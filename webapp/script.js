@@ -1,4 +1,107 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Wallet functionality
+    let wallet = null;
+    let currentWallet = null;
+
+    // Initialize wallet
+    if (window.CharmsWallet) {
+        wallet = new window.CharmsWallet();
+    }
+
+    // Wallet elements
+    const createWalletBtn = document.getElementById('createWalletBtn');
+    const walletCreation = document.getElementById('walletCreation');
+    const walletDisplay = document.getElementById('walletDisplay');
+    const walletAddress = document.getElementById('walletAddress');
+    const copyAddressBtn = document.getElementById('copyAddressBtn');
+    const showSeedBtn = document.getElementById('showSeedBtn');
+    const copySeedBtn = document.getElementById('copySeedBtn');
+    const seedPhraseDisplay = document.getElementById('seedPhraseDisplay');
+    const seedPhraseText = document.getElementById('seedPhraseText');
+
+    // Check if wallet already exists
+    if (wallet) {
+        const existingWallet = wallet.getStoredWallet();
+        if (existingWallet) {
+            currentWallet = existingWallet;
+            showWalletInfo();
+        }
+    }
+
+    // Create wallet button
+    createWalletBtn.addEventListener('click', async () => {
+        if (!wallet) {
+            alert('Wallet functionality not available');
+            return;
+        }
+
+        try {
+            // Generate seed phrase and address
+            const seedPhrase = wallet.generateSeedPhrase();
+            const address = wallet.generateTestnet4Address(seedPhrase, 0);
+
+            // Store wallet
+            wallet.storeWallet(seedPhrase, address);
+            currentWallet = { seedPhrase, address };
+
+            // Show wallet info
+            showWalletInfo();
+
+        } catch (error) {
+            console.error('Error creating wallet:', error);
+            alert('Error creating wallet. Please try again.');
+        }
+    });
+
+    // Copy address button
+    copyAddressBtn.addEventListener('click', async () => {
+        if (currentWallet && wallet) {
+            try {
+                await wallet.copyToClipboard(currentWallet.address);
+                copyAddressBtn.innerHTML = '<span>✓</span>';
+                setTimeout(() => {
+                    copyAddressBtn.innerHTML = '<span>📋</span>';
+                }, 2000);
+            } catch (error) {
+                console.error('Error copying address:', error);
+            }
+        }
+    });
+
+    // Show seed phrase button
+    showSeedBtn.addEventListener('click', () => {
+        if (currentWallet) {
+            seedPhraseText.textContent = currentWallet.seedPhrase;
+            seedPhraseDisplay.style.display = 'block';
+            showSeedBtn.style.display = 'none';
+            copySeedBtn.style.display = 'inline-block';
+        }
+    });
+
+    // Copy seed phrase button
+    copySeedBtn.addEventListener('click', async () => {
+        if (currentWallet && wallet) {
+            try {
+                await wallet.copyToClipboard(currentWallet.seedPhrase);
+                copySeedBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copySeedBtn.textContent = 'Copy Seed Phrase';
+                }, 2000);
+            } catch (error) {
+                console.error('Error copying seed phrase:', error);
+            }
+        }
+    });
+
+    // Show wallet information
+    function showWalletInfo() {
+        if (currentWallet) {
+            walletAddress.textContent = currentWallet.address;
+            walletCreation.style.display = 'none';
+            walletDisplay.style.display = 'block';
+        }
+    }
+
     // FAQ functionality
     const questions = document.querySelectorAll('.question');
 

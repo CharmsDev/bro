@@ -39,6 +39,49 @@
                 <p class="description">Your UTXBrother from another mother. Born on Bitcoin testnet, then beamed to the
                     mainnet universe with pure magic. That's wild, bro.</p>
 
+                <!-- Step 1: Wallet Creation Section -->
+                <section class="wallet-section">
+                    <h3>Step 1: Create Your Charms Wallet</h3>
+                    <p class="wallet-description">Create a secure wallet to receive your testnet4 funds. You'll need to
+                        send funds to this address to start the minting process.</p>
+
+                    <div id="walletCreation" class="wallet-creation">
+                        <button id="createWalletBtn" class="wallet-btn">
+                            <span>Create My Wallet</span>
+                        </button>
+                    </div>
+
+                    <div id="walletDisplay" class="wallet-display" style="display: none;">
+                        <div class="wallet-info">
+                            <div class="address-section">
+                                <h4>Your Testnet4 Address</h4>
+                                <div class="address-container">
+                                    <div id="walletAddress" class="address-value">Loading...</div>
+                                    <button id="copyAddressBtn" class="copy-btn" title="Copy address">
+                                        <span>📋</span>
+                                    </button>
+                                </div>
+                                <p class="address-note">Send funds to this address to begin minting BRO tokens (10,000
+                                    satoshi minimum)</p>
+                            </div>
+
+                            <div class="seedphrase-section">
+                                <h4>Your Seed Phrase</h4>
+                                <div class="seedphrase-controls">
+                                    <button id="showSeedBtn" class="seed-btn">Show Seed Phrase</button>
+                                    <button id="copySeedBtn" class="seed-btn" style="display: none;">Copy Seed
+                                        Phrase</button>
+                                </div>
+                                <div id="seedPhraseDisplay" class="seedphrase-value" style="display: none;">
+                                    <div id="seedPhraseText">Loading...</div>
+                                </div>
+                                <p class="seed-warning">⚠️ Keep your seed phrase safe and private. Never share it with
+                                    anyone!</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Mining Section -->
                 <section class="mining-section">
                     <h3>Bitcoin Mining Demo</h3>
@@ -201,6 +244,7 @@
         </div>
     </footer>
 
+    <script src="lib/wallet.js"></script>
     <script src="js/miner.js"></script>
     <script src="script.js"></script>
 </body>
