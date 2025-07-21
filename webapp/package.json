@@ -1,0 +1,21 @@
+{
+    "name": "bro-token-webapp",
+    "version": "1.0.0",
+    "description": "BRO Token landing page with integrated mining demo",
+    "main": "index.html",
+    "scripts": {
+        "start": "python3 -m http.server 8000",
+        "dev": "python3 -m http.server 8000"
+    },
+    "keywords": [
+        "bitcoin",
+        "mining",
+        "proof-of-work",
+        "charms"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "crypto-js": "^4.1.1"
+    }
+}

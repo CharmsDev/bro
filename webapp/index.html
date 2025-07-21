@@ -37,7 +37,65 @@
                     <img src="https://proars.com/images/charms/brotmp.png" alt="BRO token image" class="token-img">
                 </div>
                 <p class="description">Your UTXBrother from another mother. Born on Bitcoin testnet, then beamed to the
-                    mainnet universe with pure magic. That’s wild, bro.</p>
+                    mainnet universe with pure magic. That's wild, bro.</p>
+
+                <!-- Mining Section -->
+                <section class="mining-section">
+                    <h3>Bitcoin Mining Demo</h3>
+                    <p class="mining-description">Experience proof-of-work mining in action. Watch as we search for
+                        valid hashes!</p>
+
+                    <div class="mining-controls">
+                        <button id="startMining" class="mining-btn">
+                            <span>Start Mining</span>
+                        </button>
+                        <button id="stopMining" class="mining-btn stop-btn" style="display: none;">
+                            <span>Stop Mining</span>
+                        </button>
+                    </div>
+
+                    <div id="miningDisplay" class="mining-display" style="display: none;">
+                        <div class="mining-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Difficulty:</span>
+                                <span id="difficulty" class="stat-value">4</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Nonce:</span>
+                                <span id="nonce" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Status:</span>
+                                <span id="status" class="stat-value">Ready</span>
+                            </div>
+                        </div>
+
+                        <div class="hash-display">
+                            <div class="hash-label">Current Hash:</div>
+                            <div id="currentHash" class="hash-value">Waiting to start...</div>
+                        </div>
+
+                        <div class="mining-progress">
+                            <div class="progress-bar">
+                                <div id="progressFill" class="progress-fill"></div>
+                            </div>
+                            <div class="mining-animation">
+                                <div class="mining-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="successMessage" class="success-message" style="display: none;">
+                            <h4>🎉 Valid Hash Found!</h4>
+                            <p>Mining completed successfully with nonce: <span id="finalNonce"></span></p>
+                            <p>Final hash: <span id="finalHash"></span></p>
+                        </div>
+                    </div>
+                </section>
+
                 <a href="https://wallet.charms.dev/?a=bro" class="cta">
                     <span>Claim my tokens</span>
                 </a>
@@ -143,6 +201,7 @@
         </div>
     </footer>
 
+    <script src="js/miner.js"></script>
     <script src="script.js"></script>
 </body>
 
