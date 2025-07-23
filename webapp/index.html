@@ -71,6 +71,8 @@
                                     <button id="showSeedBtn" class="seed-btn">Show Seed Phrase</button>
                                     <button id="copySeedBtn" class="seed-btn" style="display: none;">Copy Seed
                                         Phrase</button>
+                                    <button id="resetWalletBtn" class="seed-btn" style="background: #dc2626;">🗑️ Reset
+                                        Wallet (Dev)</button>
                                 </div>
                                 <div id="seedPhraseDisplay" class="seedphrase-value" style="display: none;">
                                     <div id="seedPhraseText">Loading...</div>
@@ -82,9 +84,9 @@
                     </div>
                 </section>
 
-                <!-- Mining Section -->
+                <!-- Step 2: Mining Section -->
                 <section class="mining-section">
-                    <h3>Bitcoin Mining Demo</h3>
+                    <h3>Step 2: Bitcoin Mining Demo</h3>
                     <p class="mining-description">Experience proof-of-work mining in action. Watch as we search for
                         valid hashes!</p>
 
@@ -139,9 +141,99 @@
                     </div>
                 </section>
 
-                <a href="https://wallet.charms.dev/?a=bro" class="cta">
-                    <span>Claim my tokens</span>
-                </a>
+                <!-- Step 3: Transaction Creation Section -->
+                <section class="transaction-section">
+                    <h3>Step 3: Create Bitcoin Transaction</h3>
+                    <p class="transaction-description">Create a Bitcoin transaction with OP_RETURN data containing the
+                        mining hash and nonce. This transaction will spend the UTXO from your monitored address.</p>
+
+                    <div class="transaction-controls">
+                        <button id="createTransaction" class="transaction-btn" disabled>
+                            <span>Create Transaction</span>
+                        </button>
+                    </div>
+
+                    <div id="monitoringDisplay" class="monitoring-display" style="display: none;">
+                        <div class="monitoring-status">
+                            <div class="status-item">
+                                <span class="status-label">Address:</span>
+                                <span id="monitoredAddress" class="status-value">-</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Status:</span>
+                                <span id="monitoringStatus" class="status-value">Waiting for wallet...</span>
+                                <div id="monitoringSpinner" class="monitoring-spinner" style="display: none;"></div>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">UTXOs Found:</span>
+                                <span id="utxoCount" class="status-value">0</span>
+                            </div>
+                        </div>
+
+                        <div id="waitingIndicator" class="waiting-animation"
+                            style="display: none; justify-content: center; margin: 1rem 0;">
+                            <span>Waiting for funds</span>
+                            <div class="waiting-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+
+                        <div id="utxoDisplay" class="utxo-display" style="display: none;">
+                            <h4>Available UTXO</h4>
+                            <div class="utxo-info">
+                                <div class="utxo-item">
+                                    <span class="utxo-label">Transaction ID:</span>
+                                    <span id="utxoTxid" class="utxo-value">-</span>
+                                </div>
+                                <div class="utxo-item">
+                                    <span class="utxo-label">Output Index:</span>
+                                    <span id="utxoVout" class="utxo-value">-</span>
+                                </div>
+                                <div class="utxo-item">
+                                    <span class="utxo-label">Amount:</span>
+                                    <span id="utxoAmount" class="utxo-value">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="transactionDisplay" class="transaction-display" style="display: none;">
+                        <div class="transaction-info">
+                            <h4>Transaction Created</h4>
+                            <div class="tx-item">
+                                <span class="tx-label">Transaction ID:</span>
+                                <span id="txId" class="tx-value">-</span>
+                            </div>
+                            <div class="tx-item">
+                                <span class="tx-label">Size:</span>
+                                <span id="txSize" class="tx-value">-</span>
+                            </div>
+                            <div class="tx-item">
+                                <span class="tx-label">OP_RETURN Data:</span>
+                                <div id="opReturnData" class="tx-value op-return-data">-</div>
+                            </div>
+                            <div class="tx-item">
+                                <span class="tx-label">Raw Transaction:</span>
+                                <div id="rawTransaction" class="tx-value raw-tx">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Step 4: Claim Tokens Section -->
+                <section class="claim-section">
+                    <h3>Step 4: Claim Your BRO Tokens</h3>
+                    <p class="claim-description">Your transaction has been created! Now you can claim your BRO tokens
+                        and start using them in the Charms ecosystem.</p>
+
+                    <div class="claim-controls">
+                        <a href="https://wallet.charms.dev/?a=bro" id="claimTokensBtn" class="claim-btn disabled">
+                            <span>Claim My Tokens</span>
+                        </a>
+                    </div>
+                </section>
 
                 <div class="token-info">
                     <h3>Token Details</h3>
@@ -245,8 +337,12 @@
     </footer>
 
     <script src="lib/wallet.js"></script>
+    <script src="lib/bitcoin-tx.js"></script>
+    <script src="lib/bitcoin-api.js"></script>
+    <script src="lib/transaction-builder.js"></script>
+    <script src="lib/app-state.js"></script>
     <script src="js/miner.js"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 
 </html>

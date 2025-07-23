@@ -6,6 +6,7 @@ class BitcoinMiner {
         this.currentHash = '';
         this.difficulty = 4;
         this.challenge = '';
+        this.saveInterval = 10000; // Save progress every 10,000 nonces
     }
 
     // Generate challenge from mock UTXO data
@@ -32,12 +33,103 @@ class BitcoinMiner {
         return new TextEncoder().encode(str);
     }
 
+    // Save mining progress to localStorage
+    saveMiningProgress() {
+        const progressData = {
+            nonce: this.currentNonce,
+            hash: this.currentHash,
+            challenge: this.challenge,
+            difficulty: this.difficulty,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('miningProgress', JSON.stringify(progressData));
+        console.log(`Mining progress saved at nonce: ${this.currentNonce}`);
+    }
+
+    // Load mining progress from localStorage
+    loadMiningProgress() {
+        const saved = localStorage.getItem('miningProgress');
+        if (saved) {
+            try {
+                const progressData = JSON.parse(saved);
+                this.currentNonce = progressData.nonce || 0;
+                this.currentHash = progressData.hash || '';
+                this.challenge = progressData.challenge || '';
+                this.difficulty = progressData.difficulty || 4;
+                console.log(`Mining progress loaded from nonce: ${this.currentNonce}`);
+                return progressData;
+            } catch (error) {
+                console.error('Error loading mining progress:', error);
+                this.clearMiningProgress();
+            }
+        }
+        return null;
+    }
+
+    // Clear mining progress from localStorage
+    clearMiningProgress() {
+        localStorage.removeItem('miningProgress');
+        console.log('Mining progress cleared');
+    }
+
+    // Save completed mining result
+    saveMiningResult(result) {
+        const resultData = {
+            nonce: result.nonce,
+            hash: result.hash,
+            challenge: this.challenge,
+            difficulty: this.difficulty,
+            timestamp: Date.now(),
+            completed: true
+        };
+        localStorage.setItem('miningResult', JSON.stringify(resultData));
+        this.clearMiningProgress(); // Clear progress since we're done
+        console.log('Mining result saved:', result);
+    }
+
+    // Load completed mining result
+    loadMiningResult() {
+        const saved = localStorage.getItem('miningResult');
+        if (saved) {
+            try {
+                const resultData = JSON.parse(saved);
+                if (resultData.completed) {
+                    console.log('Mining result loaded:', resultData);
+                    return resultData;
+                }
+            } catch (error) {
+                console.error('Error loading mining result:', error);
+                this.clearMiningResult();
+            }
+        }
+        return null;
+    }
+
+    // Clear mining result from localStorage
+    clearMiningResult() {
+        localStorage.removeItem('miningResult');
+        console.log('Mining result cleared');
+    }
+
     // Mine proof of work with visual updates
-    async minePoW(challenge, difficulty, onProgress) {
+    async minePoW(challenge, difficulty, onProgress, resumeFromSaved = false) {
         this.isRunning = true;
-        this.currentNonce = 0;
         this.challenge = challenge;
         this.difficulty = difficulty;
+
+        // Load previous progress if resuming
+        if (resumeFromSaved) {
+            const savedProgress = this.loadMiningProgress();
+            if (savedProgress && savedProgress.challenge === challenge) {
+                this.currentNonce = savedProgress.nonce;
+                this.currentHash = savedProgress.hash;
+                console.log(`Resuming mining from nonce: ${this.currentNonce}`);
+            } else {
+                this.currentNonce = 0;
+            }
+        } else {
+            this.currentNonce = 0;
+        }
 
         const target = '0'.repeat(difficulty);
         const challengeBuffer = this.stringToBuffer(challenge);
@@ -69,15 +161,27 @@ class BitcoinMiner {
             // Check if we found a valid hash
             if (hash.startsWith(target)) {
                 this.isRunning = false;
-                return { nonce: this.currentNonce, hash: hash };
+                const result = { nonce: this.currentNonce, hash: hash };
+                this.saveMiningResult(result);
+                return result;
             }
 
             this.currentNonce++;
+
+            // Save progress every saveInterval nonces
+            if (this.currentNonce % this.saveInterval === 0) {
+                this.saveMiningProgress();
+            }
 
             // Yield control to prevent blocking UI
             if (this.currentNonce % 100 === 0) {
                 await new Promise(resolve => setTimeout(resolve, 1));
             }
+        }
+
+        // Save progress when stopped
+        if (!this.isRunning) {
+            this.saveMiningProgress();
         }
 
         return null;
@@ -99,16 +203,19 @@ class BitcoinMiner {
     }
 
     // Create demo mining session
-    async startDemo(onProgress, onComplete) {
+    async startDemo(onProgress, onComplete, resumeFromSaved = false) {
         const mockUtxo = this.generateMockUTXO();
         const challenge = this.generateChallenge(mockUtxo.txid, mockUtxo.vout);
 
         console.log('Starting mining demo...');
         console.log('Challenge:', challenge);
         console.log('Difficulty:', this.difficulty);
+        if (resumeFromSaved) {
+            console.log('Attempting to resume from saved progress...');
+        }
 
         try {
-            const result = await this.minePoW(challenge, this.difficulty, onProgress);
+            const result = await this.minePoW(challenge, this.difficulty, onProgress, resumeFromSaved);
             if (result && onComplete) {
                 onComplete(result);
             }
