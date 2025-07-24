@@ -12,15 +12,16 @@ class BitcoinTxBuilder {
         // Add input (the UTXO we're spending)
         tx.addInput(utxo.txid, utxo.vout);
 
-        // Create compact OP_RETURN data with mining result
-        // Format: "CHARM" + first 32 chars of hash + nonce (4 bytes)
-        const hashPrefix = miningResult.hash.substring(0, 32); // First 32 chars of hash
-        const nonceHex = miningResult.nonce.toString(16).padStart(8, '0'); // 4 bytes
+        // Create optimized OP_RETURN data with only hash and nonce in hex
+        // Format: hash (16 bytes) + nonce (4 bytes) = 20 bytes total
+        const hashPrefix = miningResult.hash.substring(0, 32); // First 16 bytes of hash (32 hex chars)
+        const nonceHex = miningResult.nonce.toString(16).padStart(8, '0'); // 4 bytes (8 hex chars)
 
-        const miningData = `CHARM${hashPrefix}${nonceHex}`;
+        // Combine hash and nonce as pure hex data (no text prefix)
+        const miningDataHex = hashPrefix + nonceHex;
 
-        // Add OP_RETURN output with mining data
-        tx.addOpReturnOutput(miningData);
+        // Add OP_RETURN output with optimized hex data
+        tx.addOpReturnOutputHex(miningDataHex);
 
         // Calculate change amount (input - fees)
         const feeAmount = 1000; // 1000 satoshis fee

@@ -42,6 +42,23 @@ class BitcoinTransaction {
         this.addOutput(this.bytesToHex(script), 0);
     }
 
+    // Create OP_RETURN output with hex data (optimized for binary data)
+    addOpReturnOutputHex(hexData) {
+        // OP_RETURN script: OP_RETURN + data length + hex data
+        const dataBytes = this.hexToBytes(hexData);
+        const script = [0x6a]; // OP_RETURN opcode
+
+        if (dataBytes.length <= 75) {
+            script.push(dataBytes.length); // Push data length
+        } else {
+            throw new Error('OP_RETURN data too large (max 75 bytes)');
+        }
+
+        script.push(...dataBytes);
+
+        this.addOutput(this.bytesToHex(script), 0);
+    }
+
     // Convert string to bytes
     stringToBytes(str) {
         return Array.from(new TextEncoder().encode(str));

@@ -112,19 +112,13 @@ export class TransactionManager {
                     const rawTx = tx.serialize();
                     const size = tx.getSize();
 
-                    // Create OP_RETURN data display
-                    const hashPrefix = this.appState.miningResult.hash.substring(0, 32);
-                    const nonceHex = this.appState.miningResult.nonce.toString(16).padStart(8, '0');
-                    const compactData = `CHARM${hashPrefix}${nonceHex}`;
+                    // Create minimal OP_RETURN data display - only hash and nonce
+                    const hashPrefix = this.appState.miningResult.hash.substring(0, 32); // 16 bytes (32 hex chars)
+                    const nonceHex = this.appState.miningResult.nonce.toString(16).padStart(8, '0'); // 4 bytes (8 hex chars)
 
                     const opReturnDataObj = {
-                        format: 'Compact Binary',
-                        prefix: 'CHARM',
-                        hashPrefix: hashPrefix,
-                        nonce: this.appState.miningResult.nonce,
-                        nonceHex: nonceHex,
-                        totalBytes: compactData.length,
-                        rawData: compactData
+                        hash: hashPrefix,
+                        nonce: nonceHex
                     };
 
                     // Update UI with transaction details
