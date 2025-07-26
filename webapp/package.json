@@ -2,10 +2,11 @@
     "name": "bro-token-webapp",
     "version": "1.0.0",
     "description": "BRO Token landing page with integrated mining demo",
-    "main": "index.html",
+    "type": "module",
     "scripts": {
-        "start": "python3 -m http.server 8000",
-        "dev": "python3 -m http.server 8000"
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
     },
     "keywords": [
         "bitcoin",
@@ -16,6 +17,28 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "crypto-js": "^4.1.1"
+        "@bitcoinerlab/secp256k1": "^1.2.0",
+        "@noble/hashes": "^1.7.1",
+        "@noble/secp256k1": "^2.2.3",
+        "@scure/base": "^1.2.6",
+        "@scure/bip32": "^1.7.0",
+        "@scure/bip39": "^1.6.0",
+        "@scure/btc-signer": "^1.8.1",
+        "bip32": "^5.0.0-rc.0",
+        "bip39": "^3.1.0",
+        "bitcoinjs-lib": "^6.1.7",
+        "buffer": "^6.0.3",
+        "crypto-browserify": "^3.12.1",
+        "crypto-js": "^4.2.0",
+        "ecpair": "^3.0.0-rc.0",
+        "process": "^0.11.10",
+        "stream-browserify": "^3.0.0",
+        "tiny-secp256k1": "^2.2.3"
+    },
+    "devDependencies": {
+        "util": "^0.12.5",
+        "vite": "^5.0.0",
+        "vite-plugin-top-level-await": "^1.6.0",
+        "vite-plugin-wasm": "^3.5.0"
     }
 }

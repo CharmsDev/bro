@@ -15,31 +15,44 @@ export class WalletManager {
     checkExistingWallet() {
         if (!this.wallet) return;
 
-        const existingWallet = this.wallet.getStoredWallet();
-        if (existingWallet) {
-            const address = existingWallet.address;
-            const isValidFormat = address && (
-                (address.startsWith('tb1q') && address.length === 42) ||
-                (address.startsWith('tb1p') && address.length === 62)
-            );
+        try {
+            const existingWallet = this.wallet.getStoredWallet();
+            if (existingWallet) {
+                const address = existingWallet.address;
 
-            if (isValidFormat) {
-                this.appState.completeWalletCreation(existingWallet);
-                console.log('Loaded existing wallet:', existingWallet);
+                // Check if address is a string and has the correct format
+                const isValidFormat = address &&
+                    typeof address === 'string' &&
+                    (
+                        (address.startsWith('tb1q') && address.length === 42) ||
+                        (address.startsWith('tb1p') && address.length === 62)
+                    );
 
-                // Also check for existing mining result
-                this.appState.loadMiningResult();
-            } else {
-                console.log('Found invalid wallet address format, clearing:', address);
-                this.wallet.clearWallet();
-                this.dom.show('walletCreation');
-                this.dom.hide('walletDisplay');
+                if (isValidFormat) {
+                    this.appState.completeWalletCreation(existingWallet);
+                    console.log('Loaded existing wallet:', existingWallet);
+
+                    // Also check for existing mining result
+                    this.appState.loadMiningResult();
+                } else {
+                    console.log('Found invalid wallet address format, clearing:', address, typeof address);
+                    this.wallet.clearWallet();
+                    this.dom.show('walletCreation');
+                    this.dom.hide('walletDisplay');
+                }
             }
+        } catch (error) {
+            console.error('Error checking existing wallet, clearing localStorage:', error);
+            // Clear all localStorage if there's any corruption
+            localStorage.clear();
+            this.dom.show('walletCreation');
+            this.dom.hide('walletDisplay');
         }
     }
 
     setupEventListeners() {
         this.setupCreateWalletButton();
+        this.setupLoadDemoWalletButton();
         this.setupCopyAddressButton();
         this.setupShowSeedButton();
         this.setupCopySeedButton();
@@ -57,7 +70,7 @@ export class WalletManager {
 
                 try {
                     const seedPhrase = this.wallet.generateSeedPhrase();
-                    const address = this.wallet.generateTestnet4Address(seedPhrase, 0);
+                    const address = await this.wallet.generateTestnet4Address(seedPhrase, 0);
 
                     this.wallet.storeWallet(seedPhrase, address);
                     const walletData = { seedPhrase, address };
@@ -68,6 +81,54 @@ export class WalletManager {
                     alert('Error creating wallet. Please try again.');
                 }
             });
+        }
+    }
+
+    setupLoadDemoWalletButton() {
+        const loadDemoWalletBtn = this.dom.get('loadDemoWalletBtn');
+        console.log('Setting up demo wallet button:', !!loadDemoWalletBtn);
+
+        if (loadDemoWalletBtn) {
+            loadDemoWalletBtn.addEventListener('click', async () => {
+                console.log('Demo wallet button clicked');
+                console.log('Wallet instance available:', !!this.wallet);
+                console.log('AppState available:', !!this.appState);
+
+                if (!this.wallet) {
+                    console.error('Wallet functionality not available');
+                    alert('Wallet functionality not available');
+                    return;
+                }
+
+                try {
+                    // Clear any existing wallet data
+                    this.wallet.clearWallet();
+
+                    // Demo seed phrase - proper BIP39 compliant mnemonic
+                    const demoSeedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+                    console.log('Generating address for demo seed phrase...');
+
+                    const address = await this.wallet.generateTestnet4Address(demoSeedPhrase, 0);
+                    console.log('Generated demo address:', address);
+
+                    this.wallet.storeWallet(demoSeedPhrase, address);
+                    const walletData = { seedPhrase: demoSeedPhrase, address };
+
+                    if (this.appState) {
+                        this.appState.completeWalletCreation(walletData);
+                    } else {
+                        console.error('AppState not available');
+                    }
+
+                    console.log('✅ Demo wallet loaded successfully');
+                    console.log('Address:', address);
+                } catch (error) {
+                    console.error('Error loading demo wallet:', error);
+                    alert('Error loading demo wallet. Please try again.');
+                }
+            });
+        } else {
+            console.error('Demo wallet button not found in DOM');
         }
     }
 

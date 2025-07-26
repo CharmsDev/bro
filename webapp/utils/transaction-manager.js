@@ -100,17 +100,56 @@ export class TransactionManager {
                     createTransaction.disabled = true;
                     createTransaction.innerHTML = '<span>Creating Transaction...</span>';
 
-                    // Create transaction with real data
-                    const tx = await this.txBuilder.createValidatedTransaction(
+                    // Generate change address (index 1) from the same seed phrase
+                    const wallet = new CharmsWallet();
+                    const changeAddress = await wallet.generateChangeAddress(this.appState.wallet.seedPhrase);
+
+                    console.log('Using change address:', changeAddress);
+
+                    console.log('Creating unsigned PSBT...');
+
+                    // Create unsigned transaction (PSBT)
+                    const unsignedTx = await this.txBuilder.createValidatedTransaction(
                         this.appState.utxo,
                         this.appState.miningResult,
-                        this.appState.wallet.address
+                        changeAddress,
+                        this.appState.wallet.seedPhrase
                     );
 
-                    // Calculate transaction details
-                    const txid = await tx.calculateTxId();
-                    const rawTx = tx.serialize();
-                    const size = tx.getSize();
+                    // Get PSBT hex for signing
+                    const psbtHex = unsignedTx.serialize();
+                    console.log('✅ PSBT created successfully');
+                    console.log('PSBT hex length:', psbtHex.length);
+
+                    // Initialize transaction signer and sign
+                    console.log('Initializing @scure/btc-signer...');
+                    const signer = new ScureBitcoinTransactionSigner();
+
+                    console.log('Signing PSBT...');
+                    console.log('PSBT hex to sign:', psbtHex.substring(0, 100) + '...');
+                    console.log('UTXO for signing:', this.appState.utxo);
+
+                    // Add scriptPubKey to UTXO for proper sighash calculation
+                    const utxoWithScript = {
+                        ...this.appState.utxo,
+                        address: this.appState.wallet.address // Ensure we have the address
+                    };
+
+                    const signResult = await signer.signPSBT(
+                        psbtHex,
+                        utxoWithScript,
+                        this.appState.wallet.seedPhrase,
+                        "m/86'/0'/0'" // Taproot derivation path
+                    );
+
+                    // Use signed transaction data
+                    const txid = signResult.txid;
+                    const rawTx = signResult.signedTxHex;
+                    const size = signResult.signedTx.virtualSize();
+
+                    console.log('✅ Transaction signed and finalized successfully!');
+                    console.log('Final transaction hex:', rawTx);
+                    console.log('Transaction size:', size, 'bytes');
 
                     // Create minimal OP_RETURN data display - only hash and nonce
                     const hashPrefix = this.appState.miningResult.hash.substring(0, 32); // 16 bytes (32 hex chars)
@@ -145,7 +184,12 @@ export class TransactionManager {
 
                 } catch (error) {
                     console.error('Error creating transaction:', error);
-                    alert('Error creating transaction. Please try again.');
+                    console.error('Error details:', {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    });
+                    alert(`Error creating transaction: ${error.message}\n\nCheck console for details.`);
                     createTransaction.disabled = false;
                     createTransaction.innerHTML = '<span>Create Transaction</span>';
                 }

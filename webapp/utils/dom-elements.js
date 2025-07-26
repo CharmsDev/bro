@@ -8,6 +8,7 @@ export class DOMElements {
         return {
             // Step 1: Wallet
             createWalletBtn: document.getElementById('createWalletBtn'),
+            loadDemoWalletBtn: document.getElementById('loadDemoWalletBtn'),
             walletCreation: document.getElementById('walletCreation'),
             walletDisplay: document.getElementById('walletDisplay'),
             walletAddress: document.getElementById('walletAddress'),

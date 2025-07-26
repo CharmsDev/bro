@@ -720,9 +720,19 @@ header h2 {
 }
 
 .wallet-btn:hover {
-    background: #0369a1;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px 0 rgba(2, 106, 163, 0.4);
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.demo-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    margin-left: 10px;
+}
+
+.demo-btn:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
 }
 
 .wallet-display {
