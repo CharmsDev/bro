@@ -24,5 +24,8 @@ _rjj/
 # Miner
 /miner/node_modules/
 
+# Webapp
+/webapp/node_modules/
+
 # Tmp
 /Contract/

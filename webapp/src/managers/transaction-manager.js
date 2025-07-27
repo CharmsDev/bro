@@ -1,0 +1,186 @@
+export class TransactionManager {
+    constructor(domElements, stepController, appState, txBuilder, walletVisitManager = null) {
+        this.dom = domElements;
+        this.stepController = stepController;
+        this.appState = appState;
+        this.txBuilder = txBuilder;
+        this.walletVisitManager = walletVisitManager;
+    }
+
+    initialize() {
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        this.setupCreateTransactionButton();
+    }
+
+    startAutomaticMonitoring() {
+        if (!this.appState.canStartMonitoring()) {
+            console.error('Cannot start monitoring: missing wallet or mining result');
+            return;
+        }
+
+        const currentWallet = this.appState.wallet;
+
+        this.dom.show('monitoringDisplay');
+        this.dom.setText('monitoredAddress', currentWallet.address);
+        this.dom.setText('monitoringStatus', 'Starting automatic monitoring...');
+        this.dom.setText('utxoCount', '0');
+
+        const monitoringSpinner = this.dom.get('monitoringSpinner');
+        const waitingIndicator = this.dom.get('waitingIndicator');
+        if (monitoringSpinner) monitoringSpinner.style.display = 'inline-block';
+        if (waitingIndicator) waitingIndicator.style.display = 'flex';
+
+        console.log('🚀 Starting automatic monitoring after mining completion');
+
+        const stopFunction = this.txBuilder.monitorAddress(
+            currentWallet.address,
+            (utxo) => {
+                this.appState.completeMonitoring(utxo);
+            },
+            (status) => {
+                this.dom.setText('monitoringStatus', status.message);
+                console.log('Monitoring status:', status);
+            },
+            (error) => {
+                console.error('Monitoring error:', error);
+
+                if (monitoringSpinner) monitoringSpinner.style.display = 'none';
+                if (waitingIndicator) waitingIndicator.style.display = 'none';
+
+                this.dom.setText('monitoringStatus', `❌ ${error.message}`);
+                alert(`Monitoring failed: ${error.message}\n\nPlease ensure you have sent funds to the address and try again.`);
+            }
+        );
+
+        this.appState.startMonitoring(stopFunction);
+    }
+
+    showUtxoFound(utxo) {
+        const monitoringSpinner = this.dom.get('monitoringSpinner');
+        const waitingIndicator = this.dom.get('waitingIndicator');
+        if (monitoringSpinner) monitoringSpinner.style.display = 'none';
+        if (waitingIndicator) waitingIndicator.style.display = 'none';
+
+        this.dom.setText('monitoringStatus', '✅ UTXO Found!');
+        this.dom.setText('utxoCount', '1');
+
+        this.dom.setText('utxoTxid', utxo.txid);
+        this.dom.setText('utxoVout', utxo.vout.toString());
+        this.dom.setText('utxoAmount', `${utxo.amount.toLocaleString()} sats`);
+        this.dom.show('utxoDisplay');
+
+        console.log('Real UTXO found:', utxo);
+    }
+
+    setupCreateTransactionButton() {
+        const createTransaction = this.dom.get('createTransaction');
+        if (createTransaction) {
+            createTransaction.addEventListener('click', async () => {
+                if (!this.appState.canCreateTransaction()) {
+                    alert('Missing required data for transaction creation');
+                    return;
+                }
+
+                try {
+                    createTransaction.disabled = true;
+                    createTransaction.innerHTML = '<span>Creating Transaction...</span>';
+
+                    // Generate change address from same seed phrase
+                    const wallet = new CharmsWallet();
+                    const changeAddress = await wallet.generateChangeAddress(this.appState.wallet.seedPhrase);
+
+                    console.log('Using change address:', changeAddress);
+
+                    console.log('Creating unsigned PSBT...');
+
+                    const unsignedTx = await this.txBuilder.createValidatedTransaction(
+                        this.appState.utxo,
+                        this.appState.miningResult,
+                        changeAddress,
+                        this.appState.wallet.seedPhrase
+                    );
+
+                    const psbtHex = unsignedTx.serialize();
+                    console.log('✅ PSBT created successfully');
+                    console.log('PSBT hex length:', psbtHex.length);
+
+                    console.log('Initializing @scure/btc-signer...');
+                    const signer = new ScureBitcoinTransactionSigner();
+
+                    console.log('Signing PSBT...');
+                    console.log('PSBT hex to sign:', psbtHex.substring(0, 100) + '...');
+                    console.log('UTXO for signing:', this.appState.utxo);
+
+                    const utxoWithScript = {
+                        ...this.appState.utxo,
+                        address: this.appState.wallet.address
+                    };
+
+                    const signResult = await signer.signPSBT(
+                        psbtHex,
+                        utxoWithScript,
+                        this.appState.wallet.seedPhrase,
+                        "m/86'/0'/0'"
+                    );
+
+                    const txid = signResult.txid;
+                    const rawTx = signResult.signedTxHex;
+                    const size = signResult.signedTx.virtualSize();
+
+                    console.log('✅ Transaction signed and finalized successfully!');
+                    console.log('Final transaction hex:', rawTx);
+                    console.log('Transaction size:', size, 'bytes');
+
+                    // Minimal OP_RETURN data display
+                    const hashPrefix = this.appState.miningResult.hash.substring(0, 32);
+                    const nonceHex = this.appState.miningResult.nonce.toString(16).padStart(8, '0');
+
+                    const opReturnDataObj = {
+                        hash: hashPrefix,
+                        nonce: nonceHex
+                    };
+
+                    this.dom.setText('txId', txid);
+                    this.dom.setText('txSize', `${size} bytes`);
+                    this.dom.setText('opReturnData', JSON.stringify(opReturnDataObj, null, 2));
+                    this.dom.setText('rawTransaction', rawTx);
+
+                    this.dom.show('transactionDisplay');
+
+                    createTransaction.innerHTML = '<span>✓ Transaction Created</span>';
+
+                    this.stepController.enableClaimTokensStep();
+
+                    this.stepController.enableWalletVisitStep();
+                    console.log('WalletVisitManager available:', !!this.walletVisitManager);
+                    if (this.walletVisitManager) {
+                        this.walletVisitManager.enableWalletVisitStep();
+                    } else {
+                        console.error('WalletVisitManager not available - Step 5 will not be enabled');
+                    }
+
+                    console.log('Real transaction created successfully:', {
+                        txid: txid,
+                        size: size,
+                        opReturnData: opReturnDataObj,
+                        rawTx: rawTx
+                    });
+
+                } catch (error) {
+                    console.error('Error creating transaction:', error);
+                    console.error('Error details:', {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    });
+                    alert(`Error creating transaction: ${error.message}\n\nCheck console for details.`);
+                    createTransaction.disabled = false;
+                    createTransaction.innerHTML = '<span>Create Transaction</span>';
+                }
+            });
+        }
+    }
+}
