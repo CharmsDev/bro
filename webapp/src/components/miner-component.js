@@ -1,4 +1,3 @@
-// Bitcoin PoW Mining functionality adapted for browser
 class BitcoinMiner {
     constructor() {
         this.isRunning = false;
@@ -6,34 +5,29 @@ class BitcoinMiner {
         this.currentHash = '';
         this.difficulty = 4;
         this.challenge = '';
-        this.saveInterval = 10000; // Save progress every 10,000 nonces
+        this.saveInterval = 10000;
     }
 
-    // Generate challenge from mock UTXO data
     generateChallenge(seedTxid, vout) {
         return `${seedTxid}:${vout}`;
     }
 
-    // Double SHA256 hash using Web Crypto API
     async doubleSha256(buffer) {
         const hash1 = await crypto.subtle.digest('SHA-256', buffer);
         const hash2 = await crypto.subtle.digest('SHA-256', hash1);
         return new Uint8Array(hash2);
     }
 
-    // Convert buffer to hex string
     bufferToHex(buffer) {
         return Array.from(new Uint8Array(buffer))
             .map(b => b.toString(16).padStart(2, '0'))
             .join('');
     }
 
-    // Convert string to buffer
     stringToBuffer(str) {
         return new TextEncoder().encode(str);
     }
 
-    // Save mining progress to localStorage
     saveMiningProgress() {
         const progressData = {
             nonce: this.currentNonce,
@@ -46,7 +40,6 @@ class BitcoinMiner {
         console.log(`Mining progress saved at nonce: ${this.currentNonce}`);
     }
 
-    // Load mining progress from localStorage
     loadMiningProgress() {
         const saved = localStorage.getItem('miningProgress');
         if (saved) {
@@ -66,13 +59,11 @@ class BitcoinMiner {
         return null;
     }
 
-    // Clear mining progress from localStorage
     clearMiningProgress() {
         localStorage.removeItem('miningProgress');
         console.log('Mining progress cleared');
     }
 
-    // Save completed mining result
     saveMiningResult(result) {
         const resultData = {
             nonce: result.nonce,
@@ -83,11 +74,10 @@ class BitcoinMiner {
             completed: true
         };
         localStorage.setItem('miningResult', JSON.stringify(resultData));
-        this.clearMiningProgress(); // Clear progress since we're done
+        this.clearMiningProgress();
         console.log('Mining result saved:', result);
     }
 
-    // Load completed mining result
     loadMiningResult() {
         const saved = localStorage.getItem('miningResult');
         if (saved) {
@@ -105,19 +95,16 @@ class BitcoinMiner {
         return null;
     }
 
-    // Clear mining result from localStorage
     clearMiningResult() {
         localStorage.removeItem('miningResult');
         console.log('Mining result cleared');
     }
 
-    // Mine proof of work with visual updates
     async minePoW(challenge, difficulty, onProgress, resumeFromSaved = false) {
         this.isRunning = true;
         this.challenge = challenge;
         this.difficulty = difficulty;
 
-        // Load previous progress if resuming
         if (resumeFromSaved) {
             const savedProgress = this.loadMiningProgress();
             if (savedProgress && savedProgress.challenge === challenge) {
@@ -143,13 +130,11 @@ class BitcoinMiner {
             combined.set(challengeBuffer);
             combined.set(nonceBuffer, challengeBuffer.length);
 
-            // Calculate hash
             const hashBuffer = await this.doubleSha256(combined);
             const hash = this.bufferToHex(hashBuffer);
 
             this.currentHash = hash;
 
-            // Update UI
             if (onProgress) {
                 onProgress({
                     nonce: this.currentNonce,
@@ -158,7 +143,6 @@ class BitcoinMiner {
                 });
             }
 
-            // Check if we found a valid hash
             if (hash.startsWith(target)) {
                 this.isRunning = false;
                 const result = { nonce: this.currentNonce, hash: hash };
@@ -168,18 +152,17 @@ class BitcoinMiner {
 
             this.currentNonce++;
 
-            // Save progress every saveInterval nonces
+            // Periodic progress save
             if (this.currentNonce % this.saveInterval === 0) {
                 this.saveMiningProgress();
             }
 
-            // Yield control to prevent blocking UI
+            // Yield control to prevent UI blocking
             if (this.currentNonce % 100 === 0) {
                 await new Promise(resolve => setTimeout(resolve, 1));
             }
         }
 
-        // Save progress when stopped
         if (!this.isRunning) {
             this.saveMiningProgress();
         }
@@ -187,12 +170,10 @@ class BitcoinMiner {
         return null;
     }
 
-    // Stop mining
     stop() {
         this.isRunning = false;
     }
 
-    // Generate mock UTXO for demo
     generateMockUTXO() {
         return {
             txid: 'a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890',
@@ -202,7 +183,6 @@ class BitcoinMiner {
         };
     }
 
-    // Create demo mining session
     async startDemo(onProgress, onComplete, resumeFromSaved = false) {
         const mockUtxo = this.generateMockUTXO();
         const challenge = this.generateChallenge(mockUtxo.txid, mockUtxo.vout);
@@ -225,5 +205,4 @@ class BitcoinMiner {
     }
 }
 
-// Export for use in other scripts
 window.BitcoinMiner = BitcoinMiner;

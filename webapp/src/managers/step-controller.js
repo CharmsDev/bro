@@ -1,4 +1,3 @@
-// Step Controller - manages workflow steps and UI state
 export class StepController {
     constructor(domElements) {
         this.dom = domElements;
@@ -14,7 +13,6 @@ export class StepController {
     }
 
     enableTransactionStep() {
-        // Remove test transaction button
         const generateTestTx = this.dom.get('generateTestTx');
         if (generateTestTx) {
             generateTestTx.style.display = 'none';
@@ -37,7 +35,6 @@ export class StepController {
             claimTokensBtn.classList.remove('disabled');
             claimTokensBtn.style.pointerEvents = 'auto';
 
-            // Add visual indicator to Step 4
             const claimSection = document.querySelector('.claim-section');
             if (claimSection) {
                 claimSection.classList.add('active');
@@ -47,8 +44,22 @@ export class StepController {
         }
     }
 
+    enableWalletVisitStep() {
+        const visitWalletBtn = this.dom.get('visitWalletBtn');
+        if (visitWalletBtn) {
+            visitWalletBtn.classList.remove('disabled');
+            visitWalletBtn.style.pointerEvents = 'auto';
+
+            const walletVisitSection = document.querySelector('.wallet-visit-section');
+            if (walletVisitSection) {
+                walletVisitSection.classList.add('active');
+            }
+
+            console.log('✅ Step 5: Visit Wallet enabled');
+        }
+    }
+
     updateStepVisualState(step, enabled) {
-        // Add visual indicators for step completion
         const sections = document.querySelectorAll('.wallet-section, .mining-section, .transaction-section');
         sections.forEach((section, index) => {
             const stepNumber = index + 1;
@@ -61,13 +72,11 @@ export class StepController {
     }
 
     resetAllSteps() {
-        // Reset UI to initial state
         this.dom.show('walletCreation');
         this.dom.hide('walletDisplay');
         this.dom.hide('monitoringDisplay');
         this.dom.hide('transactionDisplay');
 
-        // Reset buttons
         this.dom.disable('startMining');
         const createTransaction = this.dom.get('createTransaction');
         if (createTransaction) {
@@ -81,15 +90,19 @@ export class StepController {
             claimTokensBtn.style.pointerEvents = 'none';
         }
 
-        // Reset step visual states
-        const sections = document.querySelectorAll('.wallet-section, .mining-section, .transaction-section, .claim-section');
+        const visitWalletBtn = this.dom.get('visitWalletBtn');
+        if (visitWalletBtn) {
+            visitWalletBtn.classList.add('disabled');
+            visitWalletBtn.style.pointerEvents = 'none';
+        }
+
+        const sections = document.querySelectorAll('.wallet-section, .mining-section, .transaction-section, .claim-section, .wallet-visit-section');
         sections.forEach(section => {
             section.classList.remove('completed', 'active');
         });
     }
 
     initializeMiningStep() {
-        // Initially disable mining
         this.dom.disable('startMining');
         const startMining = this.dom.get('startMining');
         if (startMining) {

@@ -204,7 +204,7 @@
 
                     <div id="transactionDisplay" class="transaction-display" style="display: none;">
                         <div class="transaction-info">
-                            <h4>Transaction Created</h4>
+                            <h4>Transaction Details</h4>
                             <div class="tx-item">
                                 <span class="tx-label">Transaction ID:</span>
                                 <span id="txId" class="tx-value">-</span>
@@ -235,6 +235,19 @@
                         <a href="https://wallet.charms.dev/?a=bro" id="claimTokensBtn" class="claim-btn disabled">
                             <span>Claim My Tokens</span>
                         </a>
+                    </div>
+                </section>
+
+                <!-- Step 5: Visit Wallet Section -->
+                <section class="wallet-visit-section">
+                    <h3>Step 5: Visit Your Charms Wallet</h3>
+                    <p class="wallet-visit-description">Access your wallet to view your BRO tokens and manage your
+                        funds.</p>
+
+                    <div class="wallet-visit-controls">
+                        <button id="visitWalletBtn" class="wallet-visit-btn disabled">
+                            <span>Go to My Wallet</span>
+                        </button>
                     </div>
                 </section>
 
@@ -339,7 +352,7 @@
         </div>
     </footer>
 
-    <script type="module" src="script.js"></script>
+    <script type="module" src="src/main.js"></script>
 </body>
 
 </html>

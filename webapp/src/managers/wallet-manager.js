@@ -1,4 +1,3 @@
-// Wallet Manager - handles wallet creation, display, and utilities
 export class WalletManager {
     constructor(domElements, stepController, appState, wallet) {
         this.dom = domElements;
@@ -20,7 +19,7 @@ export class WalletManager {
             if (existingWallet) {
                 const address = existingWallet.address;
 
-                // Check if address is a string and has the correct format
+                // Validate address format
                 const isValidFormat = address &&
                     typeof address === 'string' &&
                     (
@@ -32,7 +31,6 @@ export class WalletManager {
                     this.appState.completeWalletCreation(existingWallet);
                     console.log('Loaded existing wallet:', existingWallet);
 
-                    // Also check for existing mining result
                     this.appState.loadMiningResult();
                 } else {
                     console.log('Found invalid wallet address format, clearing:', address, typeof address);
@@ -43,7 +41,6 @@ export class WalletManager {
             }
         } catch (error) {
             console.error('Error checking existing wallet, clearing localStorage:', error);
-            // Clear all localStorage if there's any corruption
             localStorage.clear();
             this.dom.show('walletCreation');
             this.dom.hide('walletDisplay');
@@ -101,10 +98,9 @@ export class WalletManager {
                 }
 
                 try {
-                    // Clear any existing wallet data
                     this.wallet.clearWallet();
 
-                    // Demo seed phrase - proper BIP39 compliant mnemonic
+                    // BIP39 compliant demo seed phrase
                     const demoSeedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
                     console.log('Generating address for demo seed phrase...');
 
@@ -193,10 +189,8 @@ export class WalletManager {
         if (resetWalletBtn) {
             resetWalletBtn.addEventListener('click', () => {
                 if (confirm('⚠️ This will permanently delete your wallet and mining data from localStorage. Are you sure?')) {
-                    // Clear all localStorage data including mining progress and results
                     localStorage.clear();
 
-                    // Reset app state
                     this.appState.reset();
                     this.stepController.resetAllSteps();
 

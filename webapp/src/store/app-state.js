@@ -1,5 +1,4 @@
-// Application State Management
-class AppState {
+export class AppState {
     constructor() {
         this.wallet = null;
         this.miningResult = null;
@@ -8,7 +7,6 @@ class AppState {
         this.isMonitoring = false;
         this.monitoringStopFunction = null;
 
-        // Event listeners for state changes
         this.listeners = {
             walletCreated: [],
             miningCompleted: [],
@@ -17,7 +15,6 @@ class AppState {
         };
     }
 
-    // Event system
     on(event, callback) {
         if (this.listeners[event]) {
             this.listeners[event].push(callback);
@@ -30,7 +27,6 @@ class AppState {
         }
     }
 
-    // State transitions
     completeWalletCreation(wallet) {
         this.wallet = wallet;
         this.currentStep = 2;
@@ -39,7 +35,6 @@ class AppState {
         console.log('✅ Wallet created, mining enabled');
     }
 
-    // Load mining result from localStorage and complete mining state
     loadMiningResult() {
         if (window.BitcoinMiner) {
             const miner = new window.BitcoinMiner();
@@ -71,7 +66,6 @@ class AppState {
         console.log('✅ UTXO found, transaction creation enabled');
     }
 
-    // State checks
     canStartMining() {
         return this.wallet !== null;
     }
@@ -84,7 +78,6 @@ class AppState {
         return this.wallet !== null && this.miningResult !== null;
     }
 
-    // Monitoring control
     startMonitoring(stopFunction) {
         this.isMonitoring = true;
         this.monitoringStopFunction = stopFunction;
@@ -98,7 +91,6 @@ class AppState {
         this.isMonitoring = false;
     }
 
-    // Reset state (for development)
     reset() {
         this.wallet = null;
         this.miningResult = null;
@@ -109,7 +101,6 @@ class AppState {
         console.log('🔄 App state reset');
     }
 
-    // Get current state summary
     getState() {
         return {
             hasWallet: !!this.wallet,
@@ -124,5 +115,4 @@ class AppState {
     }
 }
 
-// Export for use in other scripts
 window.AppState = AppState;

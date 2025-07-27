@@ -1,6 +1,6 @@
-// Charms Wallet Library - Compatible with source wallet implementation
+// Charms Wallet Service - Compatible with source wallet implementation
 
-class CharmsWallet {
+export class WalletService {
     constructor() {
         this.network = 'testnet';
     }
@@ -136,5 +136,5 @@ class CharmsWallet {
     }
 }
 
-// Export for use in other scripts
-window.CharmsWallet = CharmsWallet;
+// Export for global compatibility
+window.CharmsWallet = WalletService;

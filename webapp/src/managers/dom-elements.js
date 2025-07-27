@@ -1,4 +1,3 @@
-// DOM Elements Manager
 export class DOMElements {
     constructor() {
         this.elements = this.initializeElements();
@@ -6,7 +5,7 @@ export class DOMElements {
 
     initializeElements() {
         return {
-            // Step 1: Wallet
+            // Wallet elements
             createWalletBtn: document.getElementById('createWalletBtn'),
             loadDemoWalletBtn: document.getElementById('loadDemoWalletBtn'),
             walletCreation: document.getElementById('walletCreation'),
@@ -19,7 +18,7 @@ export class DOMElements {
             seedPhraseText: document.getElementById('seedPhraseText'),
             resetWalletBtn: document.getElementById('resetWalletBtn'),
 
-            // Step 2: Mining
+            // Mining elements
             startMining: document.getElementById('startMining'),
             stopMining: document.getElementById('stopMining'),
             miningDisplay: document.getElementById('miningDisplay'),
@@ -31,7 +30,7 @@ export class DOMElements {
             finalHash: document.getElementById('finalHash'),
             progressFill: document.getElementById('progressFill'),
 
-            // Step 3: Transaction
+            // Transaction elements
             monitorAddress: document.getElementById('monitorAddress'),
             createTransaction: document.getElementById('createTransaction'),
             generateTestTx: document.getElementById('generateTestTx'),
@@ -51,8 +50,11 @@ export class DOMElements {
             monitoringSpinner: document.getElementById('monitoringSpinner'),
             waitingIndicator: document.getElementById('waitingIndicator'),
 
-            // Step 4: Claim Tokens
-            claimTokensBtn: document.getElementById('claimTokensBtn')
+            // Token claim elements
+            claimTokensBtn: document.getElementById('claimTokensBtn'),
+
+            // Wallet visit elements
+            visitWalletBtn: document.getElementById('visitWalletBtn')
         };
     }
 
@@ -60,7 +62,6 @@ export class DOMElements {
         return this.elements[elementName];
     }
 
-    // Helper methods for common operations
     show(elementName) {
         const element = this.get(elementName);
         if (element) element.style.display = 'block';

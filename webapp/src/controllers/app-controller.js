@@ -1,10 +1,10 @@
-// App Controller - main orchestrator for all modules
-import { DOMElements } from './dom-elements.js';
-import { StepController } from './step-controller.js';
-import { WalletManager } from './wallet-manager.js';
-import { MiningManager } from './mining-manager.js';
-import { TransactionManager } from './transaction-manager.js';
-import { UIHelpers } from './ui-helpers.js';
+import { DOMElements } from '../managers/dom-elements.js';
+import { StepController } from '../managers/step-controller.js';
+import { WalletManager } from '../managers/wallet-manager.js';
+import { MiningManager } from '../managers/mining-manager.js';
+import { TransactionManager } from '../managers/transaction-manager.js';
+import { WalletVisitManager } from '../managers/wallet-visit-manager.js';
+import { UIHelpers } from '../managers/ui-helpers.js';
 
 export class AppController {
     constructor() {
@@ -16,16 +16,12 @@ export class AppController {
     }
 
     async initialize() {
-        // Initialize global modules
         this.initializeGlobalModules();
 
-        // Initialize DOM elements manager
         this.modules.domElements = new DOMElements();
 
-        // Initialize step controller
         this.modules.stepController = new StepController(this.modules.domElements);
 
-        // Initialize managers
         this.modules.walletManager = new WalletManager(
             this.modules.domElements,
             this.modules.stepController,
@@ -40,30 +36,34 @@ export class AppController {
             this.miner
         );
 
+        this.modules.walletVisitManager = new WalletVisitManager(
+            this.modules.domElements,
+            this.modules.stepController,
+            this.appState
+        );
+
         this.modules.transactionManager = new TransactionManager(
             this.modules.domElements,
             this.modules.stepController,
             this.appState,
-            this.txBuilder
+            this.txBuilder,
+            this.modules.walletVisitManager
         );
 
-        // Initialize UI helpers
         this.modules.uiHelpers = new UIHelpers();
 
-        // Set up state event listeners BEFORE initializing modules
+        // Setup event listeners before module initialization
         this.setupStateEventListeners();
 
-        // Initialize all modules
         this.modules.walletManager.initialize();
         this.modules.miningManager.initialize();
         this.modules.transactionManager.initialize();
+        this.modules.walletVisitManager.initialize();
 
-        // Debug log
         this.logInitializationStatus();
     }
 
     initializeGlobalModules() {
-        // Initialize global state and modules
         if (window.AppState) {
             this.appState = new window.AppState();
         }
@@ -119,11 +119,11 @@ export class AppController {
             walletManager: !!this.modules.walletManager,
             miningManager: !!this.modules.miningManager,
             transactionManager: !!this.modules.transactionManager,
+            walletVisitManager: !!this.modules.walletVisitManager,
             uiHelpers: !!this.modules.uiHelpers
         });
     }
 
-    // Public API for accessing modules
     getModule(moduleName) {
         return this.modules[moduleName];
     }

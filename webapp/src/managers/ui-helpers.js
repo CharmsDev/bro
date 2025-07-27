@@ -1,4 +1,3 @@
-// UI Helpers - utility functions for UI interactions
 export class UIHelpers {
     constructor() {
         this.initialize();
@@ -21,7 +20,6 @@ export class UIHelpers {
                     q.nextElementSibling.style.display = 'none';
                 });
 
-                // Open the clicked answer if it wasn't already active
                 if (!isActive) {
                     question.classList.add('active');
                     answer.style.display = 'block';
@@ -30,7 +28,6 @@ export class UIHelpers {
         });
     }
 
-    // Utility methods for common UI operations
     static showElement(element) {
         if (element) element.style.display = 'block';
     }
@@ -73,7 +70,6 @@ export class UIHelpers {
         if (element) element.classList.toggle(className);
     }
 
-    // Animation helpers
     static fadeIn(element, duration = 300) {
         if (!element) return;
 
@@ -118,14 +114,12 @@ export class UIHelpers {
         requestAnimationFrame(animate);
     }
 
-    // Progress bar helper
     static updateProgressBar(progressElement, percentage) {
         if (progressElement) {
             progressElement.style.width = `${Math.min(Math.max(percentage, 0), 100)}%`;
         }
     }
 
-    // Button state helpers
     static setButtonLoading(button, loadingText = 'Loading...') {
         if (button) {
             button.disabled = true;
@@ -142,13 +136,11 @@ export class UIHelpers {
         }
     }
 
-    // Notification helpers
     static showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.textContent = message;
 
-        // Style the notification
         Object.assign(notification.style, {
             position: 'fixed',
             top: '20px',
@@ -162,7 +154,6 @@ export class UIHelpers {
             transition: 'opacity 0.3s ease'
         });
 
-        // Set background color based on type
         const colors = {
             info: '#007bff',
             success: '#28a745',
@@ -173,12 +164,10 @@ export class UIHelpers {
 
         document.body.appendChild(notification);
 
-        // Fade in
         setTimeout(() => {
             notification.style.opacity = '1';
         }, 10);
 
-        // Auto remove
         setTimeout(() => {
             notification.style.opacity = '0';
             setTimeout(() => {

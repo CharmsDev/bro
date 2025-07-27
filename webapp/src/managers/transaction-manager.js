@@ -1,10 +1,10 @@
-// Transaction Manager - handles monitoring, UTXO detection, and transaction creation
 export class TransactionManager {
-    constructor(domElements, stepController, appState, txBuilder) {
+    constructor(domElements, stepController, appState, txBuilder, walletVisitManager = null) {
         this.dom = domElements;
         this.stepController = stepController;
         this.appState = appState;
         this.txBuilder = txBuilder;
+        this.walletVisitManager = walletVisitManager;
     }
 
     initialize() {
@@ -23,13 +23,11 @@ export class TransactionManager {
 
         const currentWallet = this.appState.wallet;
 
-        // Show monitoring display automatically
         this.dom.show('monitoringDisplay');
         this.dom.setText('monitoredAddress', currentWallet.address);
         this.dom.setText('monitoringStatus', 'Starting automatic monitoring...');
         this.dom.setText('utxoCount', '0');
 
-        // Show loading indicators
         const monitoringSpinner = this.dom.get('monitoringSpinner');
         const waitingIndicator = this.dom.get('waitingIndicator');
         if (monitoringSpinner) monitoringSpinner.style.display = 'inline-block';
@@ -37,23 +35,18 @@ export class TransactionManager {
 
         console.log('🚀 Starting automatic monitoring after mining completion');
 
-        // Start monitoring
         const stopFunction = this.txBuilder.monitorAddress(
             currentWallet.address,
-            // onUtxoFound callback
             (utxo) => {
                 this.appState.completeMonitoring(utxo);
             },
-            // onStatusUpdate callback
             (status) => {
                 this.dom.setText('monitoringStatus', status.message);
                 console.log('Monitoring status:', status);
             },
-            // onError callback
             (error) => {
                 console.error('Monitoring error:', error);
 
-                // Hide loading indicators
                 if (monitoringSpinner) monitoringSpinner.style.display = 'none';
                 if (waitingIndicator) waitingIndicator.style.display = 'none';
 
@@ -62,22 +55,18 @@ export class TransactionManager {
             }
         );
 
-        // Store stop function in app state
         this.appState.startMonitoring(stopFunction);
     }
 
     showUtxoFound(utxo) {
-        // Hide loading indicators
         const monitoringSpinner = this.dom.get('monitoringSpinner');
         const waitingIndicator = this.dom.get('waitingIndicator');
         if (monitoringSpinner) monitoringSpinner.style.display = 'none';
         if (waitingIndicator) waitingIndicator.style.display = 'none';
 
-        // Update UI with found UTXO
         this.dom.setText('monitoringStatus', '✅ UTXO Found!');
         this.dom.setText('utxoCount', '1');
 
-        // Show UTXO details
         this.dom.setText('utxoTxid', utxo.txid);
         this.dom.setText('utxoVout', utxo.vout.toString());
         this.dom.setText('utxoAmount', `${utxo.amount.toLocaleString()} sats`);
@@ -96,11 +85,10 @@ export class TransactionManager {
                 }
 
                 try {
-                    // Disable button during creation
                     createTransaction.disabled = true;
                     createTransaction.innerHTML = '<span>Creating Transaction...</span>';
 
-                    // Generate change address (index 1) from the same seed phrase
+                    // Generate change address from same seed phrase
                     const wallet = new CharmsWallet();
                     const changeAddress = await wallet.generateChangeAddress(this.appState.wallet.seedPhrase);
 
@@ -108,7 +96,6 @@ export class TransactionManager {
 
                     console.log('Creating unsigned PSBT...');
 
-                    // Create unsigned transaction (PSBT)
                     const unsignedTx = await this.txBuilder.createValidatedTransaction(
                         this.appState.utxo,
                         this.appState.miningResult,
@@ -116,12 +103,10 @@ export class TransactionManager {
                         this.appState.wallet.seedPhrase
                     );
 
-                    // Get PSBT hex for signing
                     const psbtHex = unsignedTx.serialize();
                     console.log('✅ PSBT created successfully');
                     console.log('PSBT hex length:', psbtHex.length);
 
-                    // Initialize transaction signer and sign
                     console.log('Initializing @scure/btc-signer...');
                     const signer = new ScureBitcoinTransactionSigner();
 
@@ -129,20 +114,18 @@ export class TransactionManager {
                     console.log('PSBT hex to sign:', psbtHex.substring(0, 100) + '...');
                     console.log('UTXO for signing:', this.appState.utxo);
 
-                    // Add scriptPubKey to UTXO for proper sighash calculation
                     const utxoWithScript = {
                         ...this.appState.utxo,
-                        address: this.appState.wallet.address // Ensure we have the address
+                        address: this.appState.wallet.address
                     };
 
                     const signResult = await signer.signPSBT(
                         psbtHex,
                         utxoWithScript,
                         this.appState.wallet.seedPhrase,
-                        "m/86'/0'/0'" // Taproot derivation path
+                        "m/86'/0'/0'"
                     );
 
-                    // Use signed transaction data
                     const txid = signResult.txid;
                     const rawTx = signResult.signedTxHex;
                     const size = signResult.signedTx.virtualSize();
@@ -151,29 +134,33 @@ export class TransactionManager {
                     console.log('Final transaction hex:', rawTx);
                     console.log('Transaction size:', size, 'bytes');
 
-                    // Create minimal OP_RETURN data display - only hash and nonce
-                    const hashPrefix = this.appState.miningResult.hash.substring(0, 32); // 16 bytes (32 hex chars)
-                    const nonceHex = this.appState.miningResult.nonce.toString(16).padStart(8, '0'); // 4 bytes (8 hex chars)
+                    // Minimal OP_RETURN data display
+                    const hashPrefix = this.appState.miningResult.hash.substring(0, 32);
+                    const nonceHex = this.appState.miningResult.nonce.toString(16).padStart(8, '0');
 
                     const opReturnDataObj = {
                         hash: hashPrefix,
                         nonce: nonceHex
                     };
 
-                    // Update UI with transaction details
                     this.dom.setText('txId', txid);
                     this.dom.setText('txSize', `${size} bytes`);
                     this.dom.setText('opReturnData', JSON.stringify(opReturnDataObj, null, 2));
                     this.dom.setText('rawTransaction', rawTx);
 
-                    // Show transaction display
                     this.dom.show('transactionDisplay');
 
-                    // Update button
                     createTransaction.innerHTML = '<span>✓ Transaction Created</span>';
 
-                    // Enable Step 4: Claim Tokens
                     this.stepController.enableClaimTokensStep();
+
+                    this.stepController.enableWalletVisitStep();
+                    console.log('WalletVisitManager available:', !!this.walletVisitManager);
+                    if (this.walletVisitManager) {
+                        this.walletVisitManager.enableWalletVisitStep();
+                    } else {
+                        console.error('WalletVisitManager not available - Step 5 will not be enabled');
+                    }
 
                     console.log('Real transaction created successfully:', {
                         txid: txid,
