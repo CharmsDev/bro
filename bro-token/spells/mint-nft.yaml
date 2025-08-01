@@ -1,0 +1,20 @@
+version: 6
+
+apps:
+  $00: n/${app_id}/${app_vk}
+
+ins:
+  - utxo_id: ${in_utxo_0}
+    charms: {}
+
+outs:
+  - address: ${addr_0}
+    charms:
+      $00:
+        name: '$JUST-A-TEST-BRO'
+        description: Just a test BRO token
+        ticker: JUST-A-TEST-BRO
+        url: https://bro.charms.dev
+        image: https://proars.com/images/charms/brotmp.png
+        supply_limit: 69420000000
+        decimals: 8

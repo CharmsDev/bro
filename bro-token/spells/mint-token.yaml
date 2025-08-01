@@ -1,0 +1,18 @@
+version: 6
+
+apps:
+  $01: t/${app_id}/${app_vk}
+
+private_inputs:
+  $01:
+    tx: ${mining_tx}
+    tx_block_proof: ${tx_block_proof}
+
+ins:
+  - utxo_id: ${mining_txid}:1 # 700 sats
+    charms: {}
+
+outs:
+  - address: ${addr_1}
+    charms:
+      $01: ${mined_amount}
