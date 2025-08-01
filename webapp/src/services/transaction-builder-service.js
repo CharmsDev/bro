@@ -5,6 +5,10 @@ class BitcoinTxBuilder {
         this.apiService = new window.BitcoinAPIService();
     }
 
+    stringToBuffer(str) {
+        return new TextEncoder().encode(str);
+    }
+
     // Create a transaction with OP_RETURN data containing hash and nonce
     async createMiningDataTransaction(utxo, miningResult, changeAddress, seedPhrase) {
         try {
@@ -41,7 +45,7 @@ class BitcoinTxBuilder {
 
             // Create PSBT for proper Taproot signing
             console.log('Creating PSBT...');
-            const psbt = new bitcoin.Psbt({ network });
+            const psbt = new bitcoin.Psbt({network});
 
             // Add input with proper Taproot witness UTXO
             console.log('Adding input...');
@@ -59,20 +63,17 @@ class BitcoinTxBuilder {
                 tapInternalKey: xOnlyPubkey,
             });
 
-            // Create optimized OP_RETURN data with only hash and nonce in hex
-            // Format: hash (16 bytes) + nonce (4 bytes) = 20 bytes total
-            const hashPrefix = miningResult.hash.substring(0, 32); // First 16 bytes of hash (32 hex chars)
-            const nonceHex = miningResult.nonce.toString(16).padStart(8, '0'); // 4 bytes (8 hex chars)
+            // Create optimized OP_RETURN data with only nonce in the exact form it is used in the hash
+            // Format: nonceBuffer: byte buffer encoded from string representation of a number
+            const nonceBuffer = this.stringToBuffer(miningResult.nonce.toString());
 
-            // Combine hash and nonce as pure hex data (no text prefix)
-            const miningDataHex = hashPrefix + nonceHex;
-            console.log('OP_RETURN data:', miningDataHex);
+            console.log('OP_RETURN data:', Buffer.from(nonceBuffer).toString('hex'));
 
             // Output 0: OP_RETURN with mining data (0 sats)
             console.log('Adding OP_RETURN output...');
             const opReturnScript = bitcoin.script.compile([
                 bitcoin.opcodes.OP_RETURN,
-                Buffer.from(miningDataHex, 'hex')
+                Buffer.from(nonceBuffer)
             ]);
             psbt.addOutput({
                 script: opReturnScript,
@@ -82,7 +83,7 @@ class BitcoinTxBuilder {
             // Output 1: Change amount (all remaining funds minus fees)
             const feeAmount = 1000; // 1000 satoshis fee
             const changeAmount = utxo.amount - feeAmount;
-            console.log('Adding change output:', { changeAmount, changeAddress });
+            console.log('Adding change output:', {changeAmount, changeAddress});
 
             // Always add change output (even if small, for testing purposes)
             psbt.addOutput({
@@ -111,8 +112,8 @@ class BitcoinTxBuilder {
             console.log('Transaction structure:', {
                 inputs: 1,
                 outputs: 2,
-                opReturn: { value: 0, dataLength: miningDataHex.length / 2 },
-                change: { value: changeAmount, address: changeAddress },
+                opReturn: {value: 0, dataLength: nonceBuffer.length},
+                change: {value: changeAmount, address: changeAddress},
                 fee: feeAmount,
                 signed: true
             });
