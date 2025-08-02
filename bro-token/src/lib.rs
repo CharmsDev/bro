@@ -3,6 +3,7 @@ use bitcoin::consensus::encode::deserialize_hex;
 use bitcoin::hashes::Hash;
 use bitcoin::hex::DisplayHex;
 use charms_sdk::data::{App, B32, Data, NFT, TOKEN, Transaction, TxId, charm_values};
+use libbro::{compute_mining_hash, count_leading_zero_bits, mined_amount};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -72,24 +73,6 @@ pub(crate) fn hash(data: &str) -> B32 {
     B32(hash.into())
 }
 
-pub fn double_sha256(data: &[u8]) -> Vec<u8> {
-    let hash = Sha256::digest(data);
-    let hash = Sha256::digest(&hash);
-    hash.to_vec()
-}
-
-pub fn count_leading_zero_bits(data: &[u8]) -> usize {
-    match data
-        .iter()
-        .enumerate()
-        .skip_while(|(_, b)| **b == 0u8)
-        .next()
-    {
-        Some((i, b)) => i * 8 + b.leading_zeros() as usize,
-        None => data.len() * 8,
-    }
-}
-
 fn token_contract_satisfied(token_app: &App, tx: &Transaction, w: &Data) -> anyhow::Result<()> {
     can_mint_token(token_app, tx, w)
 }
@@ -114,28 +97,17 @@ fn can_mint_token(token_app: &App, tx: &Transaction, w: &Data) -> anyhow::Result
     }
     ensure!(txs.first() == Some(&mining_txid));
 
-    let op_return_output = mining_tx.output.first();
-    ensure!(op_return_output.is_some());
-    let op_return_output = op_return_output.unwrap();
-
-    ensure!(op_return_output.script_pubkey.is_op_return());
-    let bytes = op_return_output.script_pubkey.to_bytes();
-    ensure!(bytes.len() == bytes[1] as usize + 2);
-    let bytes = &bytes[2..];
-    let nonce = String::from_utf8(bytes.to_vec()).unwrap();
-
     let challenge_txid = mining_tx.input[0].previous_output.txid.to_string();
     let challenge_vout = mining_tx.input[0].previous_output.vout;
-    let hash_input = format!("{}:{}{}", challenge_txid, challenge_vout, nonce);
+    let nonce = extract_nonce(&mining_tx)?;
 
-    dbg!(&hash_input);
-
-    let hash_bytes = double_sha256(hash_input.as_bytes());
+    let hash_bytes = compute_mining_hash(challenge_txid, challenge_vout, nonce);
     dbg!(hash_bytes.as_hex());
     let clz = count_leading_zero_bits(&hash_bytes);
     dbg!(clz);
 
     let expected_amount: u64 = mined_amount(block_time as u64, clz);
+    dbg!(expected_amount);
 
     let minted_amount = tx
         .outs
@@ -148,26 +120,16 @@ fn can_mint_token(token_app: &App, tx: &Transaction, w: &Data) -> anyhow::Result
     Ok(())
 }
 
-const TOTAL_LIMIT: u64 = 69_420_000_000;
-const MAX_MINTS_PER_BLOCK: u64 = 3200;
-const HALVING_PERIOD_DAYS: u64 = 14;
-const BLOCKS_PER_PERIOD: u64 = HALVING_PERIOD_DAYS * 24 * 6;
-const SECONDS_PER_PERIOD: u64 = HALVING_PERIOD_DAYS * 24 * 60 * 60;
-const CLZ_FACTOR_DENOMINATOR: u64 = 4500;
+fn extract_nonce(mining_tx: &bitcoin::Transaction) -> anyhow::Result<String> {
+    let op_return_output = mining_tx.output.first();
+    ensure!(op_return_output.is_some());
+    let op_return_output = op_return_output.unwrap();
 
-// uncomment to launch at 00:00 UTC on Aug 14, 2025.
-// const START_TIME: u32 = 1_755_129_600;
-
-// 7/26/2025 20:00:00 UTC
-const START_TIME: u64 = 1_753_560_000;
-
-const CONST_FACTOR: f64 = TOTAL_LIMIT as f64
-    / (MAX_MINTS_PER_BLOCK * 2 * BLOCKS_PER_PERIOD * SECONDS_PER_PERIOD) as f64
-    / CLZ_FACTOR_DENOMINATOR as f64;
-
-fn mined_amount(block_time: u64, clz: usize) -> u64 {
-    (CONST_FACTOR / 2u64.pow(((block_time - START_TIME) / SECONDS_PER_PERIOD) as u32) as f64
-        * clz.pow(2) as f64) as u64
+    ensure!(op_return_output.script_pubkey.is_op_return());
+    let bytes = op_return_output.script_pubkey.to_bytes();
+    ensure!(bytes.len() == bytes[1] as usize + 2);
+    let bytes = &bytes[2..];
+    String::from_utf8(bytes.to_vec()).map_err(|e| e.into())
 }
 
 #[cfg(test)]
