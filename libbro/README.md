@@ -18,5 +18,11 @@ cargo build --release --target wasm32-unknown-unknown
 Re-generate bindings for use from JS:
 
 ```bash
-wasm-bindgen --out-dir ./target/wasm-bindgen --target nodejs target/wasm32-unknown-unknown/release/libbro.wasm
+wasm-bindgen --out-dir ./target/wasm-bindgen-nodejs --target nodejs target/wasm32-unknown-unknown/release/libbro.wasm
+```
+
+or (for use with bundlers like Webpack)
+
+```bash
+wasm-bindgen --out-dir ./target/wasm-bindgen target/wasm32-unknown-unknown/release/libbro.wasm
 ```
