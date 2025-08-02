@@ -94,7 +94,7 @@ fn token_contract_satisfied(token_app: &App, tx: &Transaction, w: &Data) -> anyh
     can_mint_token(token_app, tx, w)
 }
 
-fn can_mint_token(_token_app: &App, tx: &Transaction, w: &Data) -> anyhow::Result<()> {
+fn can_mint_token(token_app: &App, tx: &Transaction, w: &Data) -> anyhow::Result<()> {
     let w: PrivateInput = w.value()?;
     let mining_tx: bitcoin::Transaction = deserialize_hex(&w.tx)?;
     let tx_id = tx.ins[0].0.0;
@@ -128,11 +128,46 @@ fn can_mint_token(_token_app: &App, tx: &Transaction, w: &Data) -> anyhow::Resul
     let challenge_vout = mining_tx.input[0].previous_output.vout;
     let hash_input = format!("{}:{}{}", challenge_txid, challenge_vout, nonce);
 
+    dbg!(&hash_input);
+
     let hash_bytes = double_sha256(hash_input.as_bytes());
     dbg!(hash_bytes.as_hex());
-    dbg!(count_leading_zero_bits(&hash_bytes));
+    let clz = count_leading_zero_bits(&hash_bytes);
+    dbg!(clz);
+
+    let expected_amount: u64 = mined_amount(block_time as u64, clz);
+
+    let minted_amount = tx
+        .outs
+        .first()
+        .and_then(|charms| charms.get(token_app))
+        .map(|v| v.value::<u64>())
+        .transpose()?;
+    ensure!(minted_amount == Some(expected_amount));
 
     Ok(())
+}
+
+const TOTAL_LIMIT: u64 = 69_420_000_000;
+const MAX_MINTS_PER_BLOCK: u64 = 3200;
+const HALVING_PERIOD_DAYS: u64 = 14;
+const BLOCKS_PER_PERIOD: u64 = HALVING_PERIOD_DAYS * 24 * 6;
+const SECONDS_PER_PERIOD: u64 = HALVING_PERIOD_DAYS * 24 * 60 * 60;
+const CLZ_FACTOR_DENOMINATOR: u64 = 4500;
+
+// uncomment to launch at 00:00 UTC on Aug 14, 2025.
+// const START_TIME: u32 = 1_755_129_600;
+
+// 7/26/2025 20:00:00 UTC
+const START_TIME: u64 = 1_753_560_000;
+
+const CONST_FACTOR: f64 = TOTAL_LIMIT as f64
+    / (MAX_MINTS_PER_BLOCK * 2 * BLOCKS_PER_PERIOD * SECONDS_PER_PERIOD) as f64
+    / CLZ_FACTOR_DENOMINATOR as f64;
+
+fn mined_amount(block_time: u64, clz: usize) -> u64 {
+    (CONST_FACTOR / 2u64.pow(((block_time - START_TIME) / SECONDS_PER_PERIOD) as u32) as f64
+        * clz.pow(2) as f64) as u64
 }
 
 #[cfg(test)]
