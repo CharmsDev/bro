@@ -141,6 +141,28 @@
                             <p>Mining completed successfully with nonce: <span id="finalNonce"></span></p>
                             <p>Final hash: <span id="finalHash"></span></p>
                         </div>
+
+                        <div id="rewardDisplay" class="reward-display">
+                            <h4>💰 Token Reward Calculation</h4>
+                            <div class="reward-info">
+                                <div class="reward-item">
+                                    <span class="reward-label">Leading Zeros:</span>
+                                    <span id="leadingZerosCount" class="reward-value">-</span>
+                                </div>
+                                <div class="reward-item">
+                                    <span class="reward-label">Your Reward:</span>
+                                    <span id="tokenReward" class="reward-value reward-amount">-</span>
+                                    <span class="reward-token">$BRO</span>
+                                </div>
+                                <div class="reward-item">
+                                    <span class="reward-label">Proof of Work:</span>
+                                    <span id="proofOfWork" class="reward-value">-</span>
+                                </div>
+                            </div>
+                            <div class="reward-formula" style="margin-top: 10px; font-size: 12px; color: #666;">
+                                <strong>Formula:</strong> <span id="rewardFormula">S >> (30 - leadingZeros)</span>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -225,9 +247,46 @@
                     </div>
                 </section>
 
-                <!-- Step 4: Claim Tokens Section -->
+                <!-- Step 4: Broadcast Transaction Section -->
+                <section class="broadcast-section">
+                    <h3>Step 4: Broadcast Transaction</h3>
+                    <p class="broadcast-description">Broadcast the mining transaction to the Bitcoin network. A
+                        necessary step to use it in the BRO Mint.</p>
+
+                    <div class="broadcast-controls">
+                        <button id="broadcastTransaction" class="broadcast-btn" disabled>
+                            <span>Broadcast to Network</span>
+                        </button>
+                        <div class="temp-notice"
+                            style="margin-top: 15px; padding: 10px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; color: #92400e; font-size: 14px;">
+                            <strong>🧪 TEMP:</strong> Currently not broadcasting the actual transaction to avoid
+                            consuming it.
+                        </div>
+                    </div>
+
+                    <div id="broadcastDisplay" class="broadcast-display" style="display: none;">
+                        <div class="broadcast-info">
+                            <div class="broadcast-item">
+                                <span class="broadcast-label">Status:</span>
+                                <span id="broadcastStatus" class="status-value">Ready to broadcast...</span>
+                                <div id="broadcastSpinner" class="broadcast-spinner" style="display: none;"></div>
+                            </div>
+                            <div class="broadcast-item">
+                                <span class="broadcast-label">Transaction ID:</span>
+                                <span id="broadcastTxid" class="broadcast-value">-</span>
+                            </div>
+                            <div class="broadcast-item">
+                                <span class="broadcast-label">Explorer:</span>
+                                <a id="explorerLink" href="#" target="_blank" class="explorer-link"
+                                    style="display: none;">View on Mempool.space</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Step 5: Claim Tokens Section -->
                 <section class="claim-section">
-                    <h3>Step 4: Claim Your BRO Tokens</h3>
+                    <h3>Step 5: Claim Your BRO Tokens</h3>
                     <p class="claim-description">Your transaction has been created! Now you can claim your BRO tokens
                         and start using them in the Charms ecosystem.</p>
 
@@ -238,9 +297,9 @@
                     </div>
                 </section>
 
-                <!-- Step 5: Visit Wallet Section -->
+                <!-- Step 6: Visit Wallet Section -->
                 <section class="wallet-visit-section">
-                    <h3>Step 5: Visit Your Charms Wallet</h3>
+                    <h3>Step 6: Visit Your Charms Wallet</h3>
                     <p class="wallet-visit-description">Access your wallet to view your BRO tokens and manage your
                         funds.</p>
 

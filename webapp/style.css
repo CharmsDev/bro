@@ -386,14 +386,14 @@ header h2 {
 }
 
 .token-info {
-    max-width: 700px;
-    margin: 3rem auto;
-    padding: 2rem;
+    max-width: 800px;
+    margin: 3rem auto 5rem;
+    padding: 2.5rem;
     background: linear-gradient(to bottom right, #1e293b, #0f172a);
     border: 1px solid #334155;
-    border-radius: 12px;
+    border-radius: 16px;
     backdrop-filter: blur(20px);
-    text-align: left;
+    text-align: center;
     transition: all 0.3s ease;
 }
 
@@ -1649,9 +1649,206 @@ header h2 {
 .wallet-section.active,
 .mining-section.active,
 .transaction-section.active {
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 30px rgba(2, 106, 163, 0.2);
-    animation: pulse-border 2s infinite;
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+/* Broadcast Section Styles */
+.broadcast-section {
+    max-width: 800px;
+    margin: 3rem auto;
+    padding: 2.5rem;
+    background: linear-gradient(to bottom right, #1e293b, #0f172a);
+    border: 1px solid #334155;
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    text-align: center;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.broadcast-section:hover {
+    border-color: #8b5cf6;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+}
+
+.broadcast-section h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(to right, #8b5cf6, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.broadcast-description {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.broadcast-controls {
+    margin-bottom: 2rem;
+}
+
+.broadcast-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+    color: var(--text-primary);
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.broadcast-btn:disabled {
+    background: rgba(139, 92, 246, 0.3);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.broadcast-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.broadcast-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.broadcast-btn:not(:disabled):hover::before {
+    left: 100%;
+}
+
+.broadcast-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+}
+
+.broadcast-display {
+    background: rgba(139, 92, 246, 0.05);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.broadcast-info h4 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.broadcast-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: rgba(139, 92, 246, 0.05);
+    border-radius: 8px;
+}
+
+.broadcast-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 120px;
+}
+
+.broadcast-value {
+    font-family: 'Courier New', monospace;
+    color: var(--text-secondary);
+    word-break: break-all;
+    flex: 1;
+}
+
+.status-value {
+    font-weight: 500;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.status-value.broadcasting {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.status-value.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.status-value.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.broadcast-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(139, 92, 246, 0.3);
+    border-top: 2px solid #8b5cf6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 0.5rem;
+}
+
+.explorer-link {
+    color: #8b5cf6;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.explorer-link:hover {
+    color: #a78bfa;
+    text-decoration: underline;
+}
+
+.broadcast-section.completed {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.broadcast-section.completed::before {
+    content: '✓';
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 2rem;
+    height: 2rem;
+    background: #10b981;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.broadcast-section.active {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.05);
 }
 
 @keyframes pulse-border {
@@ -1962,4 +2159,152 @@ header h2 {
     border-color: var(--accent-blue);
     box-shadow: 0 0 30px rgba(2, 106, 163, 0.2);
     animation: pulse-border 2s infinite;
+}
+
+/* Disabled step states */
+.wallet-section.disabled,
+.mining-section.disabled,
+.transaction-section.disabled,
+.broadcast-section.disabled,
+.claim-section.disabled,
+.wallet-visit-section.disabled {
+    opacity: 0.5;
+    border-color: #475569;
+    background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.3), rgba(15, 23, 42, 0.3));
+    pointer-events: none;
+}
+
+.wallet-section.disabled:hover,
+.mining-section.disabled:hover,
+.transaction-section.disabled:hover,
+.broadcast-section.disabled:hover,
+.claim-section.disabled:hover,
+.wallet-visit-section.disabled:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: #475569;
+}
+
+/* Disabled button states */
+.wallet-btn.disabled,
+.mining-btn.disabled,
+.transaction-btn.disabled,
+.broadcast-btn.disabled,
+.claim-btn.disabled,
+.wallet-visit-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: #64748b !important;
+    box-shadow: none !important;
+}
+
+.wallet-btn.disabled:hover,
+.mining-btn.disabled:hover,
+.transaction-btn.disabled:hover,
+.broadcast-btn.disabled:hover,
+.claim-btn.disabled:hover,
+.wallet-visit-btn.disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background: #64748b !important;
+}
+
+/* Reward Display Styles */
+.reward-display {
+    background: linear-gradient(to right, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    border: 1px solid #10b981;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.reward-display h4 {
+    color: #10b981;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.reward-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.reward-item {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.reward-label {
+    font-weight: 600;
+    color: #10b981;
+    margin-bottom: 0.75rem;
+    display: block;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reward-value {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    font-family: 'Courier New', monospace;
+}
+
+.reward-amount {
+    font-size: 1.8rem;
+    color: #10b981;
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.reward-token {
+    color: #34d399;
+    font-weight: 600;
+    margin-left: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.reward-formula {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    font-family: 'Courier New', monospace;
+    text-align: center;
+}
+
+.reward-formula strong {
+    color: #10b981;
+}
+
+/* Mobile responsiveness for reward display */
+@media (max-width: 768px) {
+    .reward-info {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .reward-item {
+        padding: 1rem;
+    }
+
+    .reward-amount {
+        font-size: 1.5rem;
+    }
+
+    .reward-formula {
+        font-size: 0.8rem;
+        padding: 0.75rem;
+    }
 }

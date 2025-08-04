@@ -5,6 +5,7 @@ import { MiningManager } from '../managers/mining-manager.js';
 import { TransactionManager } from '../managers/transaction-manager.js';
 import { WalletVisitManager } from '../managers/wallet-visit-manager.js';
 import { UIHelpers } from '../managers/ui-helpers.js';
+import { broadcastComponent } from '../components/broadcast-component.js';
 
 export class AppController {
     constructor() {
@@ -51,14 +52,22 @@ export class AppController {
         );
 
         this.modules.uiHelpers = new UIHelpers();
+        this.modules.broadcastComponent = broadcastComponent;
 
-        // Setup event listeners before module initialization
+        // Setup event listeners BEFORE module initialization (required for wallet loading)
         this.setupStateEventListeners();
 
+        // Initialize all modules
         this.modules.walletManager.initialize();
         this.modules.miningManager.initialize();
         this.modules.transactionManager.initialize();
         this.modules.walletVisitManager.initialize();
+
+        // Initialize step system first
+        this.modules.stepController.initializeSteps(this.appState);
+
+        // Initialize broadcast component after step system to ensure proper button state
+        this.modules.broadcastComponent.initialize(this.appState);
 
         this.logInitializationStatus();
     }
@@ -86,21 +95,32 @@ export class AppController {
 
         this.appState.on('walletCreated', (wallet) => {
             this.modules.walletManager.showWalletInfo(wallet);
-            this.modules.stepController.enableMiningStep();
         });
 
         this.appState.on('miningCompleted', (result) => {
-            this.modules.stepController.enableTransactionStep();
             this.modules.transactionManager.startAutomaticMonitoring();
         });
 
         this.appState.on('utxoFound', (utxo) => {
             this.modules.transactionManager.showUtxoFound(utxo);
-            this.modules.stepController.enableTransactionCreation(this.appState);
         });
 
+        this.appState.on('transactionCreated', (transaction) => {
+            console.log('✅ Transaction created event received, enabling broadcast step');
+            this.modules.broadcastComponent.enableBroadcasting(transaction);
+        });
+
+        this.appState.on('transactionBroadcast', (result) => {
+            console.log('✅ Transaction broadcast completed');
+        });
+
+        // New unified step management
         this.appState.on('stepChanged', (data) => {
-            this.modules.stepController.updateStepVisualState(data.step, data.enabled);
+            this.modules.stepController.updateAllSteps(data.step, data.completedSteps);
+        });
+
+        this.appState.on('stepCompleted', (data) => {
+            this.modules.stepController.updateAllSteps(this.appState.currentStep, data.completedSteps);
         });
     }
 
@@ -120,7 +140,8 @@ export class AppController {
             miningManager: !!this.modules.miningManager,
             transactionManager: !!this.modules.transactionManager,
             walletVisitManager: !!this.modules.walletVisitManager,
-            uiHelpers: !!this.modules.uiHelpers
+            uiHelpers: !!this.modules.uiHelpers,
+            broadcastComponent: !!this.modules.broadcastComponent
         });
     }
 

@@ -14,7 +14,9 @@ import './services/wallet-service.js';
 import './services/bitcoin-api-service.js';
 import './services/transaction-builder-service.js';
 import './services/transaction-signer-service.js';
+import './services/broadcast-service.js';
 import './components/miner-component.js';
+import './components/broadcast-component.js';
 import { AppController } from './controllers/app-controller.js';
 
 // Initialize the application

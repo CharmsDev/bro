@@ -1,3 +1,5 @@
+import { calculateRewardInfo } from '../mining/reward-calculator.js';
+
 export class MiningManager {
     constructor(domElements, stepController, appState, miner) {
         this.dom = domElements;
@@ -48,6 +50,9 @@ export class MiningManager {
         this.dom.setText('finalNonce', result.nonce.toLocaleString());
         this.dom.setText('finalHash', result.hash);
         this.dom.show('successMessage');
+
+        // Calculate and display token reward for restored state
+        this.displayTokenReward(result.nonce, result.hash);
 
         this.appState.completeMining(result);
     }
@@ -172,11 +177,49 @@ export class MiningManager {
         this.dom.setText('finalHash', result.hash);
         this.dom.show('successMessage');
 
+        // Calculate and display token reward
+        this.displayTokenReward(result.nonce, result.hash);
+
         const startMining = this.dom.get('startMining');
         const stopMining = this.dom.get('stopMining');
         if (startMining) startMining.style.display = 'inline-block';
         if (stopMining) stopMining.style.display = 'none';
 
         this.appState.completeMining(result);
+    }
+
+    displayTokenReward(nonce, hash) {
+        console.log('💰 Calculating token reward for nonce:', nonce, 'hash:', hash);
+
+        try {
+            const rewardInfo = calculateRewardInfo(nonce, hash);
+            console.log('💰 Reward calculated:', rewardInfo.formattedAmount, '$BRO');
+            console.log('💰 Full reward info:', rewardInfo);
+
+            // Check if DOM elements exist
+            const leadingZerosElement = this.dom.get('leadingZerosCount');
+            const tokenRewardElement = this.dom.get('tokenReward');
+            const proofOfWorkElement = this.dom.get('proofOfWork');
+
+            console.log('💰 DOM elements check:', {
+                leadingZerosElement: !!leadingZerosElement,
+                tokenRewardElement: !!tokenRewardElement,
+                proofOfWorkElement: !!proofOfWorkElement
+            });
+
+            // Update reward display elements
+            this.dom.setText('leadingZerosCount', rewardInfo.leadingZeros.toString());
+            this.dom.setText('tokenReward', rewardInfo.formattedAmount);
+            this.dom.setText('proofOfWork', `${rewardInfo.leadingZeros} leading zeros`);
+
+            console.log('💰 Values set:', {
+                leadingZeros: rewardInfo.leadingZeros.toString(),
+                tokenReward: rewardInfo.formattedAmount,
+                proofOfWork: `${rewardInfo.leadingZeros} leading zeros`
+            });
+
+        } catch (error) {
+            console.error('💰 Error calculating token reward:', error);
+        }
     }
 }

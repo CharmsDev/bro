@@ -9,10 +9,61 @@ export class TransactionManager {
 
     initialize() {
         this.setupEventListeners();
+        this.restoreTransactionState();
     }
 
     setupEventListeners() {
         this.setupCreateTransactionButton();
+    }
+
+    restoreTransactionState() {
+        // Check if we have a saved transaction
+        if (this.appState && this.appState.transaction) {
+            console.log('🔄 Restoring transaction state from localStorage');
+
+            // Show the transaction display with saved data
+            this.showTransactionData(this.appState.transaction);
+
+            // Disable the create transaction button
+            this.disableCreateTransactionButton();
+
+            // Enable broadcasting if we're on step 4 or later
+            if (this.appState.currentStep >= this.appState.STEPS.BROADCAST) {
+                console.log('🔄 Enabling broadcast for restored transaction');
+                // Get broadcast component and enable it
+                const broadcastComponent = window.appController?.getModule('broadcastComponent');
+                if (broadcastComponent) {
+                    broadcastComponent.enableBroadcasting(this.appState.transaction);
+                }
+            }
+        }
+    }
+
+    showTransactionData(transactionData) {
+        // Display transaction information
+        this.dom.setText('txId', transactionData.txid);
+        this.dom.setText('txSize', `${transactionData.size} bytes`);
+        this.dom.setText('opReturnData', JSON.stringify(transactionData.opReturnData, null, 2));
+        this.dom.setText('rawTransaction', transactionData.txHex);
+
+        this.dom.show('transactionDisplay');
+
+        // Mark transaction section as completed
+        const transactionSection = document.querySelector('.transaction-section');
+        if (transactionSection) {
+            transactionSection.classList.add('completed');
+        }
+
+        console.log('✅ Transaction data restored to UI');
+    }
+
+    disableCreateTransactionButton() {
+        const createTransaction = this.dom.get('createTransaction');
+        if (createTransaction) {
+            createTransaction.disabled = true;
+            createTransaction.classList.add('disabled');
+            createTransaction.innerHTML = '<span>✅ Transaction Created</span>';
+        }
     }
 
     startAutomaticMonitoring() {
@@ -152,22 +203,27 @@ export class TransactionManager {
 
                     createTransaction.innerHTML = '<span>✓ Transaction Created</span>';
 
-                    this.stepController.enableClaimTokensStep();
-
-                    this.stepController.enableWalletVisitStep();
-                    console.log('WalletVisitManager available:', !!this.walletVisitManager);
-                    if (this.walletVisitManager) {
-                        this.walletVisitManager.enableWalletVisitStep();
-                    } else {
-                        console.error('WalletVisitManager not available - Step 5 will not be enabled');
+                    // Mark transaction section as completed
+                    const transactionSection = document.querySelector('.transaction-section');
+                    if (transactionSection) {
+                        transactionSection.classList.add('completed');
                     }
 
-                    console.log('Real transaction created successfully:', {
+                    // Complete transaction creation step
+                    const transactionData = {
                         txid: txid,
+                        txHex: rawTx,
                         size: size,
-                        opReturnData: opReturnDataObj,
-                        rawTx: rawTx
-                    });
+                        opReturnData: opReturnDataObj
+                    };
+
+                    this.appState.completeTransactionCreation(transactionData);
+                    console.log('Real transaction created successfully:', transactionData);
+
+                    // Disable create transaction button permanently and update text
+                    createTransaction.disabled = true;
+                    createTransaction.classList.add('disabled');
+                    createTransaction.innerHTML = '<span>✅ Transaction Created</span>';
 
                 } catch (error) {
                     console.error('Error creating transaction:', error);

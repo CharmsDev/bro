@@ -30,6 +30,12 @@ export class DOMElements {
             finalHash: document.getElementById('finalHash'),
             progressFill: document.getElementById('progressFill'),
 
+            // Reward elements
+            leadingZerosCount: document.getElementById('leadingZerosCount'),
+            tokenReward: document.getElementById('tokenReward'),
+            proofOfWork: document.getElementById('proofOfWork'),
+            rewardFormula: document.getElementById('rewardFormula'),
+
             // Transaction elements
             monitorAddress: document.getElementById('monitorAddress'),
             createTransaction: document.getElementById('createTransaction'),
