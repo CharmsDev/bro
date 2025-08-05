@@ -8,20 +8,22 @@ export class MiningManager {
         this.miner = miner;
     }
 
-    // Format hash with highlighted leading zeros using the reward calculator function
+    /**
+     * Format hash with highlighted leading zeros
+     * @param {string} hash - Hash to format
+     * @returns {string} HTML formatted hash with highlighted leading zeros
+     */
     formatHashWithLeadingZeros(hash) {
         if (!hash || hash === 'Calculating...' || hash === 'Waiting to start...' || hash === 'No best hash yet...' || hash === 'Searching for best hash...') {
             return hash;
         }
 
-        // Use the same function as reward calculator
         const leadingZeroBits = leadingZeros(hash);
 
         if (leadingZeroBits === 0) {
             return `<span class="hash-remainder">${hash}</span>`;
         }
 
-        // Calculate how many full hex characters are zeros
         const fullHexZeros = Math.floor(leadingZeroBits / 4);
         const remainingBits = leadingZeroBits % 4;
 
@@ -29,12 +31,10 @@ export class MiningManager {
         let remainderPart = '';
 
         if (fullHexZeros > 0) {
-            // Highlight full hex zeros
             highlightedPart = hash.substring(0, fullHexZeros);
         }
 
         if (remainingBits > 0 && fullHexZeros < hash.length) {
-            // Highlight the next character that has partial leading zeros
             highlightedPart += hash[fullHexZeros];
             remainderPart = hash.substring(fullHexZeros + 1);
         } else {
@@ -49,7 +49,12 @@ export class MiningManager {
     }
 
 
-    // Update hash display with enhanced formatting
+    /**
+     * Update hash display with formatting and animations
+     * @param {string} elementId - Element ID to update
+     * @param {string} hash - Hash to display
+     * @param {boolean} isNewBest - Whether this is a new best hash
+     */
     updateHashDisplay(elementId, hash, isNewBest = false) {
         const element = document.getElementById(elementId);
         if (!element) return;
@@ -58,13 +63,10 @@ export class MiningManager {
         element.innerHTML = formattedHash;
 
         if (isNewBest && hash && hash !== 'No best hash yet...' && hash !== 'Searching for best hash...') {
-            // Add celebration animation
             element.classList.remove('new-best-found');
-            // Force reflow to restart animation
             element.offsetHeight;
             element.classList.add('new-best-found');
 
-            // Remove animation class after animation completes
             setTimeout(() => {
                 element.classList.remove('new-best-found');
             }, 2000);
@@ -249,17 +251,13 @@ export class MiningManager {
             this.updateHashDisplay('bestHash', 'No best hash yet...');
         }
 
-        // Update real-time reward calculation based on best hash found
         if (progress.bestHash && progress.bestNonce) {
             this.displayTokenReward(progress.bestNonce, progress.bestHash);
         }
 
-        // Progress bar based on best leading zeros found (visual indicator)
         const progressPercent = Math.min((bestLeadingZeros / 20) * 100, 95);
         const progressFill = this.dom.get('progressFill');
         if (progressFill) progressFill.style.width = progressPercent + '%';
-
-        // Hash color indication for current hash
         const currentHash = this.dom.get('currentHash');
         if (currentHash) {
             if (currentLeadingZeros >= 15) {
@@ -284,10 +282,8 @@ export class MiningManager {
         this.dom.setText('bestNonce', result.bestNonce.toLocaleString());
         this.dom.setText('bestLeadingZeros', result.bestLeadingZeros);
 
-        // Calculate and display token reward based on best hash
         this.displayTokenReward(result.bestNonce, result.bestHash);
 
-        // Get the reward amount for the success message
         let finalRewardAmount = '-';
         try {
             const rewardInfo = calculateRewardInfo(result.bestNonce, result.bestHash);
@@ -311,17 +307,18 @@ export class MiningManager {
         this.appState.completeMining(result);
     }
 
+    /**
+     * Display token reward information
+     * @param {number} nonce - Mining nonce
+     * @param {string} hash - Hash result
+     */
     displayTokenReward(nonce, hash) {
         try {
             const rewardInfo = calculateRewardInfo(nonce, hash);
-
-
-            // Update reward display elements
             this.dom.setText('tokenReward', rewardInfo.formattedAmount);
             this.dom.setText('proofOfWork', `${rewardInfo.leadingZeros} leading zeros`);
-
         } catch (error) {
-            console.error('💰 Error calculating token reward:', error);
+            console.error('Error calculating token reward:', error);
         }
     }
 }
