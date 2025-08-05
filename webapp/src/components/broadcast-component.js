@@ -259,7 +259,7 @@ class BroadcastComponent {
      */
     enableNextStep() {
         // This functionality is now handled by the centralized step system
-        console.log('✅ Next steps enabled via centralized step system');
+
     }
 
     /**

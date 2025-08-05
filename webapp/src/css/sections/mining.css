@@ -44,6 +44,303 @@
     margin-bottom: 2rem;
 }
 
+/* Hash Display Styles */
+.hash-display {
+    margin-bottom: 2rem;
+}
+
+.hash-section {
+    margin-bottom: 1.5rem;
+}
+
+.best-hash-section {
+    background: linear-gradient(to right, rgba(209, 133, 10, 0.1), rgba(245, 158, 11, 0.05));
+    border: 1px solid rgba(209, 133, 10, 0.3);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+/* Enhanced Hash Value Styles */
+.hash-value {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    word-break: break-all;
+    padding: 0.75rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid #334155;
+    border-radius: var(--border-radius);
+    color: #e2e8f0;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.hash-value .leading-zeros {
+    color: var(--accent-orange);
+    font-weight: 700;
+    font-size: 1.1em;
+    text-shadow: 0 0 8px rgba(209, 133, 10, 0.5);
+    animation: glow-pulse 2s ease-in-out infinite alternate;
+}
+
+.hash-value .hash-remainder {
+    color: #94a3b8;
+}
+
+/* New Best Hash Animation */
+.hash-value.new-best-found {
+    animation: new-best-celebration 2s ease-in-out;
+    border: 2px solid var(--accent-orange);
+    box-shadow:
+        0 0 20px rgba(209, 133, 10, 0.6),
+        0 0 40px rgba(209, 133, 10, 0.3),
+        inset 0 0 20px rgba(209, 133, 10, 0.1);
+}
+
+.hash-value.new-best-found .leading-zeros {
+    animation: celebrate-zeros 2s ease-in-out;
+}
+
+/* Glow effect for leading zeros */
+@keyframes glow-pulse {
+    0% {
+        text-shadow: 0 0 8px rgba(209, 133, 10, 0.5);
+    }
+
+    100% {
+        text-shadow: 0 0 12px rgba(209, 133, 10, 0.8), 0 0 20px rgba(209, 133, 10, 0.3);
+    }
+}
+
+/* Celebration animation for new best hash */
+@keyframes new-best-celebration {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(209, 133, 10, 0.6);
+    }
+
+    15% {
+        transform: scale(1.08);
+        box-shadow: 0 0 40px rgba(209, 133, 10, 0.9), 0 0 80px rgba(209, 133, 10, 0.6);
+    }
+
+    30% {
+        transform: scale(1.12);
+        box-shadow: 0 0 60px rgba(209, 133, 10, 1), 0 0 120px rgba(209, 133, 10, 0.7);
+    }
+
+    45% {
+        transform: scale(1.06);
+        box-shadow: 0 0 50px rgba(209, 133, 10, 0.9), 0 0 100px rgba(209, 133, 10, 0.6);
+    }
+
+    60% {
+        transform: scale(1.1);
+        box-shadow: 0 0 55px rgba(209, 133, 10, 1), 0 0 110px rgba(209, 133, 10, 0.7);
+    }
+
+    75% {
+        transform: scale(1.04);
+        box-shadow: 0 0 45px rgba(209, 133, 10, 0.8), 0 0 90px rgba(209, 133, 10, 0.5);
+    }
+
+    90% {
+        transform: scale(1.02);
+        box-shadow: 0 0 35px rgba(209, 133, 10, 0.7), 0 0 70px rgba(209, 133, 10, 0.4);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(209, 133, 10, 0.6);
+    }
+}
+
+/* Special animation for the leading zeros when new best is found */
+@keyframes celebrate-zeros {
+    0% {
+        font-size: 1.1em;
+        text-shadow: 0 0 8px rgba(209, 133, 10, 0.5);
+    }
+
+    25% {
+        font-size: 1.3em;
+        text-shadow: 0 0 15px rgba(209, 133, 10, 0.9), 0 0 25px rgba(209, 133, 10, 0.5);
+    }
+
+    50% {
+        font-size: 1.4em;
+        text-shadow: 0 0 20px rgba(209, 133, 10, 1), 0 0 35px rgba(209, 133, 10, 0.7);
+    }
+
+    75% {
+        font-size: 1.3em;
+        text-shadow: 0 0 15px rgba(209, 133, 10, 0.9), 0 0 25px rgba(209, 133, 10, 0.5);
+    }
+
+    100% {
+        font-size: 1.1em;
+        text-shadow: 0 0 8px rgba(209, 133, 10, 0.5);
+    }
+}
+
+/* Sparkle and particle effects for new best hash */
+.hash-value.new-best-found::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.8) 2px, transparent 2px),
+        radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.9) 1px, transparent 1px),
+        radial-gradient(circle at 40% 70%, rgba(255, 215, 0, 0.7) 1.5px, transparent 1.5px),
+        radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+        radial-gradient(circle at 10% 90%, rgba(255, 215, 0, 0.6) 2px, transparent 2px),
+        radial-gradient(circle at 70% 10%, rgba(255, 255, 255, 0.7) 1px, transparent 1px);
+    background-size: 50px 50px, 30px 30px, 40px 40px, 25px 25px, 35px 35px, 45px 45px;
+    animation: sparkle-dance 2s ease-in-out;
+    pointer-events: none;
+    border-radius: var(--border-radius);
+    z-index: 1;
+}
+
+.hash-value.new-best-found::after {
+    content: '✨';
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    font-size: 1.5rem;
+    animation: star-burst 2s ease-in-out;
+    z-index: 2;
+}
+
+/* Sparkle animation */
+@keyframes sparkle-dance {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) rotate(0deg);
+    }
+
+    25% {
+        opacity: 1;
+        transform: scale(1.1) rotate(90deg);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.2) rotate(180deg);
+    }
+
+    75% {
+        opacity: 1;
+        transform: scale(1.1) rotate(270deg);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0.8) rotate(360deg);
+    }
+}
+
+/* Star burst animation */
+@keyframes star-burst {
+    0% {
+        opacity: 0;
+        transform: scale(0) rotate(0deg);
+    }
+
+    25% {
+        opacity: 1;
+        transform: scale(1.5) rotate(180deg);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.8) rotate(360deg);
+    }
+
+    75% {
+        opacity: 0.6;
+        transform: scale(1.2) rotate(540deg);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0.5) rotate(720deg);
+    }
+}
+
+.best-hash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.best-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.best-stat {
+    color: var(--text-secondary);
+}
+
+.best-value {
+    color: var(--accent-orange);
+    font-weight: 600;
+}
+
+.best-value.highlight {
+    background: linear-gradient(to right, var(--accent-orange), #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.1em;
+    font-weight: 700;
+}
+
+.hash-value.best {
+    border: 1px solid rgba(209, 133, 10, 0.5);
+    background: rgba(209, 133, 10, 0.05);
+}
+
+.hash-value.new-best {
+    animation: flash-gold 1s ease-in-out;
+    border: 2px solid var(--accent-orange);
+    box-shadow: 0 0 20px rgba(209, 133, 10, 0.5);
+}
+
+.hash-value.excellent {
+    color: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.hash-value.good {
+    color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.hash-value.decent {
+    color: #f59e0b;
+    border-color: #f59e0b;
+}
+
+@keyframes flash-gold {
+
+    0%,
+    100% {
+        background: rgba(209, 133, 10, 0.05);
+    }
+
+    50% {
+        background: rgba(209, 133, 10, 0.2);
+    }
+}
+
 /* Mining Progress */
 .mining-progress {
     margin-bottom: 2rem;
@@ -93,9 +390,12 @@
 
 /* Pulse Animation for Mining Status */
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
     }
+
     50% {
         opacity: 0.5;
     }
@@ -107,12 +407,12 @@
         margin: 2rem auto;
         padding: 2rem;
     }
-    
+
     .mining-stats {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-    
+
     .hash-value {
         font-size: 0.8rem;
     }

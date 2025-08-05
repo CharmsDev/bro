@@ -35,10 +35,15 @@ export class DOMElements {
             miningDisplay: document.getElementById('miningDisplay'),
             nonce: document.getElementById('nonce'),
             currentHash: document.getElementById('currentHash'),
+            currentLeadingZeros: document.getElementById('currentLeadingZeros'),
+            bestHash: document.getElementById('bestHash'),
+            bestNonce: document.getElementById('bestNonce'),
+            bestLeadingZeros: document.getElementById('bestLeadingZeros'),
             status: document.getElementById('status'),
             successMessage: document.getElementById('successMessage'),
             finalNonce: document.getElementById('finalNonce'),
             finalHash: document.getElementById('finalHash'),
+            finalLeadingZeros: document.getElementById('finalLeadingZeros'),
             progressFill: document.getElementById('progressFill'),
 
             // Reward elements

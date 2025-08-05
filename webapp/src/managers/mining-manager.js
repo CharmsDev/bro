@@ -1,4 +1,4 @@
-import { calculateRewardInfo } from '../mining/reward-calculator.js';
+import { calculateRewardInfo, leadingZeros } from '../mining/reward-calculator.js';
 
 export class MiningManager {
     constructor(domElements, stepController, appState, miner) {
@@ -6,6 +6,69 @@ export class MiningManager {
         this.stepController = stepController;
         this.appState = appState;
         this.miner = miner;
+    }
+
+    // Format hash with highlighted leading zeros using the reward calculator function
+    formatHashWithLeadingZeros(hash) {
+        if (!hash || hash === 'Calculating...' || hash === 'Waiting to start...' || hash === 'No best hash yet...' || hash === 'Searching for best hash...') {
+            return hash;
+        }
+
+        // Use the same function as reward calculator
+        const leadingZeroBits = leadingZeros(hash);
+
+        if (leadingZeroBits === 0) {
+            return `<span class="hash-remainder">${hash}</span>`;
+        }
+
+        // Calculate how many full hex characters are zeros
+        const fullHexZeros = Math.floor(leadingZeroBits / 4);
+        const remainingBits = leadingZeroBits % 4;
+
+        let highlightedPart = '';
+        let remainderPart = '';
+
+        if (fullHexZeros > 0) {
+            // Highlight full hex zeros
+            highlightedPart = hash.substring(0, fullHexZeros);
+        }
+
+        if (remainingBits > 0 && fullHexZeros < hash.length) {
+            // Highlight the next character that has partial leading zeros
+            highlightedPart += hash[fullHexZeros];
+            remainderPart = hash.substring(fullHexZeros + 1);
+        } else {
+            remainderPart = hash.substring(fullHexZeros);
+        }
+
+        if (highlightedPart) {
+            return `<span class="leading-zeros">${highlightedPart}</span><span class="hash-remainder">${remainderPart}</span>`;
+        } else {
+            return `<span class="hash-remainder">${hash}</span>`;
+        }
+    }
+
+
+    // Update hash display with enhanced formatting
+    updateHashDisplay(elementId, hash, isNewBest = false) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+
+        const formattedHash = this.formatHashWithLeadingZeros(hash);
+        element.innerHTML = formattedHash;
+
+        if (isNewBest && hash && hash !== 'No best hash yet...' && hash !== 'Searching for best hash...') {
+            // Add celebration animation
+            element.classList.remove('new-best-found');
+            // Force reflow to restart animation
+            element.offsetHeight;
+            element.classList.add('new-best-found');
+
+            // Remove animation class after animation completes
+            setTimeout(() => {
+                element.classList.remove('new-best-found');
+            }, 2000);
+        }
     }
 
     initialize() {
@@ -22,14 +85,12 @@ export class MiningManager {
 
         const miningResult = this.miner.loadMiningResult();
         if (miningResult) {
-            console.log('Found completed mining result, restoring state');
             this.restoreCompletedMining(miningResult);
             return;
         }
 
         const miningProgress = this.miner.loadMiningProgress();
         if (miningProgress) {
-            console.log('Found mining progress, offering to resume');
             this.offerResumeOption(miningProgress);
         }
     }
@@ -37,18 +98,18 @@ export class MiningManager {
     restoreCompletedMining(result) {
         this.dom.show('miningDisplay');
 
-        this.dom.setText('status', 'Success!');
+        this.dom.setText('status', 'Stopped - Best Result Found!');
         const status = this.dom.get('status');
         if (status) status.className = 'stat-value success';
 
         this.dom.setText('nonce', result.nonce.toLocaleString());
-        this.dom.setText('currentHash', result.hash);
-
-        const progressFill = this.dom.get('progressFill');
-        if (progressFill) progressFill.style.width = '100%';
+        this.updateHashDisplay('currentHash', result.hash);
+        this.updateHashDisplay('bestHash', result.bestHash || result.hash);
+        this.dom.setText('bestNonce', (result.bestNonce || result.nonce).toLocaleString());
+        this.dom.setText('bestLeadingZeros', result.bestLeadingZeros || 0);
 
         this.dom.setText('finalNonce', result.nonce.toLocaleString());
-        this.dom.setText('finalHash', result.hash);
+        this.updateHashDisplay('finalHash', result.hash);
         this.dom.show('successMessage');
 
         // Calculate and display token reward for restored state
@@ -73,6 +134,9 @@ export class MiningManager {
 
         this.dom.setText('nonce', progress.nonce.toLocaleString());
         this.dom.setText('currentHash', progress.hash);
+        this.dom.setText('bestHash', progress.bestHash || '');
+        this.dom.setText('bestNonce', (progress.bestNonce || 0).toLocaleString());
+        this.dom.setText('bestLeadingZeros', progress.bestLeadingZeros || 0);
 
         const startMining = this.dom.get('startMining');
         const stopMining = this.dom.get('stopMining');
@@ -103,7 +167,7 @@ export class MiningManager {
         const startMining = this.dom.get('startMining');
         if (startMining) {
             startMining.addEventListener('click', async () => {
-                console.log('🚀 Starting Proof of Work with UTXO:', this.appState.utxo);
+
 
                 this.dom.show('miningDisplay');
                 startMining.style.display = 'none';
@@ -116,6 +180,10 @@ export class MiningManager {
                 if (status) status.className = 'stat-value mining';
                 this.dom.setText('nonce', '0');
                 this.dom.setText('currentHash', 'Calculating...');
+                this.dom.setText('currentLeadingZeros', '0');
+                this.dom.setText('bestHash', 'Searching for best hash...');
+                this.dom.setText('bestNonce', '0');
+                this.dom.setText('bestLeadingZeros', '0');
 
                 const utxo = this.appState.utxo;
                 await this.miner.startPoW(
@@ -148,22 +216,58 @@ export class MiningManager {
     }
 
     updateMiningProgress(progress) {
-        this.dom.setText('nonce', progress.nonce.toLocaleString());
-        this.dom.setText('currentHash', progress.hash);
+        // Use the values directly from the miner (they are already calculated correctly)
+        const currentLeadingZeros = progress.leadingZeroBits;
+        const bestLeadingZeros = progress.bestLeadingZeros;
 
-        // Progress calculation based on leading zeros
-        const leadingZeros = progress.hash.match(/^0*/)[0].length;
-        const progressPercent = Math.min((leadingZeros / this.miner.difficulty) * 100, 95);
+        // Update current mining stats
+        this.dom.setText('nonce', progress.nonce.toLocaleString());
+        this.dom.setText('currentLeadingZeros', currentLeadingZeros);
+
+        // Update current hash with enhanced formatting
+        this.updateHashDisplay('currentHash', progress.hash);
+
+        // Update best hash found so far
+        this.dom.setText('bestNonce', progress.bestHash ? progress.bestNonce.toLocaleString() : '-');
+        this.dom.setText('bestLeadingZeros', bestLeadingZeros);
+
+        // Handle new best hash with enhanced effects
+        if (progress.isNewBest && progress.bestHash) {
+            // Update best hash with celebration animation
+            this.updateHashDisplay('bestHash', progress.bestHash, true);
+
+            // Update best hash element class for additional styling
+            const bestHashElement = this.dom.get('bestHash');
+            if (bestHashElement) {
+                bestHashElement.className = 'hash-value best';
+            }
+        } else if (progress.bestHash) {
+            // Update best hash without animation
+            this.updateHashDisplay('bestHash', progress.bestHash);
+        } else {
+            // No best hash yet
+            this.updateHashDisplay('bestHash', 'No best hash yet...');
+        }
+
+        // Update real-time reward calculation based on best hash found
+        if (progress.bestHash && progress.bestNonce) {
+            this.displayTokenReward(progress.bestNonce, progress.bestHash);
+        }
+
+        // Progress bar based on best leading zeros found (visual indicator)
+        const progressPercent = Math.min((bestLeadingZeros / 20) * 100, 95);
         const progressFill = this.dom.get('progressFill');
         if (progressFill) progressFill.style.width = progressPercent + '%';
 
-        // Hash color indication based on proximity to target
+        // Hash color indication for current hash
         const currentHash = this.dom.get('currentHash');
         if (currentHash) {
-            if (leadingZeros >= this.miner.difficulty) {
-                currentHash.className = 'hash-value success';
-            } else if (leadingZeros >= this.miner.difficulty - 1) {
-                currentHash.className = 'hash-value close';
+            if (currentLeadingZeros >= 15) {
+                currentHash.className = 'hash-value excellent';
+            } else if (currentLeadingZeros >= 10) {
+                currentHash.className = 'hash-value good';
+            } else if (currentLeadingZeros >= 5) {
+                currentHash.className = 'hash-value decent';
             } else {
                 currentHash.className = 'hash-value';
             }
@@ -171,18 +275,33 @@ export class MiningManager {
     }
 
     completeMining(result) {
-        this.dom.setText('status', 'Success!');
+        this.dom.setText('status', 'Stopped - Best Result Found!');
         const status = this.dom.get('status');
         if (status) status.className = 'stat-value success';
-        const progressFill = this.dom.get('progressFill');
-        if (progressFill) progressFill.style.width = '100%';
 
-        this.dom.setText('finalNonce', result.nonce.toLocaleString());
-        this.dom.setText('finalHash', result.hash);
+        // Update the best hash section with final results
+        this.updateHashDisplay('bestHash', result.bestHash);
+        this.dom.setText('bestNonce', result.bestNonce.toLocaleString());
+        this.dom.setText('bestLeadingZeros', result.bestLeadingZeros);
+
+        // Calculate and display token reward based on best hash
+        this.displayTokenReward(result.bestNonce, result.bestHash);
+
+        // Get the reward amount for the success message
+        let finalRewardAmount = '-';
+        try {
+            const rewardInfo = calculateRewardInfo(result.bestNonce, result.bestHash);
+            finalRewardAmount = rewardInfo.formattedAmount;
+        } catch (error) {
+            console.error('Error calculating final reward:', error);
+        }
+
+        // Show the best result found in success message with reward
+        this.dom.setText('finalNonce', result.bestNonce.toLocaleString());
+        this.updateHashDisplay('finalHash', result.bestHash);
+        this.dom.setText('finalLeadingZeros', result.bestLeadingZeros);
+        this.dom.setText('finalTokenReward', finalRewardAmount);
         this.dom.show('successMessage');
-
-        // Calculate and display token reward
-        this.displayTokenReward(result.nonce, result.hash);
 
         const startMining = this.dom.get('startMining');
         const stopMining = this.dom.get('stopMining');
@@ -195,10 +314,9 @@ export class MiningManager {
     displayTokenReward(nonce, hash) {
         try {
             const rewardInfo = calculateRewardInfo(nonce, hash);
-            console.log('💰 Token reward:', rewardInfo.formattedAmount, '$BRO', `(${rewardInfo.leadingZeros} zeros)`);
+
 
             // Update reward display elements
-            this.dom.setText('leadingZerosCount', rewardInfo.leadingZeros.toString());
             this.dom.setText('tokenReward', rewardInfo.formattedAmount);
             this.dom.setText('proofOfWork', `${rewardInfo.leadingZeros} leading zeros`);
 

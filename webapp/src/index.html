@@ -132,28 +132,27 @@
 
                 <!-- Step 2: Mining Section -->
                 <section class="mining-section">
-                    <h3>Step 2: Bitcoin Mining Demo</h3>
-                    <p class="mining-description">Experience proof-of-work mining in action. Watch as we search for
-                        valid hashes!</p>
+                    <h3>Step 2: Infinite Proof of Work Mining</h3>
+                    <p class="mining-description">Find the hash with maximum leading zero bits! Mining runs infinitely until you stop and claim your best result.</p>
 
                     <div class="mining-controls">
                         <button id="startMining" class="mining-btn">
                             <span>Start Mining</span>
                         </button>
                         <button id="stopMining" class="mining-btn stop-btn" style="display: none;">
-                            <span>Stop Mining</span>
+                            <span>Stop Mining & Claim Tokens</span>
                         </button>
                     </div>
 
                     <div id="miningDisplay" class="mining-display" style="display: none;">
                         <div class="mining-stats">
                             <div class="stat-item">
-                                <span class="stat-label">Difficulty:</span>
-                                <span id="difficulty" class="stat-value">4</span>
+                                <span class="stat-label">Current Nonce:</span>
+                                <span id="nonce" class="stat-value">0</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-label">Nonce:</span>
-                                <span id="nonce" class="stat-value">0</span>
+                                <span class="stat-label">Current Zero Bits:</span>
+                                <span id="currentLeadingZeros" class="stat-value">0</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-label">Status:</span>
@@ -162,8 +161,40 @@
                         </div>
 
                         <div class="hash-display">
-                            <div class="hash-label">Current Hash:</div>
-                            <div id="currentHash" class="hash-value">Waiting to start...</div>
+                            <div class="hash-section">
+                                <div class="hash-label">Current Hash:</div>
+                                <div id="currentHash" class="hash-value">Waiting to start...</div>
+                            </div>
+                            
+                            <div class="best-hash-section">
+                                <div class="best-hash-header">
+                                    <div class="hash-label">🏆 Best Hash Found:</div>
+                                    <div class="best-stats">
+                                        <span class="best-stat">Nonce: <span id="bestNonce" class="best-value">-</span></span>
+                                        <span class="best-stat">Zero Bits: <span id="bestLeadingZeros" class="best-value highlight">0</span></span>
+                                    </div>
+                                </div>
+                                <div id="bestHash" class="hash-value best">No best hash yet...</div>
+                            </div>
+                        </div>
+
+
+                        <div id="rewardDisplay" class="reward-display">
+                            <h4>💰 Token Reward Calculation</h4>
+                            <div class="reward-info">
+                                <div class="reward-item">
+                                    <span class="reward-label">Proof of Work:</span>
+                                    <span id="proofOfWork" class="reward-value">-</span>
+                                </div>
+                                <div class="reward-item">
+                                    <span class="reward-label">Your Reward:</span>
+                                    <span id="tokenReward" class="reward-value reward-amount">-</span>
+                                    <span class="reward-token">$BRO</span>
+                                </div>
+                            </div>
+                            <div class="reward-formula" style="margin-top: 10px; font-size: 12px; color: #666;">
+                                <strong>Formula:</strong> <span id="rewardFormula">S >> (30 - leadingZeros)</span>
+                            </div>
                         </div>
 
                         <div class="mining-progress">
@@ -179,32 +210,13 @@
                             </div>
                         </div>
 
-                        <div id="successMessage" class="success-message" style="display: none;">
-                            <h4>🎉 Valid Hash Found!</h4>
-                            <p>Mining completed successfully with nonce: <span id="finalNonce"></span></p>
-                            <p>Final hash: <span id="finalHash"></span></p>
-                        </div>
 
-                        <div id="rewardDisplay" class="reward-display">
-                            <h4>💰 Token Reward Calculation</h4>
-                            <div class="reward-info">
-                                <div class="reward-item">
-                                    <span class="reward-label">Leading Zeros:</span>
-                                    <span id="leadingZerosCount" class="reward-value">-</span>
-                                </div>
-                                <div class="reward-item">
-                                    <span class="reward-label">Your Reward:</span>
-                                    <span id="tokenReward" class="reward-value reward-amount">-</span>
-                                    <span class="reward-token">$BRO</span>
-                                </div>
-                                <div class="reward-item">
-                                    <span class="reward-label">Proof of Work:</span>
-                                    <span id="proofOfWork" class="reward-value">-</span>
-                                </div>
-                            </div>
-                            <div class="reward-formula" style="margin-top: 10px; font-size: 12px; color: #666;">
-                                <strong>Formula:</strong> <span id="rewardFormula">S >> (30 - leadingZeros)</span>
-                            </div>
+                        <div id="successMessage" class="success-message" style="display: none;">
+                            <h4>🎉 Mining Stopped - Best Result Claimed!</h4>
+                            <p>Best hash found with nonce: <span id="finalNonce"></span></p>
+                            <p>Leading zero bits: <span id="finalLeadingZeros" class="highlight"></span></p>
+                            <p>Best hash: <span id="finalHash"></span></p>
+                            <p>Your reward: <span id="finalTokenReward" class="reward-amount">-</span> $BRO</p>
                         </div>
                     </div>
                 </section>

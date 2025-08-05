@@ -3,7 +3,9 @@ class BitcoinMiner {
         this.isRunning = false;
         this.currentNonce = 0;
         this.currentHash = '';
-        this.difficulty = 4;
+        this.bestHash = '';
+        this.bestNonce = 0;
+        this.bestLeadingZeros = 0;
         this.challenge = '';
         this.saveInterval = 10000;
     }
@@ -28,16 +30,40 @@ class BitcoinMiner {
         return new TextEncoder().encode(str);
     }
 
+    // Count leading zeros in bits (not hex characters)
+    countLeadingZeroBits(hash) {
+        // Convert hex string to binary and count leading zeros
+        let leadingZeros = 0;
+        for (let i = 0; i < hash.length; i++) {
+            const hexChar = hash[i];
+            const decimal = parseInt(hexChar, 16);
+            
+            // Each hex character represents exactly 4 bits
+            // Convert to 4-bit binary representation
+            for (let bit = 3; bit >= 0; bit--) {
+                if ((decimal >> bit) & 1) {
+                    // Found a 1 bit, stop counting
+                    return leadingZeros;
+                } else {
+                    // Found a 0 bit, increment counter
+                    leadingZeros++;
+                }
+            }
+        }
+        return leadingZeros;
+    }
+
     saveMiningProgress() {
         const progressData = {
             nonce: this.currentNonce,
             hash: this.currentHash,
+            bestHash: this.bestHash,
+            bestNonce: this.bestNonce,
+            bestLeadingZeros: this.bestLeadingZeros,
             challenge: this.challenge,
-            difficulty: this.difficulty,
             timestamp: Date.now()
         };
         localStorage.setItem('miningProgress', JSON.stringify(progressData));
-
     }
 
     loadMiningProgress() {
@@ -47,8 +73,10 @@ class BitcoinMiner {
                 const progressData = JSON.parse(saved);
                 this.currentNonce = progressData.nonce || 0;
                 this.currentHash = progressData.hash || '';
+                this.bestHash = progressData.bestHash || '';
+                this.bestNonce = progressData.bestNonce || 0;
+                this.bestLeadingZeros = progressData.bestLeadingZeros || 0;
                 this.challenge = progressData.challenge || '';
-                this.difficulty = progressData.difficulty || 4;
 
                 return progressData;
             } catch (error) {
@@ -68,14 +96,15 @@ class BitcoinMiner {
         const resultData = {
             nonce: result.nonce,
             hash: result.hash,
+            bestHash: result.bestHash,
+            bestNonce: result.bestNonce,
+            bestLeadingZeros: result.bestLeadingZeros,
             challenge: this.challenge,
-            difficulty: this.difficulty,
             timestamp: Date.now(),
             completed: true
         };
         localStorage.setItem('miningResult', JSON.stringify(resultData));
         this.clearMiningProgress();
-
     }
 
     loadMiningResult() {
@@ -100,25 +129,31 @@ class BitcoinMiner {
 
     }
 
-    async minePoW(challenge, difficulty, onProgress, resumeFromSaved = false) {
+    async minePoW(challenge, onProgress, resumeFromSaved = false) {
         this.isRunning = true;
         this.challenge = challenge;
-        this.difficulty = difficulty;
 
         if (resumeFromSaved) {
             const savedProgress = this.loadMiningProgress();
             if (savedProgress && savedProgress.challenge === challenge) {
                 this.currentNonce = savedProgress.nonce;
                 this.currentHash = savedProgress.hash;
-
+                this.bestHash = savedProgress.bestHash || '';
+                this.bestNonce = savedProgress.bestNonce || 0;
+                this.bestLeadingZeros = savedProgress.bestLeadingZeros || 0;
             } else {
                 this.currentNonce = 0;
+                this.bestHash = '';
+                this.bestNonce = 0;
+                this.bestLeadingZeros = 0;
             }
         } else {
             this.currentNonce = 0;
+            this.bestHash = '';
+            this.bestNonce = 0;
+            this.bestLeadingZeros = 0;
         }
 
-        const target = '0'.repeat(difficulty);
         const challengeBuffer = this.stringToBuffer(challenge);
 
         while (this.isRunning) {
@@ -135,19 +170,28 @@ class BitcoinMiner {
 
             this.currentHash = hash;
 
+            // Count leading zero bits for this hash
+            const leadingZeroBits = this.countLeadingZeroBits(hash);
+
+            // Check if this is the best hash so far
+            let isNewBest = false;
+            if (leadingZeroBits > this.bestLeadingZeros || this.bestHash === '') {
+                this.bestHash = hash;
+                this.bestNonce = this.currentNonce;
+                this.bestLeadingZeros = leadingZeroBits;
+                isNewBest = true;
+            }
+
             if (onProgress) {
                 onProgress({
                     nonce: this.currentNonce,
                     hash: hash,
-                    found: hash.startsWith(target)
+                    leadingZeroBits: leadingZeroBits,
+                    bestHash: this.bestHash,
+                    bestNonce: this.bestNonce,
+                    bestLeadingZeros: this.bestLeadingZeros,
+                    isNewBest: isNewBest
                 });
-            }
-
-            if (hash.startsWith(target)) {
-                this.isRunning = false;
-                const result = { nonce: this.currentNonce, hash: hash };
-                this.saveMiningResult(result);
-                return result;
             }
 
             this.currentNonce++;
@@ -163,8 +207,20 @@ class BitcoinMiner {
             }
         }
 
+        // When stopped, save progress and return the best result found
         if (!this.isRunning) {
             this.saveMiningProgress();
+            if (this.bestHash) {
+                const result = {
+                    nonce: this.bestNonce,
+                    hash: this.bestHash,
+                    bestHash: this.bestHash,
+                    bestNonce: this.bestNonce,
+                    bestLeadingZeros: this.bestLeadingZeros
+                };
+                this.saveMiningResult(result);
+                return result;
+            }
         }
 
         return null;
@@ -187,20 +243,12 @@ class BitcoinMiner {
             throw new Error('Invalid UTXO data provided. Required fields: txid, vout, amount');
         }
 
-        console.log('🔨 Starting Proof of Work:', {
-            utxo: `${utxo.txid}:${utxo.vout}`,
-            amount: `${utxo.amount} sats`,
-            difficulty: this.difficulty
-        });
-
         // Generate challenge from blockchain data
         const challenge = this.generateChallenge(utxo.txid, utxo.vout);
-        if (resumeFromSaved) {
-            console.log('Attempting to resume from saved progress...');
-        }
+
 
         try {
-            const result = await this.minePoW(challenge, this.difficulty, onProgress, resumeFromSaved);
+            const result = await this.minePoW(challenge, onProgress, resumeFromSaved);
             if (result && onComplete) {
                 onComplete(result);
             }

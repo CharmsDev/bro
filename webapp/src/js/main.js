@@ -5,6 +5,7 @@ import { AppState } from '../store/app-state.js';
 import { WalletService } from '../services/wallet-service.js';
 import { BitcoinAPIService } from '../services/bitcoin-api-service.js';
 
+
 // Initialize libraries first
 initializeLibraries();
 

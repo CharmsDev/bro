@@ -99,20 +99,20 @@ export class AppController {
         });
 
         this.appState.on('miningCompleted', (result) => {
-            console.log('✅ Mining completed, transaction creation should now be enabled');
+
         });
 
         this.appState.on('utxoFound', (utxo) => {
-            console.log('✅ UTXO found, enabling next steps');
+
         });
 
         this.appState.on('transactionCreated', (transaction) => {
-            console.log('✅ Transaction created event received, enabling broadcast step');
+
             this.modules.broadcastComponent.enableBroadcasting(transaction);
         });
 
         this.appState.on('transactionBroadcast', (result) => {
-            console.log('✅ Transaction broadcast completed');
+
         });
 
         // New unified step management
@@ -126,24 +126,6 @@ export class AppController {
     }
 
     logInitializationStatus() {
-        console.log('=== APP INITIALIZED ===');
-        console.log('App state:', this.appState ? this.appState.getState() : 'Not available');
-        console.log('Modules loaded:', {
-            wallet: !!this.wallet,
-            txBuilder: !!this.txBuilder,
-            miner: !!this.miner,
-            appState: !!this.appState
-        });
-        console.log('Managers initialized:', {
-            domElements: !!this.modules.domElements,
-            stepController: !!this.modules.stepController,
-            walletManager: !!this.modules.walletManager,
-            miningManager: !!this.modules.miningManager,
-            transactionManager: !!this.modules.transactionManager,
-            walletVisitManager: !!this.modules.walletVisitManager,
-            uiHelpers: !!this.modules.uiHelpers,
-            broadcastComponent: !!this.modules.broadcastComponent
-        });
     }
 
     getModule(moduleName) {

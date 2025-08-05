@@ -93,15 +93,6 @@ export class AppState {
         if (broadcastData) {
             this.broadcastResult = JSON.parse(broadcastData);
         }
-
-        console.log('📦 Loaded persisted data:', {
-            currentStep: this.currentStep,
-            completedSteps: this.completedSteps,
-            hasWallet: !!this.wallet,
-            hasMiningResult: !!this.miningResult,
-            hasTransaction: !!this.transaction,
-            hasBroadcastResult: !!this.broadcastResult
-        });
     }
 
     completeStep(step) {
@@ -116,7 +107,6 @@ export class AppState {
         }
 
         this.emit('stepCompleted', { step, completedSteps: this.completedSteps });
-        console.log(`✅ Step ${step} completed`);
     }
 
     advanceToNextStep() {
@@ -128,7 +118,6 @@ export class AppState {
                 enabled: true,
                 completedSteps: this.completedSteps
             });
-            console.log(`➡️ Advanced to step ${this.currentStep}`);
         }
     }
 
@@ -151,7 +140,7 @@ export class AppState {
 
         this.completeStep(this.STEPS.WALLET_CREATION);
         this.emit('walletCreated', wallet);
-        console.log('✅ Wallet created and saved');
+
     }
 
     loadMiningResult() {
@@ -164,7 +153,7 @@ export class AppState {
                     this.completeStep(this.STEPS.MINING);
                 }
                 this.emit('miningCompleted', result);
-                console.log('✅ Mining result loaded from localStorage');
+
                 return result;
             }
         }
@@ -175,21 +164,21 @@ export class AppState {
         this.miningResult = result;
         this.completeStep(this.STEPS.MINING);
         this.emit('miningCompleted', result);
-        console.log('✅ Mining completed');
+
     }
 
     completeFunding(utxo) {
         this.utxo = utxo;
         this.isMonitoring = false;
         this.emit('utxoFound', utxo);
-        console.log('✅ Wallet funded, mining enabled');
+
     }
 
     completeMonitoring(utxo) {
         this.utxo = utxo;
         this.isMonitoring = false;
         this.emit('utxoFound', utxo);
-        console.log('✅ UTXO found, transaction creation enabled');
+
     }
 
     completeTransactionCreation(transaction) {
@@ -199,7 +188,7 @@ export class AppState {
 
         this.completeStep(this.STEPS.TRANSACTION_CREATION);
         this.emit('transactionCreated', transaction);
-        console.log('✅ Transaction created and saved');
+
     }
 
     completeBroadcast(result) {
@@ -209,7 +198,7 @@ export class AppState {
 
         this.completeStep(this.STEPS.BROADCAST);
         this.emit('transactionBroadcast', result);
-        console.log('✅ Transaction broadcast completed');
+
     }
 
     canStartMining() {
@@ -260,7 +249,7 @@ export class AppState {
             enabled: true,
             completedSteps: this.completedSteps
         });
-        console.log('🔄 App state reset');
+
     }
 
     getState() {

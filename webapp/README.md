@@ -1,13 +1,13 @@
 # Bitcoin Mining Webapp - BRO Token
 
-A modern Bitcoin mining and wallet management web application built with vanilla JavaScript and modular architecture.
+The bro token minting site.
 
 ## Project Structure
 
 ```
 webapp/
-├── package.json              # Dependencies and scripts
-├── package-lock.json         # Locked dependency versions
+├── package.json             # Dependencies and scripts
+├── package-lock.json        # Locked dependency versions
 ├── vite.config.js           # Vite build configuration
 ├── .env                     # Environment variables
 ├── README.md                # Project documentation
@@ -88,12 +88,12 @@ npm run preview
 
 ## Features
 
-- 🪙 **Bitcoin Wallet Creation**: Generate secure HD wallets
-- ⛏️ **Proof of Work Mining**: Interactive mining demonstration
-- 💰 **Transaction Creation**: Build and sign Bitcoin transactions
-- 📡 **Network Broadcasting**: Broadcast transactions to Bitcoin network
-- 🎯 **Token Claiming**: Claim BRO tokens based on mining results
-- 📱 **Responsive Design**: Works on desktop and mobile devices
+- 🪙 **Bitcoin Wallet Management**: Secure HD wallet generation and management
+- ⛏️ **Proof of Work Mining**: Interactive blockchain mining system
+- 💰 **Transaction Processing**: Bitcoin transaction creation and signing
+- 📡 **Network Integration**: Blockchain network broadcasting capabilities
+- 🎯 **Token System**: BRO token claiming and management
+- 📱 **Responsive Design**: Cross-platform desktop and mobile support
 
 ## Environment Variables
 
