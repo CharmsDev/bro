@@ -7,7 +7,7 @@
     <title>BRO Token - The First Beaming Token on Bitcoin</title>
     <meta name="description"
         content="Claim your $BRO token, the first beaming token on Bitcoin. Join the Charms ecosystem and be part of the future of decentralized applications.">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/main.css">
     <link rel="icon" href="https://proars.com/images/charms/brotmp.png" type="image/png">
 </head>
 
@@ -40,48 +40,91 @@
                     mainnet universe with pure magic. That's wild, bro.</p>
 
                 <!-- Step 1: Wallet Creation Section -->
-                <section class="wallet-section">
+                <section class="wallet-section active">
                     <h3>Step 1: Create Your Charms Wallet</h3>
-                    <p class="wallet-description">Create a secure wallet to receive your testnet4 funds. You'll need to
-                        send funds to this address to start the minting process.</p>
+                    <p class="wallet-description">Create a new Bitcoin wallet or load an existing one to start minting
+                        BRO
+                        tokens.</p>
 
-                    <div id="walletCreation" class="wallet-creation">
+                    <div class="wallet-controls">
                         <button id="createWalletBtn" class="wallet-btn">
-                            <span>Create My Wallet</span>
+                            <span>Create New Wallet</span>
                         </button>
-                        <button id="loadDemoWalletBtn" class="wallet-btn demo-btn">
-                            <span>🧪 Load Demo Wallet</span>
+                        <button id="loadDemoWalletBtn" class="wallet-btn secondary">
+                            <span>Load Demo Wallet</span>
                         </button>
                     </div>
 
-                    <div id="walletDisplay" class="wallet-display" style="display: none;">
-                        <div class="wallet-info">
-                            <div class="address-section">
-                                <h4>Your Testnet4 Address</h4>
-                                <div class="address-container">
-                                    <div id="walletAddress" class="address-value">Loading...</div>
-                                    <button id="copyAddressBtn" class="copy-btn" title="Copy address">
-                                        <span>📋</span>
-                                    </button>
+                    <!-- Box 1: Seed Phrase -->
+                    <div id="seedPhraseBox" class="wallet-box seed-phrase-box" style="display: none;">
+                        <h4>Your Seed Phrase</h4>
+                        <div class="seedphrase-controls">
+                            <button id="showSeedBtn" class="seed-btn">Show Seed Phrase</button>
+                            <button id="copySeedBtn" class="seed-btn" style="display: none;">Copy Seed
+                                Phrase</button>
+                            <button id="resetWalletBtn" class="seed-btn" style="background: #dc2626;">🗑️ Reset
+                                Wallet (Dev)</button>
+                        </div>
+                        <div id="seedPhraseDisplay" class="seedphrase-value" style="display: none;">
+                            <div id="seedPhraseText">Loading...</div>
+                        </div>
+                        <p class="seed-warning">⚠️ Keep your seed phrase safe and private. Never share it with
+                            anyone!</p>
+                    </div>
+
+                    <!-- Box 2: Address & UTXO Monitoring (with 20px margin from Box 1) -->
+                    <div id="addressMonitoringBox" class="wallet-box address-monitoring-box separated-box"
+                        style="display: none;">
+                        <h4>Your Testnet4 Address</h4>
+                        <div class="address-container">
+                            <div id="walletAddress" class="address-value">Loading...</div>
+                            <button id="copyAddressBtn" class="copy-btn" title="Copy address">
+                                <span>📋</span>
+                            </button>
+                        </div>
+                        <p class="address-note">Send funds to this address to begin minting BRO tokens (10,000
+                            satoshi minimum)</p>
+
+                        <!-- UTXO Monitoring Section -->
+                        <div id="fundingMonitoring" class="funding-monitoring" style="display: none;">
+                            <div class="monitoring-status">
+                                <div class="status-item">
+                                    <span class="status-label">Status:</span>
+                                    <span id="fundingStatus" class="status-value">Waiting for funds...</span>
+                                    <div id="fundingSpinner" class="monitoring-spinner" style="display: none;">
+                                    </div>
                                 </div>
-                                <p class="address-note">Send funds to this address to begin minting BRO tokens (10,000
-                                    satoshi minimum)</p>
                             </div>
 
-                            <div class="seedphrase-section">
-                                <h4>Your Seed Phrase</h4>
-                                <div class="seedphrase-controls">
-                                    <button id="showSeedBtn" class="seed-btn">Show Seed Phrase</button>
-                                    <button id="copySeedBtn" class="seed-btn" style="display: none;">Copy Seed
-                                        Phrase</button>
-                                    <button id="resetWalletBtn" class="seed-btn" style="background: #dc2626;">🗑️ Reset
-                                        Wallet (Dev)</button>
+                            <div id="fundingAnimation" class="waiting-animation"
+                                style="display: none; justify-content: center; margin: 1rem 0;">
+                                <span>Monitoring blockchain</span>
+                                <div class="waiting-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
                                 </div>
-                                <div id="seedPhraseDisplay" class="seedphrase-value" style="display: none;">
-                                    <div id="seedPhraseText">Loading...</div>
+                            </div>
+                        </div>
+
+                        <div id="utxoFoundDisplay" class="utxo-found-display funds-received-subbox"
+                            style="display: none;">
+                            <div class="funds-received-header">
+                                <h4>✅ Funds Received!</h4>
+                            </div>
+                            <div class="utxo-details">
+                                <div class="utxo-item">
+                                    <span class="utxo-label">Transaction ID:</span>
+                                    <span id="foundUtxoTxid" class="utxo-value">-</span>
                                 </div>
-                                <p class="seed-warning">⚠️ Keep your seed phrase safe and private. Never share it with
-                                    anyone!</p>
+                                <div class="utxo-item">
+                                    <span class="utxo-label">Output Index:</span>
+                                    <span id="foundUtxoVout" class="utxo-value">-</span>
+                                </div>
+                                <div class="utxo-item">
+                                    <span class="utxo-label">Amount:</span>
+                                    <span id="foundUtxoAmount" class="utxo-value">-</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -176,52 +219,6 @@
                         <button id="createTransaction" class="transaction-btn" disabled>
                             <span>Create Transaction</span>
                         </button>
-                    </div>
-
-                    <div id="monitoringDisplay" class="monitoring-display" style="display: none;">
-                        <div class="monitoring-status">
-                            <div class="status-item">
-                                <span class="status-label">Address:</span>
-                                <span id="monitoredAddress" class="status-value">-</span>
-                            </div>
-                            <div class="status-item">
-                                <span class="status-label">Status:</span>
-                                <span id="monitoringStatus" class="status-value">Waiting for wallet...</span>
-                                <div id="monitoringSpinner" class="monitoring-spinner" style="display: none;"></div>
-                            </div>
-                            <div class="status-item">
-                                <span class="status-label">UTXOs Found:</span>
-                                <span id="utxoCount" class="status-value">0</span>
-                            </div>
-                        </div>
-
-                        <div id="waitingIndicator" class="waiting-animation"
-                            style="display: none; justify-content: center; margin: 1rem 0;">
-                            <span>Waiting for funds</span>
-                            <div class="waiting-dots">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>
-
-                        <div id="utxoDisplay" class="utxo-display" style="display: none;">
-                            <h4>Available UTXO</h4>
-                            <div class="utxo-info">
-                                <div class="utxo-item">
-                                    <span class="utxo-label">Transaction ID:</span>
-                                    <span id="utxoTxid" class="utxo-value">-</span>
-                                </div>
-                                <div class="utxo-item">
-                                    <span class="utxo-label">Output Index:</span>
-                                    <span id="utxoVout" class="utxo-value">-</span>
-                                </div>
-                                <div class="utxo-item">
-                                    <span class="utxo-label">Amount:</span>
-                                    <span id="utxoAmount" class="utxo-value">-</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <div id="transactionDisplay" class="transaction-display" style="display: none;">
@@ -411,7 +408,7 @@
         </div>
     </footer>
 
-    <script type="module" src="src/main.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 
 </html>

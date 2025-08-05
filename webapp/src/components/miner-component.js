@@ -37,7 +37,7 @@ class BitcoinMiner {
             timestamp: Date.now()
         };
         localStorage.setItem('miningProgress', JSON.stringify(progressData));
-        console.log(`Mining progress saved at nonce: ${this.currentNonce}`);
+
     }
 
     loadMiningProgress() {
@@ -49,7 +49,7 @@ class BitcoinMiner {
                 this.currentHash = progressData.hash || '';
                 this.challenge = progressData.challenge || '';
                 this.difficulty = progressData.difficulty || 4;
-                console.log(`Mining progress loaded from nonce: ${this.currentNonce}`);
+
                 return progressData;
             } catch (error) {
                 console.error('Error loading mining progress:', error);
@@ -61,7 +61,7 @@ class BitcoinMiner {
 
     clearMiningProgress() {
         localStorage.removeItem('miningProgress');
-        console.log('Mining progress cleared');
+
     }
 
     saveMiningResult(result) {
@@ -75,7 +75,7 @@ class BitcoinMiner {
         };
         localStorage.setItem('miningResult', JSON.stringify(resultData));
         this.clearMiningProgress();
-        console.log('Mining result saved:', result);
+
     }
 
     loadMiningResult() {
@@ -84,7 +84,7 @@ class BitcoinMiner {
             try {
                 const resultData = JSON.parse(saved);
                 if (resultData.completed) {
-                    console.log('Mining result loaded:', resultData);
+
                     return resultData;
                 }
             } catch (error) {
@@ -97,7 +97,7 @@ class BitcoinMiner {
 
     clearMiningResult() {
         localStorage.removeItem('miningResult');
-        console.log('Mining result cleared');
+
     }
 
     async minePoW(challenge, difficulty, onProgress, resumeFromSaved = false) {
@@ -110,7 +110,7 @@ class BitcoinMiner {
             if (savedProgress && savedProgress.challenge === challenge) {
                 this.currentNonce = savedProgress.nonce;
                 this.currentHash = savedProgress.hash;
-                console.log(`Resuming mining from nonce: ${this.currentNonce}`);
+
             } else {
                 this.currentNonce = 0;
             }
@@ -174,22 +174,27 @@ class BitcoinMiner {
         this.isRunning = false;
     }
 
-    generateMockUTXO() {
-        return {
-            txid: 'a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890',
-            vout: 0,
-            scriptPubKey: '76a914' + '0'.repeat(40) + '88ac',
-            amount: 100000
-        };
-    }
 
-    async startDemo(onProgress, onComplete, resumeFromSaved = false) {
-        const mockUtxo = this.generateMockUTXO();
-        const challenge = this.generateChallenge(mockUtxo.txid, mockUtxo.vout);
 
-        console.log('Starting mining demo...');
-        console.log('Challenge:', challenge);
-        console.log('Difficulty:', this.difficulty);
+    async startPoW(onProgress, onComplete, resumeFromSaved = false, utxo = null) {
+        // Validate that we have a UTXO
+        if (!utxo) {
+            throw new Error('Cannot start Proof of Work: No UTXO provided. Please ensure monitoring has found a valid UTXO first.');
+        }
+
+        // Validate UTXO structure
+        if (!utxo.txid || typeof utxo.vout !== 'number' || !utxo.amount) {
+            throw new Error('Invalid UTXO data provided. Required fields: txid, vout, amount');
+        }
+
+        console.log('🔨 Starting Proof of Work:', {
+            utxo: `${utxo.txid}:${utxo.vout}`,
+            amount: `${utxo.amount} sats`,
+            difficulty: this.difficulty
+        });
+
+        // Generate challenge from blockchain data
+        const challenge = this.generateChallenge(utxo.txid, utxo.vout);
         if (resumeFromSaved) {
             console.log('Attempting to resume from saved progress...');
         }

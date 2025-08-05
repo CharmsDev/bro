@@ -81,10 +81,16 @@ export class MiningManager {
 
         this.dom.hide('successMessage');
 
-        await this.miner.startDemo(
+        const utxo = this.appState.utxo;
+        if (!utxo) {
+            throw new Error('Cannot resume Proof of Work: No UTXO found in appState. Please ensure monitoring has completed.');
+        }
+
+        await this.miner.startPoW(
             (progress) => this.updateMiningProgress(progress),
             (result) => this.completeMining(result),
-            true
+            true,
+            utxo
         );
     }
 
@@ -97,10 +103,7 @@ export class MiningManager {
         const startMining = this.dom.get('startMining');
         if (startMining) {
             startMining.addEventListener('click', async () => {
-                if (!this.miner || !this.appState.canStartMining()) {
-                    alert('Mining not available or wallet not created');
-                    return;
-                }
+                console.log('🚀 Starting Proof of Work with UTXO:', this.appState.utxo);
 
                 this.dom.show('miningDisplay');
                 startMining.style.display = 'none';
@@ -113,12 +116,13 @@ export class MiningManager {
                 if (status) status.className = 'stat-value mining';
                 this.dom.setText('nonce', '0');
                 this.dom.setText('currentHash', 'Calculating...');
-                const progressFill = this.dom.get('progressFill');
-                if (progressFill) progressFill.style.width = '0%';
 
-                await this.miner.startDemo(
+                const utxo = this.appState.utxo;
+                await this.miner.startPoW(
                     (progress) => this.updateMiningProgress(progress),
-                    (result) => this.completeMining(result)
+                    (result) => this.completeMining(result),
+                    false,
+                    utxo
                 );
             });
         }
@@ -189,34 +193,14 @@ export class MiningManager {
     }
 
     displayTokenReward(nonce, hash) {
-        console.log('💰 Calculating token reward for nonce:', nonce, 'hash:', hash);
-
         try {
             const rewardInfo = calculateRewardInfo(nonce, hash);
-            console.log('💰 Reward calculated:', rewardInfo.formattedAmount, '$BRO');
-            console.log('💰 Full reward info:', rewardInfo);
-
-            // Check if DOM elements exist
-            const leadingZerosElement = this.dom.get('leadingZerosCount');
-            const tokenRewardElement = this.dom.get('tokenReward');
-            const proofOfWorkElement = this.dom.get('proofOfWork');
-
-            console.log('💰 DOM elements check:', {
-                leadingZerosElement: !!leadingZerosElement,
-                tokenRewardElement: !!tokenRewardElement,
-                proofOfWorkElement: !!proofOfWorkElement
-            });
+            console.log('💰 Token reward:', rewardInfo.formattedAmount, '$BRO', `(${rewardInfo.leadingZeros} zeros)`);
 
             // Update reward display elements
             this.dom.setText('leadingZerosCount', rewardInfo.leadingZeros.toString());
             this.dom.setText('tokenReward', rewardInfo.formattedAmount);
             this.dom.setText('proofOfWork', `${rewardInfo.leadingZeros} leading zeros`);
-
-            console.log('💰 Values set:', {
-                leadingZeros: rewardInfo.leadingZeros.toString(),
-                tokenReward: rewardInfo.formattedAmount,
-                proofOfWork: `${rewardInfo.leadingZeros} leading zeros`
-            });
 
         } catch (error) {
             console.error('💰 Error calculating token reward:', error);

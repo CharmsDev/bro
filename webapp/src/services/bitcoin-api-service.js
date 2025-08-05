@@ -24,43 +24,17 @@ export class BitcoinAPIService {
 
     async getAddressUtxos(address) {
         try {
-            console.log('=== UTXO API REQUEST DEBUG ===');
-            console.log('Address being queried:', address);
-            console.log('Address length:', address.length);
-            console.log('Address format check:', {
-                startsWithTb1: address.startsWith('tb1'),
-                hasValidLength: address.length >= 42 && address.length <= 62,
-                containsInvalidChars: /[^a-z0-9]/.test(address.slice(3))
-            });
-
-            const url = `${this.baseUrl}/address/${address}/utxo`;
-            console.log('Full API URL:', url);
-
+            const url = `${this.baseUrl}/address/${address}/utxo?t=${Date.now()}`;
             const response = await fetch(url);
-            console.log('Response status:', response.status);
-            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
             if (!response.ok) {
-                const errorText = await response.text();
-                console.log('Error response body:', errorText);
-                throw new Error(`API request failed: ${response.status} - ${errorText}`);
+                throw new Error(`API request failed: ${response.status}`);
             }
 
             const data = await response.json();
-            console.log('API response data:', data);
-
-            const utxos = Array.isArray(data) ? data : [];
-            console.log('Extracted UTXOs:', utxos);
-            console.log('=== END UTXO API DEBUG ===');
-
-            return utxos;
+            return Array.isArray(data) ? data : [];
         } catch (error) {
             console.error('Error fetching UTXOs:', error);
-            console.error('Error details:', {
-                name: error.name,
-                message: error.message,
-                stack: error.stack
-            });
             throw error;
         }
     }
@@ -85,7 +59,7 @@ export class BitcoinAPIService {
                     const intervalSec = Math.round(currentInterval / 1000);
                     onStatusUpdate({
                         status: 'checking',
-                        message: `Monitoring blockchain... (check #${pollingCount}, ${intervalSec}s interval)`,
+                        message: `check #${pollingCount}, ${intervalSec}s interval`,
                         pollingCount,
                         currentInterval: intervalSec
                     });

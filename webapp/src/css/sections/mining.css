@@ -1,0 +1,119 @@
+/* ===================================
+   MINING SECTION
+   ===================================
+   Bitcoin mining interface and display styles
+   ================================== */
+
+/* Mining Section */
+.mining-section {
+    max-width: 800px;
+    margin: 3rem auto;
+    padding: 2.5rem;
+    background: linear-gradient(to bottom right, #1e293b, #0f172a);
+    border: 1px solid #334155;
+    border-radius: var(--border-radius-lg);
+    backdrop-filter: blur(20px);
+    text-align: center;
+    transition: all var(--transition-normal);
+}
+
+.mining-section:hover {
+    border-color: var(--accent-orange);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(209, 133, 10, 0.1);
+}
+
+.mining-section h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(to right, var(--accent-orange), #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.mining-description {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.mining-controls {
+    margin-bottom: 2rem;
+}
+
+/* Mining Progress */
+.mining-progress {
+    margin-bottom: 2rem;
+}
+
+/* Section States */
+.mining-section.completed {
+    border-color: var(--success-color);
+    background: linear-gradient(to bottom right, var(--success-bg), rgba(5, 150, 105, 0.05));
+}
+
+.mining-section.completed::before {
+    content: '✓';
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--success-color);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.mining-section.active {
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 30px rgba(209, 133, 10, 0.2);
+    animation: pulse-border 2s infinite;
+}
+
+.mining-section.disabled {
+    opacity: 0.5;
+    border-color: #475569;
+    background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.3), rgba(15, 23, 42, 0.3));
+    pointer-events: none;
+}
+
+.mining-section.disabled:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: #475569;
+}
+
+/* Pulse Animation for Mining Status */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .mining-section {
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    
+    .mining-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .hash-value {
+        font-size: 0.8rem;
+    }
+}

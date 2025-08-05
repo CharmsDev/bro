@@ -131,6 +131,16 @@ export class StepController {
         if (state.hasWallet) {
             this.dom.hide('walletCreation');
             this.dom.show('walletDisplay');
+
+            // Show UTXO found display if UTXO exists
+            if (state.hasUtxo) {
+                this.dom.show('utxoFoundDisplay');
+                this.dom.hide('fundingMonitoring');
+            } else {
+                // Show funding monitoring if wallet exists but no UTXO yet
+                this.dom.show('fundingMonitoring');
+                this.dom.hide('utxoFoundDisplay');
+            }
         }
 
         // Show mining display if mining completed
@@ -150,11 +160,6 @@ export class StepController {
         // Show broadcast display if broadcast completed
         if (state.hasBroadcastResult) {
             this.dom.show('broadcastDisplay');
-        }
-
-        // Show monitoring if needed
-        if (state.hasMiningResult && !state.hasTransaction) {
-            this.dom.show('monitoringDisplay');
         }
     }
 
@@ -214,17 +219,29 @@ export class StepController {
             section.classList.remove('completed', 'active', 'disabled');
         });
 
-        // Disable all buttons
-        Object.values(this.stepElements).forEach(stepConfig => {
+        // Set wallet section as active (step 1)
+        const walletSection = document.querySelector('.wallet-section');
+        if (walletSection) {
+            walletSection.classList.add('active');
+        }
+
+        // Disable all buttons except step 1 buttons
+        Object.entries(this.stepElements).forEach(([step, stepConfig]) => {
             stepConfig.buttons.forEach(buttonId => {
                 const button = this.dom.get(buttonId);
                 if (button) {
-                    this.disableButton(button);
+                    if (parseInt(step) === this.STEPS.WALLET_CREATION) {
+                        // Enable step 1 buttons (create wallet, load demo)
+                        this.enableButton(button);
+                    } else {
+                        // Disable all other buttons
+                        this.disableButton(button);
+                    }
                 }
             });
         });
 
-        console.log('🔄 All steps reset');
+        console.log('🔄 All steps reset - Step 1 buttons enabled');
     }
 
     initializeMiningStep() {

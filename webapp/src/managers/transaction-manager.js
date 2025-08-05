@@ -66,66 +66,6 @@ export class TransactionManager {
         }
     }
 
-    startAutomaticMonitoring() {
-        if (!this.appState.canStartMonitoring()) {
-            console.error('Cannot start monitoring: missing wallet or mining result');
-            return;
-        }
-
-        const currentWallet = this.appState.wallet;
-
-        this.dom.show('monitoringDisplay');
-        this.dom.setText('monitoredAddress', currentWallet.address);
-        this.dom.setText('monitoringStatus', 'Starting automatic monitoring...');
-        this.dom.setText('utxoCount', '0');
-
-        const monitoringSpinner = this.dom.get('monitoringSpinner');
-        const waitingIndicator = this.dom.get('waitingIndicator');
-        if (monitoringSpinner) monitoringSpinner.style.display = 'inline-block';
-        if (waitingIndicator) waitingIndicator.style.display = 'flex';
-
-        console.log('🚀 Starting automatic monitoring after mining completion');
-
-        const stopFunction = this.txBuilder.monitorAddress(
-            currentWallet.address,
-            (utxo) => {
-                this.appState.completeMonitoring(utxo);
-            },
-            (status) => {
-                this.dom.setText('monitoringStatus', status.message);
-                console.log('Monitoring status:', status);
-            },
-            (error) => {
-                console.error('Monitoring error:', error);
-
-                if (monitoringSpinner) monitoringSpinner.style.display = 'none';
-                if (waitingIndicator) waitingIndicator.style.display = 'none';
-
-                this.dom.setText('monitoringStatus', `❌ ${error.message}`);
-                alert(`Monitoring failed: ${error.message}\n\nPlease ensure you have sent funds to the address and try again.`);
-            }
-        );
-
-        this.appState.startMonitoring(stopFunction);
-    }
-
-    showUtxoFound(utxo) {
-        const monitoringSpinner = this.dom.get('monitoringSpinner');
-        const waitingIndicator = this.dom.get('waitingIndicator');
-        if (monitoringSpinner) monitoringSpinner.style.display = 'none';
-        if (waitingIndicator) waitingIndicator.style.display = 'none';
-
-        this.dom.setText('monitoringStatus', '✅ UTXO Found!');
-        this.dom.setText('utxoCount', '1');
-
-        this.dom.setText('utxoTxid', utxo.txid);
-        this.dom.setText('utxoVout', utxo.vout.toString());
-        this.dom.setText('utxoAmount', `${utxo.amount.toLocaleString()} sats`);
-        this.dom.show('utxoDisplay');
-
-        console.log('Real UTXO found:', utxo);
-    }
-
     setupCreateTransactionButton() {
         const createTransaction = this.dom.get('createTransaction');
         if (createTransaction) {

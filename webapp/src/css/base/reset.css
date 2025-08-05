@@ -1,0 +1,73 @@
+/* ===================================
+   CSS RESET & BASE STYLES
+   ===================================
+   Modern CSS reset and base element styles
+   ================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--primary-font);
+    background: var(--background-start);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Remove default list styles */
+ul, ol {
+    list-style: none;
+}
+
+/* Remove default link styles */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* Remove default button styles */
+button {
+    border: none;
+    background: none;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+/* Remove default input styles */
+input, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* Image defaults */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Focus styles */
+*:focus {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* Selection styles */
+::selection {
+    background: var(--accent-blue);
+    color: var(--text-primary);
+}
+
+::-moz-selection {
+    background: var(--accent-blue);
+    color: var(--text-primary);
+}

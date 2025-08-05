@@ -27,7 +27,8 @@ export class AppController {
             this.modules.domElements,
             this.modules.stepController,
             this.appState,
-            this.wallet
+            this.wallet,
+            this.txBuilder
         );
 
         this.modules.miningManager = new MiningManager(
@@ -98,11 +99,11 @@ export class AppController {
         });
 
         this.appState.on('miningCompleted', (result) => {
-            this.modules.transactionManager.startAutomaticMonitoring();
+            console.log('✅ Mining completed, transaction creation should now be enabled');
         });
 
         this.appState.on('utxoFound', (utxo) => {
-            this.modules.transactionManager.showUtxoFound(utxo);
+            console.log('✅ UTXO found, enabling next steps');
         });
 
         this.appState.on('transactionCreated', (transaction) => {

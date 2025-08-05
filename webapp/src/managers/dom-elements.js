@@ -8,8 +8,8 @@ export class DOMElements {
             // Wallet elements
             createWalletBtn: document.getElementById('createWalletBtn'),
             loadDemoWalletBtn: document.getElementById('loadDemoWalletBtn'),
-            walletCreation: document.getElementById('walletCreation'),
-            walletDisplay: document.getElementById('walletDisplay'),
+            walletControls: document.querySelector('.wallet-controls'),
+            seedPhraseBox: document.getElementById('seedPhraseBox'),
             walletAddress: document.getElementById('walletAddress'),
             copyAddressBtn: document.getElementById('copyAddressBtn'),
             showSeedBtn: document.getElementById('showSeedBtn'),
@@ -17,6 +17,17 @@ export class DOMElements {
             seedPhraseDisplay: document.getElementById('seedPhraseDisplay'),
             seedPhraseText: document.getElementById('seedPhraseText'),
             resetWalletBtn: document.getElementById('resetWalletBtn'),
+            addressMonitoringBox: document.getElementById('addressMonitoringBox'),
+
+            // Funding monitoring elements
+            fundingMonitoring: document.getElementById('fundingMonitoring'),
+            fundingStatus: document.getElementById('fundingStatus'),
+            fundingSpinner: document.getElementById('fundingSpinner'),
+            fundingAnimation: document.getElementById('fundingAnimation'),
+            utxoFoundDisplay: document.getElementById('utxoFoundDisplay'),
+            foundUtxoTxid: document.getElementById('foundUtxoTxid'),
+            foundUtxoVout: document.getElementById('foundUtxoVout'),
+            foundUtxoAmount: document.getElementById('foundUtxoAmount'),
 
             // Mining elements
             startMining: document.getElementById('startMining'),

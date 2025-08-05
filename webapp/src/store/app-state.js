@@ -178,6 +178,13 @@ export class AppState {
         console.log('✅ Mining completed');
     }
 
+    completeFunding(utxo) {
+        this.utxo = utxo;
+        this.isMonitoring = false;
+        this.emit('utxoFound', utxo);
+        console.log('✅ Wallet funded, mining enabled');
+    }
+
     completeMonitoring(utxo) {
         this.utxo = utxo;
         this.isMonitoring = false;
@@ -223,10 +230,10 @@ export class AppState {
     }
 
     stopMonitoring() {
-        if (this.monitoringStopFunction) {
+        if (this.monitoringStopFunction && typeof this.monitoringStopFunction === 'function') {
             this.monitoringStopFunction();
-            this.monitoringStopFunction = null;
         }
+        this.monitoringStopFunction = null;
         this.isMonitoring = false;
     }
 
