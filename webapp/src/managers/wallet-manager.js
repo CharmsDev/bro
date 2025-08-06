@@ -1,9 +1,12 @@
 export class WalletManager {
-    constructor(domElements, stepController, appState, wallet) {
+    constructor(domElements, stepController, appState, wallet, txBuilder = null, miningManager = null, transactionManager = null) {
         this.dom = domElements;
         this.stepController = stepController;
         this.appState = appState;
         this.wallet = wallet;
+        this.txBuilder = txBuilder;
+        this.miningManager = miningManager;
+        this.transactionManager = transactionManager;
     }
 
     initialize() {
@@ -31,19 +34,24 @@ export class WalletManager {
                     this.appState.completeWalletCreation(existingWallet);
                     console.log('Loaded existing wallet:', existingWallet);
 
+                    // Show wallet info and start monitoring if no UTXO yet
+                    this.showWalletInfo(existingWallet);
+
                     this.appState.loadMiningResult();
                 } else {
                     console.log('Found invalid wallet address format, clearing:', address, typeof address);
                     this.wallet.clearWallet();
-                    this.dom.show('walletCreation');
-                    this.dom.hide('walletDisplay');
+                    this.dom.show('walletControls');
+                    this.dom.hide('seedPhraseBox');
+                    this.dom.hide('addressMonitoringBox');
                 }
             }
         } catch (error) {
             console.error('Error checking existing wallet, clearing localStorage:', error);
             localStorage.clear();
-            this.dom.show('walletCreation');
-            this.dom.hide('walletDisplay');
+            this.dom.show('walletControls');
+            this.dom.hide('seedPhraseBox');
+            this.dom.hide('addressMonitoringBox');
         }
     }
 
@@ -98,6 +106,16 @@ export class WalletManager {
                 }
 
                 try {
+                    // First reset the entire app state to clear any previous data
+                    if (this.appState) {
+                        this.appState.reset();
+                    }
+                    
+                    // Reset transaction manager if available
+                    if (this.transactionManager) {
+                        this.transactionManager.reset();
+                    }
+                    
                     this.wallet.clearWallet();
 
                     // BIP39 compliant demo seed phrase
@@ -188,22 +206,148 @@ export class WalletManager {
         const resetWalletBtn = this.dom.get('resetWalletBtn');
         if (resetWalletBtn) {
             resetWalletBtn.addEventListener('click', () => {
-                if (confirm('⚠️ This will permanently delete your wallet and mining data from localStorage. Are you sure?')) {
+                if (confirm('⚠️ This will permanently delete your current wallet and all data. Are you sure?')) {
                     localStorage.clear();
 
                     this.appState.reset();
                     this.stepController.resetAllSteps();
+                    
+                    // Reset mining manager if available
+                    if (this.miningManager) {
+                        this.miningManager.reset();
+                    }
+                    
+                    // Reset transaction manager if available
+                    if (this.transactionManager) {
+                        this.transactionManager.reset();
+                    }
+
+                    // Reset UI to initial state
+                    this.resetToInitialState();
 
                     console.log('✅ All data cleared - page reset to initial state');
-                    alert('✅ All data cleared! You can now test the full flow from the beginning.');
                 }
             });
         }
     }
 
+    resetToInitialState() {
+        // Show wallet creation buttons
+        this.dom.show('walletControls');
+
+        // Hide wallet boxes
+        this.dom.hide('seedPhraseBox');
+        this.dom.hide('addressMonitoringBox');
+
+        // Hide funding monitoring
+        this.dom.hide('fundingMonitoring');
+        this.dom.hide('utxoFoundDisplay');
+
+        // Reset seed phrase display
+        this.dom.hide('seedPhraseDisplay');
+        const showSeedBtn = this.dom.get('showSeedBtn');
+        const copySeedBtn = this.dom.get('copySeedBtn');
+        if (showSeedBtn) showSeedBtn.style.display = 'inline-block';
+        if (copySeedBtn) copySeedBtn.style.display = 'none';
+
+        // Clear any displayed data
+        this.dom.setText('walletAddress', 'Loading...');
+        this.dom.setText('seedPhraseText', 'Loading...');
+        this.dom.setText('foundUtxoTxid', '-');
+        this.dom.setText('foundUtxoVout', '-');
+        this.dom.setText('foundUtxoAmount', '-');
+        this.dom.setText('fundingStatus', 'Waiting for funds...');
+
+        // Show address note again
+        const addressNote = document.querySelector('.address-note');
+        if (addressNote) addressNote.style.display = 'block';
+    }
+
     showWalletInfo(walletData) {
         this.dom.setText('walletAddress', walletData.address);
-        this.dom.hide('walletCreation');
-        this.dom.show('walletDisplay');
+        this.dom.hide('walletControls');
+        this.dom.show('seedPhraseBox');
+        this.dom.show('addressMonitoringBox');
+
+        // Start UTXO monitoring after showing wallet
+        setTimeout(() => {
+            this.startFundingMonitoring();
+        }, 100);
+    }
+
+    startFundingMonitoring() {
+        if (!this.appState.wallet || !this.txBuilder) {
+            console.error('Cannot start funding monitoring: missing wallet or txBuilder');
+            return;
+        }
+
+        // Check if we already have a UTXO
+        if (this.appState.utxo) {
+            this.showUtxoFound(this.appState.utxo);
+            return;
+        }
+
+        const currentWallet = this.appState.wallet;
+
+        // Show monitoring UI
+        this.dom.show('fundingMonitoring');
+        this.dom.setText('fundingStatus', 'Starting monitoring...');
+
+        const fundingSpinner = this.dom.get('fundingSpinner');
+        const fundingAnimation = this.dom.get('fundingAnimation');
+
+        if (fundingSpinner) fundingSpinner.style.display = 'inline-block';
+        if (fundingAnimation) fundingAnimation.style.display = 'flex';
+
+        const stopFunction = this.txBuilder.monitorAddress(
+            currentWallet.address,
+            (utxo) => {
+                this.showUtxoFound(utxo);
+                this.appState.completeFunding(utxo);
+            },
+            (status) => {
+                this.dom.setText('fundingStatus', status.message);
+            },
+            (error) => {
+                console.error('Funding monitoring error:', error);
+
+                if (fundingSpinner) fundingSpinner.style.display = 'none';
+                if (fundingAnimation) fundingAnimation.style.display = 'none';
+
+                this.dom.setText('fundingStatus', `❌ ${error.message}`);
+
+                const helpMessage = error.message.includes('No UTXOs')
+                    ? `No unspent funds found at this address.\n\nThis address has transaction history but all UTXOs have been spent.\nPlease send NEW funds to this address to continue.`
+                    : `Funding monitoring failed: ${error.message}\n\nPlease ensure you have sent funds to the address and try again.`;
+
+                alert(helpMessage);
+            }
+        );
+
+        this.appState.startMonitoring(stopFunction);
+    }
+
+    showUtxoFound(utxo) {
+        const fundingSpinner = this.dom.get('fundingSpinner');
+        const fundingAnimation = this.dom.get('fundingAnimation');
+        if (fundingSpinner) fundingSpinner.style.display = 'none';
+        if (fundingAnimation) fundingAnimation.style.display = 'none';
+
+        // Hide the "send funds" message
+        const addressNote = document.querySelector('.address-note');
+        if (addressNote) addressNote.style.display = 'none';
+
+        // Keep the title as "Your Testnet4 Address" - don't change it
+
+        this.dom.setText('foundUtxoTxid', utxo.txid);
+        this.dom.setText('foundUtxoVout', utxo.vout.toString());
+        this.dom.setText('foundUtxoAmount', `${utxo.amount.toLocaleString()} sats`);
+        this.dom.show('utxoFoundDisplay');
+
+        // Hide monitoring display
+        this.dom.hide('fundingMonitoring');
+
+        console.log('✅ UTXO found in Step 1:', utxo);
+        console.log('🚀 Step 2 (Mining) should now be enabled');
     }
 }

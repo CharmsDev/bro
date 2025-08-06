@@ -7,7 +7,7 @@
     <title>BRO Token - The First Beaming Token on Bitcoin</title>
     <meta name="description"
         content="Claim your $BRO token, the first beaming token on Bitcoin. Join the Charms ecosystem and be part of the future of decentralized applications.">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/main.css">
     <link rel="icon" href="https://proars.com/images/charms/brotmp.png" type="image/png">
 </head>
 
@@ -40,48 +40,91 @@
                     mainnet universe with pure magic. That's wild, bro.</p>
 
                 <!-- Step 1: Wallet Creation Section -->
-                <section class="wallet-section">
+                <section class="wallet-section active">
                     <h3>Step 1: Create Your Charms Wallet</h3>
-                    <p class="wallet-description">Create a secure wallet to receive your testnet4 funds. You'll need to
-                        send funds to this address to start the minting process.</p>
+                    <p class="wallet-description">Create a new Bitcoin wallet or load an existing one to start minting
+                        BRO
+                        tokens.</p>
 
-                    <div id="walletCreation" class="wallet-creation">
+                    <div class="wallet-controls">
                         <button id="createWalletBtn" class="wallet-btn">
-                            <span>Create My Wallet</span>
+                            <span>Create New Wallet</span>
                         </button>
-                        <button id="loadDemoWalletBtn" class="wallet-btn demo-btn">
-                            <span>🧪 Load Demo Wallet</span>
+                        <button id="loadDemoWalletBtn" class="wallet-btn secondary">
+                            <span>Load Demo Wallet</span>
                         </button>
                     </div>
 
-                    <div id="walletDisplay" class="wallet-display" style="display: none;">
-                        <div class="wallet-info">
-                            <div class="address-section">
-                                <h4>Your Testnet4 Address</h4>
-                                <div class="address-container">
-                                    <div id="walletAddress" class="address-value">Loading...</div>
-                                    <button id="copyAddressBtn" class="copy-btn" title="Copy address">
-                                        <span>📋</span>
-                                    </button>
+                    <!-- Box 1: Seed Phrase -->
+                    <div id="seedPhraseBox" class="wallet-box seed-phrase-box" style="display: none;">
+                        <h4>Your Seed Phrase</h4>
+                        <div class="seedphrase-controls">
+                            <button id="showSeedBtn" class="seed-btn">Show Seed Phrase</button>
+                            <button id="copySeedBtn" class="seed-btn" style="display: none;">Copy Seed
+                                Phrase</button>
+                            <button id="resetWalletBtn" class="seed-btn" style="background: #dc2626;">🗑️ Reset
+                                Wallet (Dev)</button>
+                        </div>
+                        <div id="seedPhraseDisplay" class="seedphrase-value" style="display: none;">
+                            <div id="seedPhraseText">Loading...</div>
+                        </div>
+                        <p class="seed-warning">⚠️ Keep your seed phrase safe and private. Never share it with
+                            anyone!</p>
+                    </div>
+
+                    <!-- Box 2: Address & UTXO Monitoring (with 20px margin from Box 1) -->
+                    <div id="addressMonitoringBox" class="wallet-box address-monitoring-box separated-box"
+                        style="display: none;">
+                        <h4>Your Testnet4 Address</h4>
+                        <div class="address-container">
+                            <div id="walletAddress" class="address-value">Loading...</div>
+                            <button id="copyAddressBtn" class="copy-btn" title="Copy address">
+                                <span>📋</span>
+                            </button>
+                        </div>
+                        <p class="address-note">Send funds to this address to begin minting BRO tokens (10,000
+                            satoshi minimum)</p>
+
+                        <!-- UTXO Monitoring Section -->
+                        <div id="fundingMonitoring" class="funding-monitoring" style="display: none;">
+                            <div class="monitoring-status">
+                                <div class="status-item">
+                                    <span class="status-label">Status:</span>
+                                    <span id="fundingStatus" class="status-value">Waiting for funds...</span>
+                                    <div id="fundingSpinner" class="monitoring-spinner" style="display: none;">
+                                    </div>
                                 </div>
-                                <p class="address-note">Send funds to this address to begin minting BRO tokens (10,000
-                                    satoshi minimum)</p>
                             </div>
 
-                            <div class="seedphrase-section">
-                                <h4>Your Seed Phrase</h4>
-                                <div class="seedphrase-controls">
-                                    <button id="showSeedBtn" class="seed-btn">Show Seed Phrase</button>
-                                    <button id="copySeedBtn" class="seed-btn" style="display: none;">Copy Seed
-                                        Phrase</button>
-                                    <button id="resetWalletBtn" class="seed-btn" style="background: #dc2626;">🗑️ Reset
-                                        Wallet (Dev)</button>
+                            <div id="fundingAnimation" class="waiting-animation"
+                                style="display: none; justify-content: center; margin: 1rem 0;">
+                                <span>Monitoring blockchain</span>
+                                <div class="waiting-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
                                 </div>
-                                <div id="seedPhraseDisplay" class="seedphrase-value" style="display: none;">
-                                    <div id="seedPhraseText">Loading...</div>
+                            </div>
+                        </div>
+
+                        <div id="utxoFoundDisplay" class="utxo-found-display funds-received-subbox"
+                            style="display: none;">
+                            <div class="funds-received-header">
+                                <h4>✅ Funds Received!</h4>
+                            </div>
+                            <div class="utxo-details">
+                                <div class="utxo-item">
+                                    <span class="utxo-label">Transaction ID:</span>
+                                    <span id="foundUtxoTxid" class="utxo-value">-</span>
                                 </div>
-                                <p class="seed-warning">⚠️ Keep your seed phrase safe and private. Never share it with
-                                    anyone!</p>
+                                <div class="utxo-item">
+                                    <span class="utxo-label">Output Index:</span>
+                                    <span id="foundUtxoVout" class="utxo-value">-</span>
+                                </div>
+                                <div class="utxo-item">
+                                    <span class="utxo-label">Amount:</span>
+                                    <span id="foundUtxoAmount" class="utxo-value">-</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -89,28 +132,27 @@
 
                 <!-- Step 2: Mining Section -->
                 <section class="mining-section">
-                    <h3>Step 2: Bitcoin Mining Demo</h3>
-                    <p class="mining-description">Experience proof-of-work mining in action. Watch as we search for
-                        valid hashes!</p>
+                    <h3>Step 2: Infinite Proof of Work Mining</h3>
+                    <p class="mining-description">Find the hash with maximum leading zero bits! Mining runs infinitely until you stop and claim your best result.</p>
 
                     <div class="mining-controls">
                         <button id="startMining" class="mining-btn">
                             <span>Start Mining</span>
                         </button>
                         <button id="stopMining" class="mining-btn stop-btn" style="display: none;">
-                            <span>Stop Mining</span>
+                            <span>Stop Mining & Claim Tokens</span>
                         </button>
                     </div>
 
                     <div id="miningDisplay" class="mining-display" style="display: none;">
                         <div class="mining-stats">
                             <div class="stat-item">
-                                <span class="stat-label">Difficulty:</span>
-                                <span id="difficulty" class="stat-value">4</span>
+                                <span class="stat-label">Current Nonce:</span>
+                                <span id="nonce" class="stat-value">0</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-label">Nonce:</span>
-                                <span id="nonce" class="stat-value">0</span>
+                                <span class="stat-label">Current Zero Bits:</span>
+                                <span id="currentLeadingZeros" class="stat-value">0</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-label">Status:</span>
@@ -119,8 +161,40 @@
                         </div>
 
                         <div class="hash-display">
-                            <div class="hash-label">Current Hash:</div>
-                            <div id="currentHash" class="hash-value">Waiting to start...</div>
+                            <div class="hash-section">
+                                <div class="hash-label">Current Hash:</div>
+                                <div id="currentHash" class="hash-value">Waiting to start...</div>
+                            </div>
+                            
+                            <div class="best-hash-section">
+                                <div class="best-hash-header">
+                                    <div class="hash-label">🏆 Best Hash Found:</div>
+                                    <div class="best-stats">
+                                        <span class="best-stat">Nonce: <span id="bestNonce" class="best-value">-</span></span>
+                                        <span class="best-stat">Zero Bits: <span id="bestLeadingZeros" class="best-value highlight">0</span></span>
+                                    </div>
+                                </div>
+                                <div id="bestHash" class="hash-value best">No best hash yet...</div>
+                            </div>
+                        </div>
+
+
+                        <div id="rewardDisplay" class="reward-display">
+                            <h4>💰 Token Reward Calculation</h4>
+                            <div class="reward-info">
+                                <div class="reward-item">
+                                    <span class="reward-label">Proof of Work:</span>
+                                    <span id="proofOfWork" class="reward-value">-</span>
+                                </div>
+                                <div class="reward-item">
+                                    <span class="reward-label">Your Reward:</span>
+                                    <span id="tokenReward" class="reward-value reward-amount">-</span>
+                                    <span class="reward-token">$BRO</span>
+                                </div>
+                            </div>
+                            <div class="reward-formula" style="margin-top: 10px; font-size: 12px; color: #666;">
+                                <strong>Formula:</strong> <span id="rewardFormula">100M * clz² / 2^h</span>
+                            </div>
                         </div>
 
                         <div class="mining-progress">
@@ -136,10 +210,13 @@
                             </div>
                         </div>
 
+
                         <div id="successMessage" class="success-message" style="display: none;">
-                            <h4>🎉 Valid Hash Found!</h4>
-                            <p>Mining completed successfully with nonce: <span id="finalNonce"></span></p>
-                            <p>Final hash: <span id="finalHash"></span></p>
+                            <h4>🎉 Mining Stopped - Best Result Claimed!</h4>
+                            <p>Best hash found with nonce: <span id="finalNonce"></span></p>
+                            <p>Leading zero bits: <span id="finalLeadingZeros" class="highlight"></span></p>
+                            <p>Best hash: <span id="finalHash"></span></p>
+                            <p>Your reward: <span id="finalTokenReward" class="reward-amount">-</span> $BRO</p>
                         </div>
                     </div>
                 </section>
@@ -156,78 +233,71 @@
                         </button>
                     </div>
 
-                    <div id="monitoringDisplay" class="monitoring-display" style="display: none;">
-                        <div class="monitoring-status">
-                            <div class="status-item">
-                                <span class="status-label">Address:</span>
-                                <span id="monitoredAddress" class="status-value">-</span>
-                            </div>
-                            <div class="status-item">
-                                <span class="status-label">Status:</span>
-                                <span id="monitoringStatus" class="status-value">Waiting for wallet...</span>
-                                <div id="monitoringSpinner" class="monitoring-spinner" style="display: none;"></div>
-                            </div>
-                            <div class="status-item">
-                                <span class="status-label">UTXOs Found:</span>
-                                <span id="utxoCount" class="status-value">0</span>
-                            </div>
-                        </div>
-
-                        <div id="waitingIndicator" class="waiting-animation"
-                            style="display: none; justify-content: center; margin: 1rem 0;">
-                            <span>Waiting for funds</span>
-                            <div class="waiting-dots">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>
-
-                        <div id="utxoDisplay" class="utxo-display" style="display: none;">
-                            <h4>Available UTXO</h4>
-                            <div class="utxo-info">
-                                <div class="utxo-item">
-                                    <span class="utxo-label">Transaction ID:</span>
-                                    <span id="utxoTxid" class="utxo-value">-</span>
-                                </div>
-                                <div class="utxo-item">
-                                    <span class="utxo-label">Output Index:</span>
-                                    <span id="utxoVout" class="utxo-value">-</span>
-                                </div>
-                                <div class="utxo-item">
-                                    <span class="utxo-label">Amount:</span>
-                                    <span id="utxoAmount" class="utxo-value">-</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div id="transactionDisplay" class="transaction-display" style="display: none;">
                         <div class="transaction-info">
-                            <h4>Transaction Details</h4>
-                            <div class="tx-item">
-                                <span class="tx-label">Transaction ID:</span>
-                                <span id="txId" class="tx-value">-</span>
-                            </div>
-                            <div class="tx-item">
-                                <span class="tx-label">Size:</span>
-                                <span id="txSize" class="tx-value">-</span>
-                            </div>
-                            <div class="tx-item">
-                                <span class="tx-label">OP_RETURN Data:</span>
-                                <div id="opReturnData" class="tx-value op-return-data">-</div>
-                            </div>
-                            <div class="tx-item">
-                                <span class="tx-label">Raw Transaction:</span>
-                                <div id="rawTransaction" class="tx-value raw-tx">-</div>
+                            <h4>✅ Transaction Created</h4>
+                            <div class="transaction-details">
+                                <div class="transaction-item">
+                                    <span class="transaction-label">🆔 Transaction ID:</span>
+                                    <span id="txId" class="transaction-value">-</span>
+                                </div>
+                                <div class="transaction-item">
+                                    <span class="transaction-label">📏 Size:</span>
+                                    <span id="txSize" class="transaction-value">-</span>
+                                </div>
+                                <div class="transaction-item">
+                                    <span class="transaction-label">📝 OP_RETURN Data:</span>
+                                    <div id="opReturnData" class="transaction-value op-return-data">-</div>
+                                </div>
+                                <div class="transaction-item">
+                                    <span class="transaction-label">🔗 Raw Transaction:</span>
+                                    <div id="rawTransaction" class="transaction-value raw-tx">-</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- Step 4: Claim Tokens Section -->
+                <!-- Step 4: Broadcast Transaction Section -->
+                <section class="broadcast-section">
+                    <h3>Step 4: Broadcast Transaction</h3>
+                    <p class="broadcast-description">Broadcast the mining transaction to the Bitcoin network. A
+                        necessary step to use it in the BRO Mint.</p>
+
+                    <div class="broadcast-controls">
+                        <button id="broadcastTransaction" class="broadcast-btn" disabled>
+                            <span>Broadcast to Network</span>
+                        </button>
+                        <div class="temp-notice"
+                            style="margin-top: 15px; padding: 10px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; color: #92400e; font-size: 14px;">
+                            <strong>🧪 TEMP:</strong> Currently not broadcasting the actual transaction to avoid
+                            consuming it.
+                        </div>
+                    </div>
+
+                    <div id="broadcastDisplay" class="broadcast-display" style="display: none;">
+                        <div class="broadcast-info">
+                            <div class="broadcast-item">
+                                <span class="broadcast-label">Status:</span>
+                                <span id="broadcastStatus" class="status-value">Ready to broadcast...</span>
+                                <div id="broadcastSpinner" class="broadcast-spinner" style="display: none;"></div>
+                            </div>
+                            <div class="broadcast-item">
+                                <span class="broadcast-label">Transaction ID:</span>
+                                <span id="broadcastTxid" class="broadcast-value">-</span>
+                            </div>
+                            <div class="broadcast-item">
+                                <span class="broadcast-label">Explorer:</span>
+                                <a id="explorerLink" href="#" target="_blank" class="explorer-link"
+                                    style="display: none;">View on Mempool.space</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Step 5: Claim Tokens Section -->
                 <section class="claim-section">
-                    <h3>Step 4: Claim Your BRO Tokens</h3>
+                    <h3>Step 5: Claim Your BRO Tokens</h3>
                     <p class="claim-description">Your transaction has been created! Now you can claim your BRO tokens
                         and start using them in the Charms ecosystem.</p>
 
@@ -238,9 +308,9 @@
                     </div>
                 </section>
 
-                <!-- Step 5: Visit Wallet Section -->
+                <!-- Step 6: Visit Wallet Section -->
                 <section class="wallet-visit-section">
-                    <h3>Step 5: Visit Your Charms Wallet</h3>
+                    <h3>Step 6: Visit Your Charms Wallet</h3>
                     <p class="wallet-visit-description">Access your wallet to view your BRO tokens and manage your
                         funds.</p>
 
@@ -352,7 +422,7 @@
         </div>
     </footer>
 
-    <script type="module" src="src/main.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 
 </html>

@@ -9,70 +9,72 @@ export class TransactionManager {
 
     initialize() {
         this.setupEventListeners();
+        this.restoreTransactionState();
     }
 
     setupEventListeners() {
         this.setupCreateTransactionButton();
     }
 
-    startAutomaticMonitoring() {
-        if (!this.appState.canStartMonitoring()) {
-            console.error('Cannot start monitoring: missing wallet or mining result');
-            return;
-        }
+    restoreTransactionState() {
+        // Check if we have a saved transaction
+        if (this.appState && this.appState.transaction) {
+            console.log('🔄 Restoring transaction state from localStorage');
 
-        const currentWallet = this.appState.wallet;
+            // Show the transaction display with saved data
+            this.showTransactionData(this.appState.transaction);
 
-        this.dom.show('monitoringDisplay');
-        this.dom.setText('monitoredAddress', currentWallet.address);
-        this.dom.setText('monitoringStatus', 'Starting automatic monitoring...');
-        this.dom.setText('utxoCount', '0');
+            // Disable the create transaction button
+            this.disableCreateTransactionButton();
 
-        const monitoringSpinner = this.dom.get('monitoringSpinner');
-        const waitingIndicator = this.dom.get('waitingIndicator');
-        if (monitoringSpinner) monitoringSpinner.style.display = 'inline-block';
-        if (waitingIndicator) waitingIndicator.style.display = 'flex';
-
-        console.log('🚀 Starting automatic monitoring after mining completion');
-
-        const stopFunction = this.txBuilder.monitorAddress(
-            currentWallet.address,
-            (utxo) => {
-                this.appState.completeMonitoring(utxo);
-            },
-            (status) => {
-                this.dom.setText('monitoringStatus', status.message);
-                console.log('Monitoring status:', status);
-            },
-            (error) => {
-                console.error('Monitoring error:', error);
-
-                if (monitoringSpinner) monitoringSpinner.style.display = 'none';
-                if (waitingIndicator) waitingIndicator.style.display = 'none';
-
-                this.dom.setText('monitoringStatus', `❌ ${error.message}`);
-                alert(`Monitoring failed: ${error.message}\n\nPlease ensure you have sent funds to the address and try again.`);
+            // Enable broadcasting if we're on step 4 or later
+            if (this.appState.currentStep >= this.appState.STEPS.BROADCAST) {
+                console.log('🔄 Enabling broadcast for restored transaction');
+                // Get broadcast component and enable it
+                const broadcastComponent = window.appController?.getModule('broadcastComponent');
+                if (broadcastComponent) {
+                    broadcastComponent.enableBroadcasting(this.appState.transaction);
+                }
             }
-        );
-
-        this.appState.startMonitoring(stopFunction);
+        }
     }
 
-    showUtxoFound(utxo) {
-        const monitoringSpinner = this.dom.get('monitoringSpinner');
-        const waitingIndicator = this.dom.get('waitingIndicator');
-        if (monitoringSpinner) monitoringSpinner.style.display = 'none';
-        if (waitingIndicator) waitingIndicator.style.display = 'none';
+    showTransactionData(transactionData) {
+        // Display transaction information
+        this.dom.setText('txId', transactionData.txid);
+        this.dom.setText('txSize', `${transactionData.size} bytes`);
+        
+        // Handle backward compatibility for opReturnData format
+        let opReturnDisplay;
+        if (typeof transactionData.opReturnData === 'object' && transactionData.opReturnData !== null) {
+            // Old format: {hash: "...", nonce: "..."} - show only nonce
+            opReturnDisplay = transactionData.opReturnData.nonce || 'Invalid format';
+        } else {
+            // New format: just the nonce string
+            opReturnDisplay = transactionData.opReturnData;
+        }
+        
+        this.dom.setText('opReturnData', opReturnDisplay);
+        this.dom.setText('rawTransaction', transactionData.txHex);
 
-        this.dom.setText('monitoringStatus', '✅ UTXO Found!');
-        this.dom.setText('utxoCount', '1');
+        this.dom.show('transactionDisplay');
 
-        this.dom.setText('utxoTxid', utxo.txid);
-        this.dom.setText('utxoVout', utxo.vout.toString());
-        this.dom.setText('utxoAmount', `${utxo.amount.toLocaleString()} sats`);
-        this.dom.show('utxoDisplay');
+        // Mark transaction section as completed
+        const transactionSection = document.querySelector('.transaction-section');
+        if (transactionSection) {
+            transactionSection.classList.add('completed');
+        }
 
-        console.log('Real UTXO found:', utxo);
+        console.log('✅ Transaction data restored to UI');
+    }
+
+    disableCreateTransactionButton() {
+        const createTransaction = this.dom.get('createTransaction');
+        if (createTransaction) {
+            createTransaction.disabled = true;
+            createTransaction.classList.add('disabled');
+            createTransaction.innerHTML = '<span>✅ Transaction Created</span>';
+        }
     }
 
     setupCreateTransactionButton() {
@@ -134,40 +136,39 @@ export class TransactionManager {
                     console.log('Final transaction hex:', rawTx);
                     console.log('Transaction size:', size, 'bytes');
 
-                    // Minimal OP_RETURN data display
-                    const hashPrefix = this.appState.miningResult.hash.substring(0, 32);
-                    const nonceHex = this.appState.miningResult.nonce.toString(16).padStart(8, '0');
-
-                    const opReturnDataObj = {
-                        hash: hashPrefix,
-                        nonce: nonceHex
-                    };
+                    // OP_RETURN only contains the nonce (as stored in the actual transaction)
+                    const nonceString = this.appState.miningResult.nonce.toString();
 
                     this.dom.setText('txId', txid);
                     this.dom.setText('txSize', `${size} bytes`);
-                    this.dom.setText('opReturnData', JSON.stringify(opReturnDataObj, null, 2));
+                    this.dom.setText('opReturnData', nonceString);
                     this.dom.setText('rawTransaction', rawTx);
 
                     this.dom.show('transactionDisplay');
 
                     createTransaction.innerHTML = '<span>✓ Transaction Created</span>';
 
-                    this.stepController.enableClaimTokensStep();
-
-                    this.stepController.enableWalletVisitStep();
-                    console.log('WalletVisitManager available:', !!this.walletVisitManager);
-                    if (this.walletVisitManager) {
-                        this.walletVisitManager.enableWalletVisitStep();
-                    } else {
-                        console.error('WalletVisitManager not available - Step 5 will not be enabled');
+                    // Mark transaction section as completed
+                    const transactionSection = document.querySelector('.transaction-section');
+                    if (transactionSection) {
+                        transactionSection.classList.add('completed');
                     }
 
-                    console.log('Real transaction created successfully:', {
+                    // Complete transaction creation step
+                    const transactionData = {
                         txid: txid,
+                        txHex: rawTx,
                         size: size,
-                        opReturnData: opReturnDataObj,
-                        rawTx: rawTx
-                    });
+                        opReturnData: nonceString
+                    };
+
+                    this.appState.completeTransactionCreation(transactionData);
+                    console.log('Real transaction created successfully:', transactionData);
+
+                    // Disable create transaction button permanently and update text
+                    createTransaction.disabled = true;
+                    createTransaction.classList.add('disabled');
+                    createTransaction.innerHTML = '<span>✅ Transaction Created</span>';
 
                 } catch (error) {
                     console.error('Error creating transaction:', error);
@@ -182,5 +183,20 @@ export class TransactionManager {
                 }
             });
         }
+    }
+
+    reset() {
+        // Hide transaction display
+        this.dom.hide('transactionDisplay');
+        
+        // Reset create transaction button
+        const createTransaction = this.dom.get('createTransaction');
+        if (createTransaction) {
+            createTransaction.disabled = false;
+            createTransaction.classList.remove('disabled');
+            createTransaction.innerHTML = '<span>Create Transaction</span>';
+        }
+        
+        console.log('🔄 Transaction manager reset completed');
     }
 }
