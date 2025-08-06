@@ -43,7 +43,18 @@ export class TransactionManager {
         // Display transaction information
         this.dom.setText('txId', transactionData.txid);
         this.dom.setText('txSize', `${transactionData.size} bytes`);
-        this.dom.setText('opReturnData', JSON.stringify(transactionData.opReturnData, null, 2));
+        
+        // Handle backward compatibility for opReturnData format
+        let opReturnDisplay;
+        if (typeof transactionData.opReturnData === 'object' && transactionData.opReturnData !== null) {
+            // Old format: {hash: "...", nonce: "..."} - show only nonce
+            opReturnDisplay = transactionData.opReturnData.nonce || 'Invalid format';
+        } else {
+            // New format: just the nonce string
+            opReturnDisplay = transactionData.opReturnData;
+        }
+        
+        this.dom.setText('opReturnData', opReturnDisplay);
         this.dom.setText('rawTransaction', transactionData.txHex);
 
         this.dom.show('transactionDisplay');
@@ -125,18 +136,12 @@ export class TransactionManager {
                     console.log('Final transaction hex:', rawTx);
                     console.log('Transaction size:', size, 'bytes');
 
-                    // Minimal OP_RETURN data display
-                    const hashPrefix = this.appState.miningResult.hash.substring(0, 32);
-                    const nonceHex = this.appState.miningResult.nonce.toString(16).padStart(8, '0');
-
-                    const opReturnDataObj = {
-                        hash: hashPrefix,
-                        nonce: nonceHex
-                    };
+                    // OP_RETURN only contains the nonce (as stored in the actual transaction)
+                    const nonceString = this.appState.miningResult.nonce.toString();
 
                     this.dom.setText('txId', txid);
                     this.dom.setText('txSize', `${size} bytes`);
-                    this.dom.setText('opReturnData', JSON.stringify(opReturnDataObj, null, 2));
+                    this.dom.setText('opReturnData', nonceString);
                     this.dom.setText('rawTransaction', rawTx);
 
                     this.dom.show('transactionDisplay');
@@ -154,7 +159,7 @@ export class TransactionManager {
                         txid: txid,
                         txHex: rawTx,
                         size: size,
-                        opReturnData: opReturnDataObj
+                        opReturnData: nonceString
                     };
 
                     this.appState.completeTransactionCreation(transactionData);
@@ -178,5 +183,20 @@ export class TransactionManager {
                 }
             });
         }
+    }
+
+    reset() {
+        // Hide transaction display
+        this.dom.hide('transactionDisplay');
+        
+        // Reset create transaction button
+        const createTransaction = this.dom.get('createTransaction');
+        if (createTransaction) {
+            createTransaction.disabled = false;
+            createTransaction.classList.remove('disabled');
+            createTransaction.innerHTML = '<span>Create Transaction</span>';
+        }
+        
+        console.log('🔄 Transaction manager reset completed');
     }
 }

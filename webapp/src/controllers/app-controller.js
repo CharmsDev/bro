@@ -23,14 +23,6 @@ export class AppController {
 
         this.modules.stepController = new StepController(this.modules.domElements);
 
-        this.modules.walletManager = new WalletManager(
-            this.modules.domElements,
-            this.modules.stepController,
-            this.appState,
-            this.wallet,
-            this.txBuilder
-        );
-
         this.modules.miningManager = new MiningManager(
             this.modules.domElements,
             this.modules.stepController,
@@ -50,6 +42,16 @@ export class AppController {
             this.appState,
             this.txBuilder,
             this.modules.walletVisitManager
+        );
+
+        this.modules.walletManager = new WalletManager(
+            this.modules.domElements,
+            this.modules.stepController,
+            this.appState,
+            this.wallet,
+            this.txBuilder,
+            this.modules.miningManager,
+            this.modules.transactionManager
         );
 
         this.modules.uiHelpers = new UIHelpers();

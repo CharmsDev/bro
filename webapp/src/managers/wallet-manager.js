@@ -1,10 +1,12 @@
 export class WalletManager {
-    constructor(domElements, stepController, appState, wallet, txBuilder = null) {
+    constructor(domElements, stepController, appState, wallet, txBuilder = null, miningManager = null, transactionManager = null) {
         this.dom = domElements;
         this.stepController = stepController;
         this.appState = appState;
         this.wallet = wallet;
         this.txBuilder = txBuilder;
+        this.miningManager = miningManager;
+        this.transactionManager = transactionManager;
     }
 
     initialize() {
@@ -104,6 +106,16 @@ export class WalletManager {
                 }
 
                 try {
+                    // First reset the entire app state to clear any previous data
+                    if (this.appState) {
+                        this.appState.reset();
+                    }
+                    
+                    // Reset transaction manager if available
+                    if (this.transactionManager) {
+                        this.transactionManager.reset();
+                    }
+                    
                     this.wallet.clearWallet();
 
                     // BIP39 compliant demo seed phrase
@@ -199,6 +211,16 @@ export class WalletManager {
 
                     this.appState.reset();
                     this.stepController.resetAllSteps();
+                    
+                    // Reset mining manager if available
+                    if (this.miningManager) {
+                        this.miningManager.reset();
+                    }
+                    
+                    // Reset transaction manager if available
+                    if (this.transactionManager) {
+                        this.transactionManager.reset();
+                    }
 
                     // Reset UI to initial state
                     this.resetToInitialState();

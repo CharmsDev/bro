@@ -80,16 +80,27 @@ class BitcoinTxBuilder {
                 value: 0,
             });
 
-            // Output 1: Change amount (all remaining funds minus fees)
-            const feeAmount = 1000; // 1000 satoshis fee
-            const changeAmount = utxo.amount - feeAmount;
-            console.log('Adding change output:', {changeAmount, changeAddress});
-
-            // Always add change output (even if small, for testing purposes)
+            // Output 1: 777 satoshis output
+            const fixedAmount = 777;
+            console.log('Adding 777 sats output:', {fixedAmount, changeAddress});
             psbt.addOutput({
                 address: changeAddress,
-                value: changeAmount,
+                value: fixedAmount,
             });
+
+            // Output 2: Change amount (remaining funds minus fees and 777 sats)
+            const feeAmount = 1000; // 1000 satoshis fee
+            const changeAmount = utxo.amount - feeAmount - fixedAmount;
+            console.log('Adding change output:', {changeAmount, changeAddress});
+
+            if (changeAmount > 0) {
+                psbt.addOutput({
+                    address: changeAddress,
+                    value: changeAmount,
+                });
+            } else {
+                console.warn('No change output created - insufficient funds for change');
+            }
 
             // Create unsigned transaction for review
             console.log('Creating unsigned PSBT...');
@@ -109,11 +120,13 @@ class BitcoinTxBuilder {
             };
 
             console.log('Transaction created successfully');
+            const outputCount = changeAmount > 0 ? 3 : 2;
             console.log('Transaction structure:', {
                 inputs: 1,
-                outputs: 2,
-                opReturn: {value: 0, dataLength: nonceBuffer.length},
-                change: {value: changeAmount, address: changeAddress},
+                outputs: outputCount,
+                opReturn: {value: 0, dataLength: nonceBuffer.length, index: 0},
+                fixedOutput: {value: fixedAmount, address: changeAddress, index: 1},
+                change: changeAmount > 0 ? {value: changeAmount, address: changeAddress, index: 2} : null,
                 fee: feeAmount,
                 signed: true
             });
@@ -160,7 +173,7 @@ class BitcoinTxBuilder {
     }
 
     // Validate UTXO has sufficient funds
-    validateUtxo(utxo, minimumAmount = 10000) {
+    validateUtxo(utxo, minimumAmount = 2777) { // Updated minimum: 777 + 1000 fee + some change
         if (!utxo) {
             throw new Error('UTXO is required');
         }

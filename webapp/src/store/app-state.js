@@ -171,14 +171,26 @@ export class AppState {
         this.utxo = utxo;
         this.isMonitoring = false;
         this.emit('utxoFound', utxo);
-
+        
+        // Emit step change to update button states
+        this.emit('stepChanged', {
+            step: this.currentStep,
+            enabled: true,
+            completedSteps: this.completedSteps
+        });
     }
 
     completeMonitoring(utxo) {
         this.utxo = utxo;
         this.isMonitoring = false;
         this.emit('utxoFound', utxo);
-
+        
+        // Emit step change to update button states
+        this.emit('stepChanged', {
+            step: this.currentStep,
+            enabled: true,
+            completedSteps: this.completedSteps
+        });
     }
 
     completeTransactionCreation(transaction) {
@@ -202,7 +214,7 @@ export class AppState {
     }
 
     canStartMining() {
-        return this.wallet !== null;
+        return this.wallet !== null && this.utxo !== null;
     }
 
     canCreateTransaction() {
@@ -233,6 +245,9 @@ export class AppState {
         localStorage.removeItem('bro_wallet_data');
         localStorage.removeItem('bro_transaction_data');
         localStorage.removeItem('bro_broadcast_data');
+        // Clear mining data
+        localStorage.removeItem('miningProgress');
+        localStorage.removeItem('miningResult');
 
         // Reset state
         this.wallet = null;

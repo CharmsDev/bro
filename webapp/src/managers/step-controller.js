@@ -40,6 +40,7 @@ export class StepController {
 
     // Initialize step states based on current app state
     initializeSteps(appState) {
+        this.appState = appState; // Store reference for button state checks
         const state = appState.getState();
 
         // Reset all steps first
@@ -86,7 +87,7 @@ export class StepController {
             }
         }
 
-        // Enable/disable buttons with special handling for broadcast
+        // Enable/disable buttons with special handling for broadcast and mining
         stepConfig.buttons.forEach(buttonId => {
             const button = this.dom.get(buttonId);
             if (button) {
@@ -96,6 +97,16 @@ export class StepController {
                         // Don't disable broadcast button here - let BroadcastComponent handle it
                         return;
                     }
+                }
+                
+                // Special case for mining button - requires both wallet and UTXO
+                if (buttonId === 'startMining') {
+                    if (this.appState && this.appState.canStartMining()) {
+                        this.enableButton(button);
+                    } else {
+                        this.disableButton(button);
+                    }
+                    return;
                 }
 
                 if (canAccess && !isCompleted) {

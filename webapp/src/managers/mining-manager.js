@@ -82,6 +82,43 @@ export class MiningManager {
         }
     }
 
+    /**
+     * Reset mining manager to initial state
+     */
+    reset() {
+        // Hide mining display
+        this.dom.hide('miningDisplay');
+        
+        // Reset UI elements to initial state
+        this.dom.setText('status', 'Ready to start mining');
+        this.dom.setText('nonce', '0');
+        this.dom.setText('currentZeroBits', '0');
+        this.updateHashDisplay('currentHash', 'Waiting to start...');
+        this.updateHashDisplay('bestHash', 'No best hash yet...');
+        this.dom.setText('bestNonce', '0');
+        this.dom.setText('bestLeadingZeros', '0');
+        
+        // Reset buttons
+        const startMining = this.dom.get('startMining');
+        const stopMining = this.dom.get('stopMining');
+        if (startMining) {
+            startMining.style.display = 'inline-block';
+            startMining.disabled = true; // Will be enabled when conditions are met
+        }
+        if (stopMining) {
+            stopMining.style.display = 'none';
+        }
+        
+        // Hide success message
+        this.dom.hide('successMessage');
+        
+        // Reset progress bar
+        const progressFill = this.dom.get('progressFill');
+        if (progressFill) progressFill.style.width = '0%';
+        
+        console.log('🔄 Mining manager reset to initial state');
+    }
+
     checkExistingMiningState() {
         if (!this.miner) return;
 
