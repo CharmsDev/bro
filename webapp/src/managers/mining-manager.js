@@ -76,6 +76,7 @@ export class MiningManager {
     initialize() {
         this.setupEventListeners();
         this.checkExistingMiningState();
+        this.updateButtonText();
 
         if (!this.appState.canStartMining()) {
             this.stepController.initializeMiningStep();
@@ -88,7 +89,7 @@ export class MiningManager {
     reset() {
         // Hide mining display
         this.dom.hide('miningDisplay');
-        
+
         // Reset UI elements to initial state
         this.dom.setText('status', 'Ready to start mining');
         this.dom.setText('nonce', '0');
@@ -97,7 +98,7 @@ export class MiningManager {
         this.updateHashDisplay('bestHash', 'No best hash yet...');
         this.dom.setText('bestNonce', '0');
         this.dom.setText('bestLeadingZeros', '0');
-        
+
         // Reset buttons
         const startMining = this.dom.get('startMining');
         const stopMining = this.dom.get('stopMining');
@@ -108,29 +109,63 @@ export class MiningManager {
         if (stopMining) {
             stopMining.style.display = 'none';
         }
-        
+
         // Hide success message
         this.dom.hide('successMessage');
-        
+
         // Reset progress bar
         const progressFill = this.dom.get('progressFill');
         if (progressFill) progressFill.style.width = '0%';
-        
+
         console.log('🔄 Mining manager reset to initial state');
     }
 
     checkExistingMiningState() {
-        if (!this.miner) return;
-
-        const miningResult = this.miner.loadMiningResult();
-        if (miningResult) {
-            this.restoreCompletedMining(miningResult);
+        if (!this.miner) {
+            console.log('🔍 No miner available for state check');
             return;
         }
 
+        console.log('🔍 Checking existing mining state...');
+
+        // First check for progress (Stop & Claim scenario)
         const miningProgress = this.miner.loadMiningProgress();
+        console.log('🔍 Mining progress found:', miningProgress);
+
         if (miningProgress) {
-            this.offerResumeOption(miningProgress);
+            console.log('🔍 Restoring progress state with data:', {
+                nonce: miningProgress.nonce,
+                bestHash: miningProgress.bestHash,
+                bestNonce: miningProgress.bestNonce,
+                bestLeadingZeros: miningProgress.bestLeadingZeros
+            });
+
+            // Check if transaction exists - if so, show disabled state but with mining data
+            if (this.appState.transaction) {
+                console.log('🔍 Transaction exists - showing mining data in disabled state');
+                this.showMiningDisabledWithData(miningProgress);
+            } else {
+                this.offerResumeOption(miningProgress);
+            }
+            return;
+        }
+
+        // Only check for completed result if no progress exists
+        const miningResult = this.miner.loadMiningResult();
+        console.log('🔍 Mining result found:', miningResult);
+
+        if (miningResult) {
+            console.log('🔍 Restoring completed mining state');
+
+            // Check if transaction exists - if so, show disabled state but with mining data
+            if (this.appState.transaction) {
+                console.log('🔍 Transaction exists - showing completed mining data in disabled state');
+                this.showMiningDisabledWithData(miningResult);
+            } else {
+                this.restoreCompletedMining(miningResult);
+            }
+        } else {
+            console.log('🔍 No existing mining state found');
         }
     }
 
@@ -157,11 +192,204 @@ export class MiningManager {
         this.appState.completeMining(result);
     }
 
-    offerResumeOption(progress) {
-        const resumeMessage = `Found previous mining progress at nonce ${progress.nonce.toLocaleString()}. Would you like to resume?`;
-        if (confirm(resumeMessage)) {
-            this.resumeMining(progress);
+    showMiningDisabled() {
+        // Show mining display but with disabled state
+        this.dom.show('miningDisplay');
+
+        // Get the mining result that was used for the transaction
+        const miningResult = this.miner.loadMiningResult();
+        if (miningResult) {
+            // Show the mining data that was used
+            this.dom.setText('nonce', miningResult.nonce.toLocaleString());
+            this.updateHashDisplay('currentHash', miningResult.hash);
+            this.updateHashDisplay('bestHash', miningResult.bestHash || miningResult.hash);
+            this.dom.setText('bestNonce', (miningResult.bestNonce || miningResult.nonce).toLocaleString());
+            this.dom.setText('bestLeadingZeros', miningResult.bestLeadingZeros || 0);
+
+            // Display the token reward
+            this.displayTokenReward(miningResult.nonce, miningResult.hash);
+
+            // Update progress bar
+            const bestLeadingZeros = miningResult.bestLeadingZeros || 0;
+            const progressPercent = Math.min((bestLeadingZeros / 20) * 100, 95);
+            const progressFill = this.dom.get('progressFill');
+            if (progressFill) progressFill.style.width = progressPercent + '%';
         }
+
+        // Set status to disabled
+        this.dom.setText('status', 'Mining Disabled');
+        const status = this.dom.get('status');
+        if (status) status.className = 'stat-value disabled';
+
+        // Hide and disable buttons
+        const startMining = this.dom.get('startMining');
+        const stopMining = this.dom.get('stopMining');
+        if (startMining) {
+            startMining.style.display = 'none';
+        }
+        if (stopMining) {
+            stopMining.style.display = 'none';
+        }
+
+        // Hide success message since this is disabled state
+        this.dom.hide('successMessage');
+
+        console.log('🚫 Mining disabled - transaction already created');
+    }
+
+    showMiningDisabledWithData(miningData) {
+        // Show mining display with the provided data but in disabled state
+        this.dom.show('miningDisplay');
+
+        // Set status to disabled
+        this.dom.setText('status', 'Mining Disabled');
+        const status = this.dom.get('status');
+        if (status) status.className = 'stat-value disabled';
+
+        // Show the mining data
+        this.dom.setText('nonce', miningData.nonce.toLocaleString());
+        this.updateHashDisplay('currentHash', miningData.hash);
+
+        // Calculate current leading zeros
+        if (this.miner) {
+            this.dom.setText('currentLeadingZeros', this.miner.countLeadingZeroBits(miningData.hash));
+        }
+
+        // Show best hash data
+        if (miningData.bestHash) {
+            this.updateHashDisplay('bestHash', miningData.bestHash);
+            this.dom.setText('bestNonce', miningData.bestNonce.toLocaleString());
+            this.dom.setText('bestLeadingZeros', miningData.bestLeadingZeros);
+
+            // Display token reward for the best result
+            this.displayTokenReward(miningData.bestNonce, miningData.bestHash);
+
+            // Update progress bar
+            const progressPercent = Math.min((miningData.bestLeadingZeros / 20) * 100, 95);
+            const progressFill = this.dom.get('progressFill');
+            if (progressFill) progressFill.style.width = progressPercent + '%';
+        } else {
+            this.updateHashDisplay('bestHash', 'No best hash yet...');
+            this.dom.setText('bestNonce', '0');
+            this.dom.setText('bestLeadingZeros', '0');
+            this.dom.setText('tokenReward', '-');
+            this.dom.setText('proofOfWork', '-');
+        }
+
+        // Hide and disable buttons
+        const startMining = this.dom.get('startMining');
+        const stopMining = this.dom.get('stopMining');
+        if (startMining) {
+            startMining.style.display = 'none';
+        }
+        if (stopMining) {
+            stopMining.style.display = 'none';
+        }
+
+        // Hide success message since this is disabled state
+        this.dom.hide('successMessage');
+
+        console.log('🚫 Mining disabled with data - transaction already created');
+    }
+
+    offerResumeOption(progress) {
+        // Show the saved progress state without auto-starting mining
+        console.log(`🔄 Found previous mining progress at nonce ${progress.nonce.toLocaleString()}. Restoring state...`);
+        this.restoreProgressState(progress);
+    }
+
+    restoreProgressState(progress) {
+        console.log('🔧 Starting restoreProgressState with:', progress);
+
+        // Show mining display with saved progress but don't start mining
+        console.log('🔧 Showing miningDisplay...');
+        this.dom.show('miningDisplay');
+
+        // Check if miningDisplay is actually visible
+        const miningDisplay = document.getElementById('miningDisplay');
+        console.log('🔧 miningDisplay element:', miningDisplay);
+        console.log('🔧 miningDisplay style.display:', miningDisplay ? miningDisplay.style.display : 'not found');
+
+        this.dom.setText('status', 'Stopped - Progress Saved');
+        const status = this.dom.get('status');
+        if (status) status.className = 'stat-value stopped';
+
+        // Restore all the saved values
+        console.log('🔧 Setting nonce to:', progress.nonce.toLocaleString());
+        this.dom.setText('nonce', progress.nonce.toLocaleString());
+
+        console.log('🔧 Setting currentHash to:', progress.hash);
+        this.updateHashDisplay('currentHash', progress.hash);
+
+        console.log('🔧 Setting currentLeadingZeros...');
+        this.dom.setText('currentLeadingZeros', this.miner.countLeadingZeroBits(progress.hash));
+
+        if (progress.bestHash) {
+            console.log('🔧 Setting bestHash to:', progress.bestHash);
+            this.updateHashDisplay('bestHash', progress.bestHash);
+            this.dom.setText('bestNonce', progress.bestNonce.toLocaleString());
+            this.dom.setText('bestLeadingZeros', progress.bestLeadingZeros);
+
+            // Display token reward for the best result found so far
+            console.log('🔧 Displaying token reward...');
+            this.displayTokenReward(progress.bestNonce, progress.bestHash);
+        } else {
+            this.updateHashDisplay('bestHash', 'No best hash yet...');
+            this.dom.setText('bestNonce', '0');
+            this.dom.setText('bestLeadingZeros', '0');
+            // Clear reward display if no best hash yet
+            this.dom.setText('tokenReward', '-');
+            this.dom.setText('proofOfWork', '-');
+        }
+
+        // Update progress bar based on best leading zeros
+        const bestLeadingZeros = progress.bestLeadingZeros || 0;
+        const progressPercent = Math.min((bestLeadingZeros / 20) * 100, 95);
+        const progressFill = this.dom.get('progressFill');
+        if (progressFill) progressFill.style.width = progressPercent + '%';
+
+        // Ensure all display elements are visible
+        const rewardDisplay = document.getElementById('rewardDisplay');
+        console.log('🔧 rewardDisplay element:', rewardDisplay);
+        if (rewardDisplay) {
+            rewardDisplay.style.display = 'block';
+            console.log('🔧 Set rewardDisplay to block');
+        }
+
+        // Debug: Check all key elements are found and visible
+        const elementsToCheck = [
+            'miningDisplay', 'nonce', 'currentHash', 'currentLeadingZeros',
+            'bestHash', 'bestNonce', 'bestLeadingZeros', 'status',
+            'tokenReward', 'proofOfWork', 'rewardDisplay'
+        ];
+
+        console.log('🔧 Element visibility check:');
+        elementsToCheck.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                console.log(`  ✅ ${elementId}: found, display=${element.style.display || 'default'}, textContent="${element.textContent?.substring(0, 50)}..."`);
+            } else {
+                console.log(`  ❌ ${elementId}: NOT FOUND`);
+            }
+        });
+
+        // Ensure buttons are in correct state (Start button visible, Stop button hidden)
+        const startMining = this.dom.get('startMining');
+        const stopMining = this.dom.get('stopMining');
+        if (startMining) startMining.style.display = 'inline-block';
+        if (stopMining) stopMining.style.display = 'none';
+
+        // Hide success message since this is progress, not completion
+        this.dom.hide('successMessage');
+
+        console.log('✅ Progress state restored - ready to continue mining');
+        console.log('📊 Restored values:', {
+            nonce: progress.nonce,
+            hash: progress.hash,
+            bestHash: progress.bestHash,
+            bestNonce: progress.bestNonce,
+            bestLeadingZeros: progress.bestLeadingZeros
+        });
     }
 
     async resumeMining(progress) {
@@ -206,7 +434,10 @@ export class MiningManager {
         const startMining = this.dom.get('startMining');
         if (startMining) {
             startMining.addEventListener('click', async () => {
-
+                // Check if we have existing mining progress or completed mining
+                const miningResult = this.miner.loadMiningResult();
+                const miningProgress = this.miner.loadMiningProgress();
+                const shouldResume = miningProgress && !miningResult;
 
                 this.dom.show('miningDisplay');
                 startMining.style.display = 'none';
@@ -214,21 +445,48 @@ export class MiningManager {
                 if (stopMining) stopMining.style.display = 'inline-block';
                 this.dom.hide('successMessage');
 
-                this.dom.setText('status', 'Mining...');
-                const status = this.dom.get('status');
-                if (status) status.className = 'stat-value mining';
-                this.dom.setText('nonce', '0');
-                this.dom.setText('currentHash', 'Calculating...');
-                this.dom.setText('currentLeadingZeros', '0');
-                this.dom.setText('bestHash', 'Searching for best hash...');
-                this.dom.setText('bestNonce', '0');
-                this.dom.setText('bestLeadingZeros', '0');
+                if (shouldResume) {
+                    // Resume from existing progress
+                    this.dom.setText('status', 'Resuming...');
+                    const status = this.dom.get('status');
+                    if (status) status.className = 'stat-value mining';
+
+                    // Restore previous state
+                    this.dom.setText('nonce', miningProgress.nonce.toLocaleString());
+                    this.updateHashDisplay('currentHash', miningProgress.hash);
+                    this.dom.setText('currentLeadingZeros', this.miner.countLeadingZeroBits(miningProgress.hash));
+
+                    if (miningProgress.bestHash) {
+                        this.updateHashDisplay('bestHash', miningProgress.bestHash);
+                        this.dom.setText('bestNonce', miningProgress.bestNonce.toLocaleString());
+                        this.dom.setText('bestLeadingZeros', miningProgress.bestLeadingZeros);
+                    } else {
+                        this.updateHashDisplay('bestHash', 'Searching for best hash...');
+                        this.dom.setText('bestNonce', '0');
+                        this.dom.setText('bestLeadingZeros', '0');
+                    }
+                } else {
+                    // Start fresh mining (either first time or starting new after completion)
+                    this.dom.setText('status', 'Mining...');
+                    const status = this.dom.get('status');
+                    if (status) status.className = 'stat-value mining';
+                    this.dom.setText('nonce', '0');
+                    this.updateHashDisplay('currentHash', 'Calculating...');
+                    this.dom.setText('currentLeadingZeros', '0');
+                    this.updateHashDisplay('bestHash', 'Searching for best hash...');
+                    this.dom.setText('bestNonce', '0');
+                    this.dom.setText('bestLeadingZeros', '0');
+
+                    // Clear any existing reward display
+                    this.dom.setText('tokenReward', '-');
+                    this.dom.setText('proofOfWork', '-');
+                }
 
                 const utxo = this.appState.utxo;
                 await this.miner.startPoW(
                     (progress) => this.updateMiningProgress(progress),
                     (result) => this.completeMining(result),
-                    false,
+                    shouldResume,
                     utxo
                 );
             });
@@ -243,13 +501,16 @@ export class MiningManager {
                     this.miner.stop();
                 }
 
-                this.dom.setText('status', 'Stopped');
+                this.dom.setText('status', 'Stopped - Progress Saved');
                 const status = this.dom.get('status');
                 if (status) status.className = 'stat-value stopped';
 
                 const startMining = this.dom.get('startMining');
                 if (startMining) startMining.style.display = 'inline-block';
                 stopMining.style.display = 'none';
+
+                // Update button text after stopping
+                this.updateButtonText();
             });
         }
     }
@@ -341,6 +602,9 @@ export class MiningManager {
         if (startMining) startMining.style.display = 'inline-block';
         if (stopMining) stopMining.style.display = 'none';
 
+        // Update button text after completing mining
+        this.updateButtonText();
+
         this.appState.completeMining(result);
     }
 
@@ -356,6 +620,42 @@ export class MiningManager {
             this.dom.setText('proofOfWork', `${rewardInfo.leadingZeros} leading zeros`);
         } catch (error) {
             console.error('Error calculating token reward:', error);
+        }
+    }
+
+    /**
+     * Update button text based on mining state
+     */
+    updateButtonText() {
+        const startMining = this.dom.get('startMining');
+        if (!startMining) return;
+
+        const buttonSpan = startMining.querySelector('span');
+        if (!buttonSpan) return;
+
+        // Check if transaction exists - if so, disable mining
+        if (this.appState.transaction) {
+            buttonSpan.textContent = 'Mining Disabled';
+            startMining.disabled = true;
+            startMining.classList.add('disabled');
+            startMining.style.pointerEvents = 'none';
+            startMining.style.opacity = '0.5';
+            return;
+        }
+
+        // Check if there's existing mining progress or completed mining
+        const miningResult = this.miner ? this.miner.loadMiningResult() : null;
+        const miningProgress = this.miner ? this.miner.loadMiningProgress() : null;
+
+        if (miningResult) {
+            // Mining is completed, show "Start New Mining"
+            buttonSpan.textContent = 'Start New Mining';
+        } else if (miningProgress) {
+            // There's progress to resume, show "Continue Mining"
+            buttonSpan.textContent = 'Continue Mining';
+        } else {
+            // No previous state, show default "Start Mining"
+            buttonSpan.textContent = 'Start Mining';
         }
     }
 }

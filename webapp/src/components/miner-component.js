@@ -37,7 +37,7 @@ class BitcoinMiner {
         for (let i = 0; i < hash.length; i++) {
             const hexChar = hash[i];
             const decimal = parseInt(hexChar, 16);
-            
+
             // Each hex character represents exactly 4 bits
             // Convert to 4-bit binary representation
             for (let bit = 3; bit >= 0; bit--) {
@@ -132,6 +132,7 @@ class BitcoinMiner {
     async minePoW(challenge, onProgress, resumeFromSaved = false) {
         this.isRunning = true;
         this.challenge = challenge;
+        this.stoppedManually = false; // Track if stopped manually
 
         if (resumeFromSaved) {
             const savedProgress = this.loadMiningProgress();
@@ -207,9 +208,10 @@ class BitcoinMiner {
             }
         }
 
-        // When stopped, save progress and return the best result found
+        // When stopped, only save progress (not result) if stopped manually
         if (!this.isRunning) {
             this.saveMiningProgress();
+
             if (this.bestHash) {
                 const result = {
                     nonce: this.bestNonce,
@@ -218,7 +220,12 @@ class BitcoinMiner {
                     bestNonce: this.bestNonce,
                     bestLeadingZeros: this.bestLeadingZeros
                 };
-                this.saveMiningResult(result);
+
+                // Only save as completed result if NOT stopped manually
+                if (!this.stoppedManually) {
+                    this.saveMiningResult(result);
+                }
+
                 return result;
             }
         }
@@ -228,6 +235,7 @@ class BitcoinMiner {
 
     stop() {
         this.isRunning = false;
+        this.stoppedManually = true; // Mark as manually stopped
     }
 
 
@@ -246,6 +254,10 @@ class BitcoinMiner {
         // Generate challenge from blockchain data
         const challenge = this.generateChallenge(utxo.txid, utxo.vout);
 
+        // If not resuming from saved, clear any existing completed result
+        if (!resumeFromSaved) {
+            this.clearMiningResult();
+        }
 
         try {
             const result = await this.minePoW(challenge, onProgress, resumeFromSaved);

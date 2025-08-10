@@ -43,7 +43,7 @@ export class TransactionManager {
         // Display transaction information
         this.dom.setText('txId', transactionData.txid);
         this.dom.setText('txSize', `${transactionData.size} bytes`);
-        
+
         // Handle backward compatibility for opReturnData format
         let opReturnDisplay;
         if (typeof transactionData.opReturnData === 'object' && transactionData.opReturnData !== null) {
@@ -53,7 +53,7 @@ export class TransactionManager {
             // New format: just the nonce string
             opReturnDisplay = transactionData.opReturnData;
         }
-        
+
         this.dom.setText('opReturnData', opReturnDisplay);
         this.dom.setText('rawTransaction', transactionData.txHex);
 
@@ -82,7 +82,7 @@ export class TransactionManager {
         if (createTransaction) {
             createTransaction.addEventListener('click', async () => {
                 if (!this.appState.canCreateTransaction()) {
-                    alert('Missing required data for transaction creation');
+                    console.error('❌ Missing required data for transaction creation');
                     return;
                 }
 
@@ -98,9 +98,25 @@ export class TransactionManager {
 
                     console.log('Creating unsigned PSBT...');
 
+                    // Get mining result - either completed result or best from progress
+                    let miningData = this.appState.miningResult;
+                    if (!miningData && window.BitcoinMiner) {
+                        const miner = new window.BitcoinMiner();
+                        const miningProgress = miner.loadMiningProgress();
+                        if (miningProgress && miningProgress.bestHash && miningProgress.bestNonce) {
+                            miningData = {
+                                nonce: miningProgress.bestNonce,
+                                hash: miningProgress.bestHash,
+                                bestHash: miningProgress.bestHash,
+                                bestNonce: miningProgress.bestNonce,
+                                bestLeadingZeros: miningProgress.bestLeadingZeros
+                            };
+                        }
+                    }
+
                     const unsignedTx = await this.txBuilder.createValidatedTransaction(
                         this.appState.utxo,
-                        this.appState.miningResult,
+                        miningData,
                         changeAddress,
                         this.appState.wallet.seedPhrase
                     );
@@ -137,7 +153,7 @@ export class TransactionManager {
                     console.log('Transaction size:', size, 'bytes');
 
                     // OP_RETURN only contains the nonce (as stored in the actual transaction)
-                    const nonceString = this.appState.miningResult.nonce.toString();
+                    const nonceString = miningData.nonce.toString();
 
                     this.dom.setText('txId', txid);
                     this.dom.setText('txSize', `${size} bytes`);
@@ -177,7 +193,7 @@ export class TransactionManager {
                         message: error.message,
                         stack: error.stack
                     });
-                    alert(`Error creating transaction: ${error.message}\n\nCheck console for details.`);
+                    console.error(`❌ Error creating transaction: ${error.message}`);
                     createTransaction.disabled = false;
                     createTransaction.innerHTML = '<span>Create Transaction</span>';
                 }
@@ -188,7 +204,7 @@ export class TransactionManager {
     reset() {
         // Hide transaction display
         this.dom.hide('transactionDisplay');
-        
+
         // Reset create transaction button
         const createTransaction = this.dom.get('createTransaction');
         if (createTransaction) {
@@ -196,7 +212,7 @@ export class TransactionManager {
             createTransaction.classList.remove('disabled');
             createTransaction.innerHTML = '<span>Create Transaction</span>';
         }
-        
+
         console.log('🔄 Transaction manager reset completed');
     }
 }

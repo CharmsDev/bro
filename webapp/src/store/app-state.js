@@ -73,15 +73,6 @@ export class AppState {
             this.wallet = JSON.parse(walletData);
         }
 
-        // Load mining result
-        if (window.BitcoinMiner) {
-            const miner = new window.BitcoinMiner();
-            const result = miner.loadMiningResult();
-            if (result) {
-                this.miningResult = result;
-            }
-        }
-
         // Load transaction data
         const transactionData = localStorage.getItem('bro_transaction_data');
         if (transactionData) {
@@ -93,6 +84,9 @@ export class AppState {
         if (broadcastData) {
             this.broadcastResult = JSON.parse(broadcastData);
         }
+
+        // Load mining result for transaction creation validation
+        this.loadMiningResult();
     }
 
     completeStep(step) {
@@ -171,7 +165,7 @@ export class AppState {
         this.utxo = utxo;
         this.isMonitoring = false;
         this.emit('utxoFound', utxo);
-        
+
         // Emit step change to update button states
         this.emit('stepChanged', {
             step: this.currentStep,
@@ -184,7 +178,7 @@ export class AppState {
         this.utxo = utxo;
         this.isMonitoring = false;
         this.emit('utxoFound', utxo);
-        
+
         // Emit step change to update button states
         this.emit('stepChanged', {
             step: this.currentStep,
@@ -218,7 +212,21 @@ export class AppState {
     }
 
     canCreateTransaction() {
-        return this.miningResult !== null && this.utxo !== null;
+        // Check if we have a completed mining result
+        if (this.miningResult !== null && this.utxo !== null) {
+            return true;
+        }
+
+        // If no completed result, check if we have mining progress with a best result
+        if (this.utxo !== null && window.BitcoinMiner) {
+            const miner = new window.BitcoinMiner();
+            const miningProgress = miner.loadMiningProgress();
+            if (miningProgress && miningProgress.bestHash && miningProgress.bestNonce) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     canStartMonitoring() {
