@@ -4,7 +4,7 @@ import { WalletManager } from '../managers/wallet-manager.js';
 import { MiningManager } from '../managers/mining-manager.js';
 import { TransactionManager } from '../managers/transaction-manager.js';
 import { WalletVisitManager } from '../managers/wallet-visit-manager.js';
-import { Step5Manager } from '../managers/step5-manager.js';
+import { MintingManager } from '../managers/minting-manager.js';
 import { UIHelpers } from '../managers/ui-helpers.js';
 import { broadcastComponent } from '../components/broadcast-component.js';
 
@@ -58,7 +58,7 @@ export class AppController {
         this.modules.uiHelpers = new UIHelpers();
         this.modules.broadcastComponent = broadcastComponent;
 
-        this.modules.step5Manager = new Step5Manager(
+        this.modules.mintingManager = new MintingManager(
             this.appState,
             this.modules.domElements,
             this.modules.broadcastComponent
@@ -72,7 +72,7 @@ export class AppController {
         this.modules.miningManager.initialize();
         this.modules.transactionManager.initialize();
         this.modules.walletVisitManager.initialize();
-        this.modules.step5Manager.initialize();
+        this.modules.mintingManager.initialize();
 
         // Initialize step system first
         this.modules.stepController.initializeSteps(this.appState);
@@ -144,7 +144,7 @@ export class AppController {
         if (claimTokensBtn) {
             claimTokensBtn.addEventListener('click', async () => {
                 try {
-                    await this.modules.step5Manager.executeStep5Process();
+                    await this.modules.mintingManager.executeMintingProcess();
                 } catch (error) {
                     console.error('❌ Step 5 minting process failed:', error);
                     console.error('❌ Failed to start minting process. Please try again.');

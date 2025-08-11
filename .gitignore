@@ -29,6 +29,6 @@ target/
 # RJJ
 Contract/
 _rjj/
-tests/
+XXXtests/
 wasm/
 .DS_Store

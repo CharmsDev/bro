@@ -25,7 +25,7 @@ export class WalletVisitManager {
     handleWalletVisit() {
         const currentWallet = this.appState.wallet;
         if (!currentWallet || !currentWallet.seedPhrase) {
-            alert('No wallet found. Please create a wallet first.');
+            console.error('❌ No wallet found. Please create a wallet first.');
             return;
         }
 
@@ -41,7 +41,7 @@ export class WalletVisitManager {
             console.log('✅ Step 5: Redirected to Charms Wallet');
         } catch (error) {
             console.error('Error visiting wallet:', error);
-            alert('Error opening wallet. Please try again.');
+            console.error('❌ Error opening wallet. Please try again.');
         }
     }
 

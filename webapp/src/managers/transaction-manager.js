@@ -175,7 +175,12 @@ export class TransactionManager {
                         txid: txid,
                         txHex: rawTx,
                         size: size,
-                        opReturnData: nonceString
+                        opReturnData: nonceString,
+                        outputs: unsignedTx.outputs,
+                        inputTxid: this.appState.utxo.txid,
+                        inputVout: this.appState.utxo.vout,
+                        difficulty: miningData.bestLeadingZeros,
+                        reward: this.appState.miningReward
                     };
 
                     this.appState.completeTransactionCreation(transactionData);

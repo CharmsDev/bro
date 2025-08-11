@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         console.log('✅ Application successfully initialized with modern ES6 modules');
     } catch (error) {
         console.error('❌ Failed to initialize application:', error);
-        alert('Failed to initialize application. Please refresh the page and try again.');
+        console.error('❌ Failed to initialize application. Please refresh the page and try again.');
     }
 
     // Make app controller available globally for debugging

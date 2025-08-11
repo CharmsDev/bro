@@ -138,19 +138,40 @@ export class AppState {
     }
 
     loadMiningResult() {
-        if (window.BitcoinMiner) {
-            const miner = new window.BitcoinMiner();
-            const result = miner.loadMiningResult();
-            if (result) {
+        // First try to load from localStorage directly
+        const storedResult = localStorage.getItem('miningResult');
+        if (storedResult) {
+            try {
+                const result = JSON.parse(storedResult);
                 this.miningResult = result;
                 if (!this.isStepCompleted(this.STEPS.MINING)) {
                     this.completeStep(this.STEPS.MINING);
                 }
                 this.emit('miningCompleted', result);
-
                 return result;
+            } catch (error) {
+                console.error('Error parsing stored mining result:', error);
             }
         }
+
+        // Fallback to BitcoinMiner if available
+        if (window.BitcoinMiner) {
+            try {
+                const miner = new window.BitcoinMiner();
+                const result = miner.loadMiningResult();
+                if (result) {
+                    this.miningResult = result;
+                    if (!this.isStepCompleted(this.STEPS.MINING)) {
+                        this.completeStep(this.STEPS.MINING);
+                    }
+                    this.emit('miningCompleted', result);
+                    return result;
+                }
+            } catch (error) {
+                console.error('Error loading mining result from BitcoinMiner:', error);
+            }
+        }
+
         return null;
     }
 

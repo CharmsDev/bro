@@ -98,7 +98,7 @@ export class StepController {
                         return;
                     }
                 }
-                
+
                 // Special case for mining button - requires both wallet and UTXO
                 if (buttonId === 'startMining') {
                     if (this.appState && this.appState.canStartMining()) {
@@ -154,12 +154,20 @@ export class StepController {
             }
         }
 
-        // Show mining display if mining completed
+        // Show mining display if mining completed OR if there's mining progress
         if (state.hasMiningResult) {
             this.dom.show('miningDisplay');
             const successMessage = this.dom.get('successMessage');
             if (successMessage) {
                 successMessage.style.display = 'block';
+            }
+        } else if (window.BitcoinMiner) {
+            // Check for mining progress (Stop & Claim scenario)
+            const miner = new window.BitcoinMiner();
+            const miningProgress = miner.loadMiningProgress();
+            if (miningProgress) {
+                this.dom.show('miningDisplay');
+                console.log('🔧 StepController: Showing miningDisplay for saved progress');
             }
         }
 
