@@ -8,7 +8,7 @@ import { MempoolClient } from './mempool-client.js';
 import { PayloadUtils } from './payload-utils.js';
 import { TemplateLoader } from './template-loader.js';
 import { PayloadValidator } from './payload-validator.js';
-import { FileSaver } from './file-saver.js';
+
 
 export class PayloadGenerator {
     constructor() {
@@ -43,9 +43,7 @@ export class PayloadGenerator {
             PayloadValidator.validatePayload(payload);
             console.log('✅ Payload validation passed');
             
-            // Save payload to disk for review
-            await FileSaver.savePayloadToDisk(payload);
-            console.log('💾 Payload saved to disk');
+
             
             console.log('🎉 Payload generated successfully!');
             return payload;

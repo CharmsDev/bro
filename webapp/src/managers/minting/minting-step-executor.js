@@ -104,10 +104,7 @@ export class MintingStepExecutor {
                 utxo_id: payload.spell?.ins?.[0]?.utxo_id
             });
             
-            // Save payload to disk for review
-            console.log('💾 Saving payload to disk for review...');
-            await this.proverApiService.savePayloadToDisk(payload);
-            console.log('💾 Payload guardado en disco para revisión - revisa tu carpeta de Descargas');
+
             
             // Show API call details
             console.log('🌐 Making API call to prover...');
@@ -131,13 +128,7 @@ export class MintingStepExecutor {
             this.uiManager.updateStepStatus(3, 'error');
             console.error('❌ Step 4 failed:', error);
             
-            // Always save payload on error for debugging
-            try {
-                await this.proverApiService.savePayloadToDisk(payload);
-                console.log('💾 Payload guardado en disco para revisión - revisa tu carpeta de Descargas');
-            } catch (saveError) {
-                console.error('❌ Failed to save payload:', saveError);
-            }
+
             
             throw new Error(`Prover API request failed: ${error.message}`);
         }

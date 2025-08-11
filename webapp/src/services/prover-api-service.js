@@ -6,7 +6,7 @@
 import { PayloadGenerator } from './prover/payload-generator.js';
 import { ProverApiClient } from './prover/api-client.js';
 import { PayloadValidator } from './prover/payload-validator.js';
-import { FileSaver } from './prover/file-saver.js';
+
 import { PayloadUtils } from './prover/payload-utils.js';
 
 export class ProverApiService {
@@ -99,21 +99,9 @@ export class ProverApiService {
         return PayloadValidator.validatePayload(payload);
     }
 
-    /**
-     * Save payload to disk
-     * @param {Object} payload - The payload to save
-     * @param {string} filename - Optional filename
-     * @returns {Promise<void>}
-     */
-    async savePayloadToDisk(payload, filename) {
-        return FileSaver.savePayloadToDisk(payload, filename);
-    }
+
 
     /**
-     * Get payload info for debugging
-     * @param {Object} miningData - Mining data
-     * @returns {Object} Payload info
-     */
     getPayloadInfo(miningData) {
         return PayloadUtils.getPayloadInfo(miningData);
     }
