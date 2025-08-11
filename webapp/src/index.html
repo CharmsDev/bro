@@ -84,6 +84,9 @@
                         </div>
                         <p class="address-note">Send funds to this address to begin minting BRO tokens (10,000
                             satoshi minimum)</p>
+                        <p class="faucet-info">
+                            💧 Get testnet funds: <a href="https://testnet4.dev" target="_blank" rel="noopener noreferrer">testnet4.dev</a>
+                        </p>
 
                         <!-- UTXO Monitoring Section -->
                         <div id="fundingMonitoring" class="funding-monitoring" style="display: none;">
@@ -133,7 +136,8 @@
                 <!-- Step 2: Mining Section -->
                 <section class="mining-section">
                     <h3>Step 2: Infinite Proof of Work Mining</h3>
-                    <p class="mining-description">Find the hash with maximum leading zero bits! Mining runs infinitely until you stop and claim your best result.</p>
+                    <p class="mining-description">Find the hash with maximum leading zero bits! Mining runs infinitely
+                        until you stop and claim your best result.</p>
 
                     <div class="mining-controls">
                         <button id="startMining" class="mining-btn">
@@ -165,13 +169,15 @@
                                 <div class="hash-label">Current Hash:</div>
                                 <div id="currentHash" class="hash-value">Waiting to start...</div>
                             </div>
-                            
+
                             <div class="best-hash-section">
                                 <div class="best-hash-header">
                                     <div class="hash-label">🏆 Best Hash Found:</div>
                                     <div class="best-stats">
-                                        <span class="best-stat">Nonce: <span id="bestNonce" class="best-value">-</span></span>
-                                        <span class="best-stat">Zero Bits: <span id="bestLeadingZeros" class="best-value highlight">0</span></span>
+                                        <span class="best-stat">Nonce: <span id="bestNonce"
+                                                class="best-value">-</span></span>
+                                        <span class="best-stat">Zero Bits: <span id="bestLeadingZeros"
+                                                class="best-value highlight">0</span></span>
                                     </div>
                                 </div>
                                 <div id="bestHash" class="hash-value best">No best hash yet...</div>
@@ -268,11 +274,6 @@
                         <button id="broadcastTransaction" class="broadcast-btn" disabled>
                             <span>Broadcast to Network</span>
                         </button>
-                        <div class="temp-notice"
-                            style="margin-top: 15px; padding: 10px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; color: #92400e; font-size: 14px;">
-                            <strong>🧪 TEMP:</strong> Currently not broadcasting the actual transaction to avoid
-                            consuming it.
-                        </div>
                     </div>
 
                     <div id="broadcastDisplay" class="broadcast-display" style="display: none;">
@@ -298,13 +299,13 @@
                 <!-- Step 5: Claim Tokens Section -->
                 <section class="claim-section">
                     <h3>Step 5: Claim Your BRO Tokens</h3>
-                    <p class="claim-description">Your transaction has been created! Now you can claim your BRO tokens
-                        and start using them in the Charms ecosystem.</p>
+                    <p class="claim-description">Your transaction has been broadcasted! Now you can claim your BRO
+                        tokens through the minting process.</p>
 
                     <div class="claim-controls">
-                        <a href="https://wallet.charms.dev/?a=bro" id="claimTokensBtn" class="claim-btn disabled">
-                            <span>Claim My Tokens</span>
-                        </a>
+                        <button id="claimTokensBtn" class="claim-btn disabled">
+                            <span>Start BRO Token Minting</span>
+                        </button>
                     </div>
                 </section>
 

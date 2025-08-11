@@ -121,6 +121,201 @@ class ScureBitcoinTransactionSigner {
             throw new Error(`Failed to sign PSBT: ${error.message}`);
         }
     }
+
+    // Sign prover transactions (multiple transactions from prover API response)
+    async signProverTransactions(transactionHexArray, wallet) {
+        console.log(`🔐 Signing ${transactionHexArray.length} prover transactions...`);
+
+        const signedTransactions = [];
+
+        for (let i = 0; i < transactionHexArray.length; i++) {
+            const txHex = transactionHexArray[i];
+            console.log(`🔐 Signing transaction ${i + 1}/${transactionHexArray.length}`);
+
+            try {
+                // Convert raw transaction hex to PSBT format for signing
+                const psbtHex = await this.convertTxToPSBT(txHex, wallet);
+
+                // Sign the PSBT
+                const signedResult = await this.signPSBT(
+                    psbtHex,
+                    { amount: 777 }, // Standard amount for BRO tokens
+                    wallet.mnemonic
+                );
+
+                signedTransactions.push({
+                    index: i,
+                    originalHex: txHex,
+                    signedHex: signedResult.signedTxHex,
+                    txid: signedResult.txid
+                });
+
+                console.log(`✅ Transaction ${i + 1} signed: ${signedResult.txid}`);
+
+            } catch (error) {
+                console.error(`❌ Error signing transaction ${i + 1}:`, error);
+                throw new Error(`Failed to sign transaction ${i + 1}: ${error.message}`);
+            }
+        }
+
+        console.log(`✅ All ${signedTransactions.length} transactions signed successfully`);
+        return signedTransactions;
+    }
+
+    // Convert raw transaction hex to PSBT format
+    async convertTxToPSBT(txHex, wallet) {
+        try {
+            console.log('[ScureSigner] Converting transaction to PSBT format...');
+
+            // Parse the raw transaction
+            const txBytes = hex.decode(txHex);
+            const tx = btc.Transaction.fromRaw(txBytes, {
+                network: this.currentNetwork,
+                allowUnknownOutputs: true
+            });
+
+            // Create a new PSBT from the transaction
+            const psbt = new btc.Transaction({
+                version: tx.version,
+                lockTime: tx.lockTime
+            });
+
+            // Add inputs
+            for (let i = 0; i < tx.inputsLength; i++) {
+                const input = tx.getInput(i);
+                psbt.addInput({
+                    txid: input.txid,
+                    index: input.index,
+                    sequence: input.sequence
+                });
+            }
+
+            // Add outputs
+            for (let i = 0; i < tx.outputsLength; i++) {
+                const output = tx.getOutput(i);
+                psbt.addOutput({
+                    script: output.script,
+                    amount: output.amount
+                });
+            }
+
+            // Convert to PSBT bytes and then to hex
+            const psbtBytes = psbt.toPSBT();
+            const psbtHex = hex.encode(psbtBytes);
+
+            console.log('[ScureSigner] ✅ Transaction converted to PSBT');
+            return psbtHex;
+
+        } catch (error) {
+            console.error('[ScureSigner] Error converting to PSBT:', error);
+            throw new Error(`Failed to convert transaction to PSBT: ${error.message}`);
+        }
+    }
+
+    // Sign a single raw transaction hex
+    async signRawTransaction(txHex, wallet, inputUtxos = []) {
+        console.log('[ScureSigner] Signing raw transaction...');
+
+        try {
+            // For prover transactions, we need to handle them differently
+            // They come as complete transactions that need to be signed
+
+            const txBytes = hex.decode(txHex);
+            const tx = btc.Transaction.fromRaw(txBytes, {
+                network: this.currentNetwork,
+                allowUnknownOutputs: true
+            });
+
+            console.log('[ScureSigner] Transaction parsed, TXID:', tx.id);
+
+            // Derive wallet keys
+            const { privateKey, p2tr } = await this.deriveTapKeys(wallet.mnemonic);
+
+            // Create a new transaction for signing
+            const signedTx = new btc.Transaction({
+                version: tx.version,
+                lockTime: tx.lockTime
+            });
+
+            // Copy inputs and add witness data
+            for (let i = 0; i < tx.inputsLength; i++) {
+                const input = tx.getInput(i);
+                signedTx.addInput({
+                    txid: input.txid,
+                    index: input.index,
+                    sequence: input.sequence,
+                    witnessUtxo: {
+                        script: p2tr.script,
+                        amount: BigInt(777) // Standard BRO token amount
+                    }
+                });
+            }
+
+            // Copy outputs
+            for (let i = 0; i < tx.outputsLength; i++) {
+                const output = tx.getOutput(i);
+                signedTx.addOutput({
+                    script: output.script,
+                    amount: output.amount
+                });
+            }
+
+            // Sign all inputs
+            for (let i = 0; i < signedTx.inputsLength; i++) {
+                signedTx.signIdx(privateKey, i);
+            }
+
+            // Finalize
+            signedTx.finalize();
+
+            const finalTx = signedTx.extract();
+            const finalTxHex = hex.encode(finalTx);
+            const finalTxId = btc.Transaction.fromRaw(finalTx, {
+                network: this.currentNetwork,
+                allowUnknownOutputs: true
+            }).id;
+
+            console.log('[ScureSigner] ✅ Raw transaction signed:', finalTxId);
+
+            return {
+                success: true,
+                txid: finalTxId,
+                signedTxHex: finalTxHex,
+                originalHex: txHex
+            };
+
+        } catch (error) {
+            console.error('[ScureSigner] Error signing raw transaction:', error);
+            throw new Error(`Failed to sign raw transaction: ${error.message}`);
+        }
+    }
+
+    // Validate signed transactions
+    validateSignedTransactions(signedTransactions) {
+        console.log('🔍 Validating signed transactions...');
+
+        for (let i = 0; i < signedTransactions.length; i++) {
+            const tx = signedTransactions[i];
+
+            // Check required fields
+            if (!tx.signedHex || !tx.txid) {
+                throw new Error(`Transaction ${i + 1} missing required fields`);
+            }
+
+            // Validate hex format
+            if (!/^[0-9a-fA-F]+$/.test(tx.signedHex)) {
+                throw new Error(`Transaction ${i + 1} has invalid hex format`);
+            }
+
+            // Validate TXID format
+            if (!/^[0-9a-fA-F]{64}$/.test(tx.txid)) {
+                throw new Error(`Transaction ${i + 1} has invalid TXID format`);
+            }
+        }
+
+        console.log('✅ All signed transactions validated');
+        return true;
+    }
 }
 
 // Export for use in other modules

@@ -138,25 +138,19 @@ class BroadcastComponent {
             this.broadcastBtn.disabled = true;
             this.broadcastBtn.innerHTML = '<span>Broadcasting...</span>';
 
-            // 🧪 TEMPORARY TESTING MODIFICATION 🧪
-            // TODO: REMOVE THIS BEFORE PRODUCTION!
-            // Corrupt the transaction hex for testing (remove last character)
-            // This will cause an API error without broadcasting a real transaction
-            const corruptedTxHex = this.currentTransaction.txHex.slice(0, -1);
-            console.log('🧪 TESTING MODE: Using corrupted transaction hex');
-            console.log('Original length:', this.currentTransaction.txHex.length);
-            console.log('Corrupted length:', corruptedTxHex.length);
-            console.log('⚠️  This will intentionally fail to test error handling');
-            // 🧪 END TEMPORARY MODIFICATION 🧪
-
-            // Broadcast the corrupted transaction (will fail safely)
-            const result = await broadcastService.broadcastTransaction(corruptedTxHex);
+            // Broadcast the transaction to the Bitcoin network
+            const result = await broadcastService.broadcastTransaction(this.currentTransaction.txHex);
 
             this.broadcastResult = result;
 
             // Update UI with success
-            this.updateBroadcastStatus('success', 'Transaction broadcast successful!');
+            this.updateBroadcastStatus('success', '✅ Transaction broadcast successful! Transaction is now in the mempool.');
             this.displayBroadcastResult(result);
+
+            // Permanently disable the broadcast button since it's successful
+            this.broadcastBtn.disabled = true;
+            this.broadcastBtn.classList.add('disabled');
+            this.broadcastBtn.innerHTML = '<span>✅ Successfully Broadcast</span>';
 
             // Complete broadcast step
             if (this.appState) {
@@ -168,19 +162,23 @@ class BroadcastComponent {
         } catch (error) {
             console.error('❌ Broadcast failed:', error);
 
-            // Show detailed error information for testing
+            // Show error information
             const errorMessage = error.message.length > 100
                 ? error.message.substring(0, 100) + '...'
                 : error.message;
 
             // Update UI with error
-            this.updateBroadcastStatus('error', `🚨 Test Error: ${errorMessage}`);
+            this.updateBroadcastStatus('error', `❌ Broadcast failed: ${errorMessage}`);
 
             // Show additional error details in the broadcast display
             this.displayErrorDetails(error);
 
-            // Re-enable the broadcast button
+            // Re-enable the broadcast button for retry
             this.broadcastBtn.disabled = false;
+            this.broadcastBtn.classList.remove('disabled');
+            this.broadcastBtn.style.pointerEvents = 'auto';
+            this.broadcastBtn.style.opacity = '1';
+            this.broadcastBtn.style.cursor = 'pointer';
             this.broadcastBtn.innerHTML = '<span>🔄 Retry Broadcast</span>';
         }
     }
@@ -229,7 +227,7 @@ class BroadcastComponent {
     }
 
     /**
-     * Display detailed error information for testing
+     * Display detailed error information
      * @param {Error} error - The error object
      */
     displayErrorDetails(error) {

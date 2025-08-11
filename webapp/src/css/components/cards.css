@@ -125,6 +125,28 @@
     font-style: italic;
 }
 
+.faucet-info {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(2, 106, 163, 0.1);
+    border: 1px solid rgba(2, 106, 163, 0.2);
+    border-radius: var(--border-radius-sm);
+}
+
+.faucet-info a {
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color var(--transition-fast);
+}
+
+.faucet-info a:hover {
+    color: #0ea5e9;
+    text-decoration: underline;
+}
+
 /* Seedphrase Value */
 .seedphrase-value {
     background: rgba(0, 0, 0, 0.4);
@@ -200,6 +222,11 @@
 
 .stat-value.stopped {
     color: var(--error-color);
+}
+
+.stat-value.disabled {
+    color: #6b7280;
+    opacity: 0.7;
 }
 
 /* Hash Display */

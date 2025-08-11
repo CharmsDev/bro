@@ -69,7 +69,7 @@ export class WalletManager {
         if (createWalletBtn) {
             createWalletBtn.addEventListener('click', async () => {
                 if (!this.wallet) {
-                    alert('Wallet functionality not available');
+                    console.error('❌ Wallet functionality not available');
                     return;
                 }
 
@@ -83,7 +83,7 @@ export class WalletManager {
                     this.appState.completeWalletCreation(walletData);
                 } catch (error) {
                     console.error('Error creating wallet:', error);
-                    alert('Error creating wallet. Please try again.');
+                    console.error('❌ Error creating wallet. Please try again.');
                 }
             });
         }
@@ -100,8 +100,7 @@ export class WalletManager {
                 console.log('AppState available:', !!this.appState);
 
                 if (!this.wallet) {
-                    console.error('Wallet functionality not available');
-                    alert('Wallet functionality not available');
+                    console.error('❌ Wallet functionality not available');
                     return;
                 }
 
@@ -110,12 +109,12 @@ export class WalletManager {
                     if (this.appState) {
                         this.appState.reset();
                     }
-                    
+
                     // Reset transaction manager if available
                     if (this.transactionManager) {
                         this.transactionManager.reset();
                     }
-                    
+
                     this.wallet.clearWallet();
 
                     // BIP39 compliant demo seed phrase
@@ -138,7 +137,7 @@ export class WalletManager {
                     console.log('Address:', address);
                 } catch (error) {
                     console.error('Error loading demo wallet:', error);
-                    alert('Error loading demo wallet. Please try again.');
+                    console.error('❌ Error loading demo wallet. Please try again.');
                 }
             });
         } else {
@@ -211,12 +210,12 @@ export class WalletManager {
 
                     this.appState.reset();
                     this.stepController.resetAllSteps();
-                    
+
                     // Reset mining manager if available
                     if (this.miningManager) {
                         this.miningManager.reset();
                     }
-                    
+
                     // Reset transaction manager if available
                     if (this.transactionManager) {
                         this.transactionManager.reset();
@@ -320,7 +319,7 @@ export class WalletManager {
                     ? `No unspent funds found at this address.\n\nThis address has transaction history but all UTXOs have been spent.\nPlease send NEW funds to this address to continue.`
                     : `Funding monitoring failed: ${error.message}\n\nPlease ensure you have sent funds to the address and try again.`;
 
-                alert(helpMessage);
+                console.error('❌ Funding monitoring error:', helpMessage);
             }
         );
 
