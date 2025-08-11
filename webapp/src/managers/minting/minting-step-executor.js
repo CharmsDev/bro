@@ -12,7 +12,7 @@ export class MintingStepExecutor {
     // Step 1: Wait for mining transaction confirmation
     async executeStep1_waitForConfirmation(miningResult) {
         this.uiManager.updateStepStatus(0, 'active');
-        console.log('📡 Step 1: Waiting for transaction confirmation...');
+        console.log('📡 Waiting for confirmation...');
 
         try {
             const confirmationResult = await this.confirmationMonitor.waitForConfirmation(
@@ -21,8 +21,7 @@ export class MintingStepExecutor {
             );
 
             this.uiManager.updateStepStatus(0, 'completed');
-            console.log('✅ Step 1 completed: Transaction confirmed');
-
+            console.log('✅ Transaction confirmed');
             return confirmationResult;
         } catch (error) {
             this.uiManager.updateStepStatus(0, 'error');
@@ -33,7 +32,7 @@ export class MintingStepExecutor {
     // Step 2: Generate transaction proof
     async executeStep2_generateProof(miningResult, confirmationData) {
         this.uiManager.updateStepStatus(1, 'active');
-        console.log('🔍 Step 2: Generating transaction proof...');
+        console.log('🔍 Generating proof...');
 
         try {
             const proofData = await this.txProofService.getTxProof(
@@ -42,10 +41,8 @@ export class MintingStepExecutor {
             );
 
             this.txProofService.validateProof(proofData);
-
             this.uiManager.updateStepStatus(1, 'completed');
-            console.log('✅ Step 2 completed: Proof generated');
-
+            console.log('✅ Proof generated');
             return proofData;
         } catch (error) {
             this.uiManager.updateStepStatus(1, 'error');
@@ -56,7 +53,7 @@ export class MintingStepExecutor {
     // Step 3: Compose prover payload
     async executeStep3_composePayload(miningResult, proofData, wallet) {
         this.uiManager.updateStepStatus(2, 'active');
-        console.log('🔧 Step 3: Composing prover payload...');
+        console.log('🔧 Composing payload...');
 
         try {
             const miningData = {
@@ -69,19 +66,14 @@ export class MintingStepExecutor {
                 changeAmount: miningResult.changeAmount
             };
 
-            const walletData = {
-                address: wallet.address
-            };
-
             const payload = await this.proverApiService.generatePayload(
                 miningData,
                 proofData,
-                walletData
+                { address: wallet.address }
             );
 
             this.uiManager.updateStepStatus(2, 'completed');
-            console.log('✅ Step 3 completed: Payload composed');
-
+            console.log('✅ Payload composed');
             return payload;
         } catch (error) {
             this.uiManager.updateStepStatus(2, 'error');
@@ -92,44 +84,20 @@ export class MintingStepExecutor {
     // Step 4: Send request to prover API
     async executeStep4_proverApiRequest(payload) {
         this.uiManager.updateStepStatus(3, 'active');
-        console.log('🚀 Step 4: Sending request to prover API...');
+        console.log('🚀 Sending to prover API...');
         
         try {
-            // Log payload info for debugging
-            console.log('📊 Payload info:', {
-                size: JSON.stringify(payload).length + ' bytes',
-                spell_version: payload.spell?.version,
-                apps: Object.keys(payload.spell?.apps || {}),
-                proof_length: payload.spell?.private_inputs?.$01?.tx_block_proof?.length + ' chars',
-                utxo_id: payload.spell?.ins?.[0]?.utxo_id
-            });
-            
-
-            
-            // Show API call details
-            console.log('🌐 Making API call to prover...');
-            console.log('📡 API URL: https://charms-prover-test.fly.dev/spells/prove');
-            console.log('⏳ This may take several minutes - check Network tab in DevTools');
-            
             const startTime = Date.now();
             const proverResponse = await this.proverApiService.sendToProver(payload);
             const duration = Date.now() - startTime;
             
-            console.log(`⏱️ Prover API response time: ${duration}ms (${(duration/1000).toFixed(1)}s)`);
-            console.log('📥 Prover response received:', proverResponse);
-
+            console.log(`⏱️ Prover response: ${(duration/1000).toFixed(1)}s`);
             this.proverApiService.validateProverResponse(proverResponse);
-
             this.uiManager.updateStepStatus(3, 'completed');
-            console.log(`✅ Step 4 completed: Prover API successful`);
-
+            console.log('✅ Prover API successful');
             return proverResponse;
         } catch (error) {
             this.uiManager.updateStepStatus(3, 'error');
-            console.error('❌ Step 4 failed:', error);
-            
-
-            
             throw new Error(`Prover API request failed: ${error.message}`);
         }
     }
@@ -137,7 +105,7 @@ export class MintingStepExecutor {
     // Step 5: Sign transactions
     async executeStep5_signTransactions(proverResponse, wallet) {
         this.uiManager.updateStepStatus(4, 'active');
-        console.log('🔐 Step 5: Signing transactions...');
+        console.log('🔐 Signing transactions...');
 
         try {
             const signedTransactions = await this.transactionSigner.signProverTransactions(
@@ -146,10 +114,8 @@ export class MintingStepExecutor {
             );
 
             this.transactionSigner.validateSignedTransactions(signedTransactions);
-
             this.uiManager.updateStepStatus(4, 'completed');
-            console.log(`✅ Step 5 completed: ${signedTransactions.length} transactions signed`);
-
+            console.log(`✅ ${signedTransactions.length} transactions signed`);
             return signedTransactions;
         } catch (error) {
             this.uiManager.updateStepStatus(4, 'error');
@@ -160,16 +126,13 @@ export class MintingStepExecutor {
     // Step 6: Broadcast transactions
     async executeStep6_broadcastTransactions(signedTransactions) {
         this.uiManager.updateStepStatus(5, 'active');
-        console.log('📡 Step 6: Broadcasting transactions...');
+        console.log('📡 Broadcasting transactions...');
 
         try {
             const broadcastResults = [];
 
             for (let i = 0; i < signedTransactions.length; i++) {
                 const signedTx = signedTransactions[i];
-
-                console.log(`📡 Broadcasting transaction ${i + 1}/${signedTransactions.length}`);
-
                 const result = await this.broadcastService.broadcastTransaction(signedTx.signedHex);
 
                 broadcastResults.push({
@@ -179,12 +142,11 @@ export class MintingStepExecutor {
                     success: result.success
                 });
 
-                console.log(`✅ Transaction ${i + 1} broadcasted: ${result.txid}`);
+                console.log(`✅ TX ${i + 1}: ${result.txid}`);
             }
 
             this.uiManager.updateStepStatus(5, 'completed');
-            console.log(`✅ Step 6 completed: ${broadcastResults.length} transactions broadcasted`);
-
+            console.log(`✅ ${broadcastResults.length} transactions broadcasted`);
             return broadcastResults;
         } catch (error) {
             this.uiManager.updateStepStatus(5, 'error');

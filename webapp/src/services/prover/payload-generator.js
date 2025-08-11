@@ -30,26 +30,13 @@ export class PayloadGenerator {
      */
     async generatePayload(miningData, proofData, walletData) {
         try {
-            console.log('🚀 Starting consolidated payload generation...');
-            
-            // Load template first
             const template = await this.templateLoader.loadTemplate();
-            console.log('📄 Template loaded successfully');
-            
-            // Generate the actual payload
             const payload = await this._generatePayloadCore(miningData, proofData, walletData, template);
-            
-            // Validate payload before returning
             PayloadValidator.validatePayload(payload);
-            console.log('✅ Payload validation passed');
-            
-
-            
-            console.log('🎉 Payload generated successfully!');
+            console.log('✅ Payload generated');
             return payload;
-            
         } catch (error) {
-            console.error('❌ Error in consolidated payload generation:', error);
+            console.error('❌ Payload generation failed:', error);
             throw error;
         }
     }
@@ -64,28 +51,7 @@ export class PayloadGenerator {
      * @returns {Promise<Object>} Generated payload
      */
     async _generatePayloadCore(miningData, proofData, walletData, template) {
-        console.log('🔧 Generating prover API payload...');
-        console.log('🧩 Input summary:', {
-            miningDataKeys: Object.keys(miningData || {}),
-            proofDataKeys: Object.keys(proofData || {}),
-            walletDataKeys: Object.keys(walletData || {})
-        });
-        
-        // CRITICAL DEBUG: Log ALL miningData content to identify where transaction IDs come from
-        console.log('🔍 COMPLETE miningData content:', JSON.stringify(miningData, null, 2));
-        console.log('🔍 COMPLETE proofData content:', JSON.stringify(proofData, null, 2));
-        
-        // CRITICAL: Check for mining transaction ID
-        console.log('🆔 TRANSACTION ID ANALYSIS:');
-        console.log('  - miningData.txid (MINING TX - CORRECT):', miningData?.txid);
-        console.log('  - Will use txid:1 for input UTXO, txid:2 for funding UTXO');
-        console.log('  - NO LONGER using inputTxid/inputVout (those were INCORRECT)');
-        
-        // Check if the mining transaction ID is embedded in the tx hex
-        if (miningData?.txHex) {
-            console.log('🔍 Mining transaction hex length:', miningData.txHex.length);
-            console.log('🔍 Mining transaction hex (first 100 chars):', miningData.txHex.substring(0, 100));
-        }
+        console.log('🚀 Generating payload...');
 
         // SINGLE SOURCE OF TRUTH: Refresh mining transaction data from localStorage
         const storedTx = PayloadUtils.loadMiningDataFromStorage();
@@ -98,13 +64,9 @@ export class PayloadGenerator {
             reward: (typeof storedTx?.reward === 'number') ? storedTx.reward : undefined,
             changeAmount: (typeof storedTx?.changeAmount === 'number') ? storedTx.changeAmount : undefined
         };
-        
-        console.log('🎯 Using MINING transaction ID for all purposes:', mining.txid);
-        console.log('🎯 Will use vout 1 for input UTXO, vout 2 for funding UTXO');
 
-        console.log('🎯 Canonical mining data (after localStorage merge):', mining);
 
-        // Fill missing txHex from network if needed (only if missing)
+
         await this._fillMissingTxHex(mining);
 
         // Log debugging info
@@ -118,12 +80,10 @@ export class PayloadGenerator {
         const appId = await PayloadUtils.generateAppId(mining);
         const minedAmount = PayloadUtils.calculateMinedAmount(mining.difficulty, mining.reward);
 
-        console.log('🧮 appId generated from input UTXO:', appId);
-        console.log('💰 minedAmount (smallest unit):', minedAmount);
 
-        // Clone the template to avoid modifying the original
+
+        // Deep clone template to avoid mutations
         const payload = JSON.parse(JSON.stringify(template));
-        console.log('🧪 Cloned template created.');
 
         // Update the payload with actual values
         this._updatePayloadWithMiningData(payload, mining, resolvedAddress, walletData, minedAmount);
@@ -155,11 +115,9 @@ export class PayloadGenerator {
     async _fillMissingTxHex(mining) {
         if (!mining.txHex && mining.txid) {
             try {
-                console.log('🔎 Fetching txHex from mempool for txid:', mining.txid);
                 mining.txHex = await this.mempoolClient.fetchTxHex(mining.txid);
-                console.log('🧩 Filled txHex from network. Length:', mining.txHex?.length);
             } catch (e) {
-                console.warn('⚠️ Could not fetch tx hex from mempool:', e.message);
+                console.warn('⚠️ Could not fetch tx hex:', e.message);
             }
         }
     }
@@ -186,7 +144,7 @@ export class PayloadGenerator {
         payload.spell.outs[0].address = resolvedAddress || walletData.address;
         payload.spell.outs[0].charms["$01"] = minedAmount;
         
-        console.log('🎯 Set payload utxo_id to MINING transaction:', `${mining.txid}:1`);
+
     }
 
     /**
@@ -194,17 +152,13 @@ export class PayloadGenerator {
      * @private
      */
     _updatePayloadWithProofData(payload, proofData, mining) {
-        console.log('🚨 CRITICAL ANALYSIS - BLOCK PROOF SOURCE:');
-        console.log('  - proofData.proof:', proofData?.proof?.substring(0, 100) + '...');
-        console.log('  - proofData.blockProof:', proofData?.blockProof?.substring(0, 100) + '...');
-        console.log('  - proofData.txBlockProof:', proofData?.txBlockProof?.substring(0, 100) + '...');
-        console.log('  - proofData.merkleProof:', proofData?.merkleProof?.substring(0, 100) + '...');
+
         
         if (proofData && (proofData.proof || proofData.blockProof || proofData.txBlockProof || proofData.merkleProof)) {
             const selectedProof = proofData.proof || proofData.blockProof || proofData.txBlockProof || proofData.merkleProof;
             payload.spell.private_inputs["$01"].tx_block_proof = selectedProof;
             
-            console.log('🚨 SELECTED BLOCK PROOF (first 100 chars):', selectedProof.substring(0, 100));
+
             
             // CRITICAL: Check that proof does not contain OLD input txid and ideally references the mining tx
             const oldTxId = mining.inputTxid;
