@@ -10,9 +10,10 @@ export const PROVER_CONFIG = {
     
     // Template paths (tried in order)
     TEMPLATE_PATHS: [
+        './assets/payload/request.json',
         '/assets/payload/request.json',
-        '/src/assets/payload/request.json', 
-        'assets/payload/request.json'
+        'assets/payload/request.json',
+        '/src/assets/payload/request.json'
     ],
     
     // WASM configuration
