@@ -93,21 +93,52 @@ export class MintingStepExecutor {
     async executeStep4_proverApiRequest(payload) {
         this.uiManager.updateStepStatus(3, 'active');
         console.log('🚀 Step 4: Sending request to prover API...');
-
+        
         try {
-
-
+            // Log payload info for debugging
+            console.log('📊 Payload info:', {
+                size: JSON.stringify(payload).length + ' bytes',
+                spell_version: payload.spell?.version,
+                apps: Object.keys(payload.spell?.apps || {}),
+                proof_length: payload.spell?.private_inputs?.$01?.tx_block_proof?.length + ' chars',
+                utxo_id: payload.spell?.ins?.[0]?.utxo_id
+            });
+            
+            // Save payload to disk for review
+            console.log('💾 Saving payload to disk for review...');
+            await this.proverApiService.savePayloadToDisk(payload);
+            console.log('💾 Payload guardado en disco para revisión - revisa tu carpeta de Descargas');
+            
+            // Show API call details
+            console.log('🌐 Making API call to prover...');
+            console.log('📡 API URL: https://charms-prover-test.fly.dev/spells/prove');
+            console.log('⏳ This may take several minutes - check Network tab in DevTools');
+            
+            const startTime = Date.now();
             const proverResponse = await this.proverApiService.sendToProver(payload);
+            const duration = Date.now() - startTime;
+            
+            console.log(`⏱️ Prover API response time: ${duration}ms (${(duration/1000).toFixed(1)}s)`);
+            console.log('📥 Prover response received:', proverResponse);
 
             this.proverApiService.validateProverResponse(proverResponse);
 
             this.uiManager.updateStepStatus(3, 'completed');
-            console.log(`✅ Step 4 completed: Received ${proverResponse.length} transactions`);
+            console.log(`✅ Step 4 completed: Prover API successful`);
 
             return proverResponse;
         } catch (error) {
             this.uiManager.updateStepStatus(3, 'error');
-            console.log('💾 Payload guardado en disco para revisión - revisa tu carpeta de Descargas');
+            console.error('❌ Step 4 failed:', error);
+            
+            // Always save payload on error for debugging
+            try {
+                await this.proverApiService.savePayloadToDisk(payload);
+                console.log('💾 Payload guardado en disco para revisión - revisa tu carpeta de Descargas');
+            } catch (saveError) {
+                console.error('❌ Failed to save payload:', saveError);
+            }
+            
             throw new Error(`Prover API request failed: ${error.message}`);
         }
     }

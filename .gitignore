@@ -26,9 +26,11 @@ target/
 # Webapp
 /webapp/node_modules/
 
+# tests
+/tests/node_modules
+
 # RJJ
 Contract/
 _rjj/
-XXXtests/
 wasm/
 .DS_Store

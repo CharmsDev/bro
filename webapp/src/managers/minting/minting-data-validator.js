@@ -60,69 +60,41 @@ export class MintingDataValidator {
     static createMiningResult(transaction, appState) {
         const changeAmount = this.extractChangeAmount(transaction, appState);
 
+        console.log('🎯 Creating mining result with CORRECT transaction data:');
+        console.log('  - Using transaction.txid (MINING TX):', transaction.txid);
+        console.log('  - NOT extracting from inputs (those are PREVIOUS tx data)');
+        console.log('  - Will use vout 1 for input, vout 2 for funding');
 
-
-        // Extract input data from transaction hex
-        let inputTxid, inputVout;
-        try {
-            const bitcoin = window.bitcoin;
-            if (bitcoin) {
-                const decodedTx = bitcoin.Transaction.fromHex(transaction.txHex);
-                if (decodedTx && decodedTx.ins && decodedTx.ins[0]) {
-                    const firstInput = decodedTx.ins[0];
-                    inputTxid = Buffer.from(firstInput.hash).reverse().toString('hex');
-                    inputVout = firstInput.index;
-                    console.log('✅ Extracted input data from transaction hex:', { inputTxid, inputVout });
-                }
-            }
-        } catch (error) {
-            console.error('❌ Failed to extract input data from transaction hex:', error);
-        }
-
-        // Use stored transaction reward (difficulty field no longer needed)
+        // Use stored transaction reward
         let reward = transaction.reward;
 
         const result = {
-            txid: transaction.txid,
-            txHex: transaction.txHex,
-            inputTxid: inputTxid,
-            inputVout: inputVout,
-            reward: reward,
-            changeAmount: changeAmount
+            txid: transaction.txid,           // ← MINING transaction ID (CORRECT)
+            txHex: transaction.txHex,         // ← MINING transaction hex
+            reward: reward,                   // ← Reward amount
+            changeAmount: changeAmount        // ← Calculated change
         };
 
-
+        console.log('✅ Mining result created (WITHOUT incorrect input extraction):', result);
         return result;
     }
 
-    // Validate mining result object
+    // Validate mining result data
     static validateMiningResult(miningResult) {
-        if (!miningResult || !miningResult.txid) {
-            throw new Error('Mining transaction ID not found');
+        if (!miningResult) {
+            throw new Error('Mining result is required');
+        }
+
+        if (!miningResult.txid) {
+            throw new Error('Mining transaction ID is required');
         }
 
         if (!miningResult.txHex) {
-            throw new Error('Mining transaction hex not found');
+            throw new Error('Mining transaction hex is required');
         }
 
-        if (!miningResult.inputTxid) {
-            throw new Error('Input transaction ID not found');
-        }
-
-        if (miningResult.inputVout === undefined || miningResult.inputVout === null) {
-            throw new Error('Input transaction vout not found');
-        }
-
-
-
-
-
-        if (!miningResult.changeAmount) {
-            throw new Error('Change amount not found');
-        }
-
-        console.log('✅ Mining result validated successfully');
-        return true;
+        // NO longer require inputTxid/inputVout - we use the mining txid directly
+        console.log('✅ Mining result validation passed (using mining txid directly)');
     }
 
     // Validate wallet data
