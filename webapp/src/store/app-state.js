@@ -7,10 +7,8 @@ export class AppState {
         this.broadcastResult = null;
         this.currentStep = 1;
         this.completedSteps = [];
-
-        // Step management with localStorage persistence
-        this.cleanupStaleData();
-        this.loadState();
+        this.isMonitoring = false;
+        this.monitoringStopFunction = null;
 
         this.STEPS = {
             WALLET_CREATION: 1,
@@ -21,20 +19,19 @@ export class AppState {
             VISIT_WALLET: 6
         };
 
-        this.currentStep = this.loadCurrentStep();
-        this.completedSteps = this.loadCompletedSteps();
-
         this.listeners = {
             walletCreated: [],
             miningCompleted: [],
             utxoFound: [],
             transactionCreated: [],
-            transactionBroadcast: [],
-            stepChanged: [],
-            stepCompleted: []
+            broadcastCompleted: [],
+            stepChanged: []
         };
 
-        // Load persisted data on initialization
+        // Initialize state from localStorage
+        this.currentStep = this.loadCurrentStep();
+        this.completedSteps = this.loadCompletedSteps();
+        this.cleanupStaleData();
         this.loadPersistedData();
     }
 
