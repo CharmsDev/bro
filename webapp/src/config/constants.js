@@ -1,4 +1,4 @@
-let REQUEST_TEMPLATE = {
+export const REQUEST_TEMPLATE = {
     "spell": {
         "version": 6,
         "apps": {
