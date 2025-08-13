@@ -34,10 +34,49 @@ export class PayloadGenerator {
             const payload = await this._generatePayloadCore(miningData, proofData, walletData, template);
             PayloadValidator.validatePayload(payload);
             console.log('✅ Payload generated');
+            
+            // Add payload download functionality for debugging
+            this._offerPayloadDownload(payload);
+            
             return payload;
         } catch (error) {
             console.error('❌ Payload generation failed:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Offer to download the generated payload as JSON file for debugging
+     */
+    _offerPayloadDownload(payload) {
+        try {
+            // Create timestamp for filename
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `payload-${timestamp}.json`;
+            
+            // Create download link
+            const jsonString = JSON.stringify(payload, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create temporary download link
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.style.display = 'none';
+            
+            // Add to DOM, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up URL
+            URL.revokeObjectURL(url);
+            
+            console.log(`📥 Payload downloaded as: ${filename}`);
+            
+        } catch (error) {
+            console.warn('Failed to download payload:', error);
         }
     }
 

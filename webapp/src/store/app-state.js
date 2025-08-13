@@ -5,10 +5,13 @@ export class AppState {
         this.utxo = null;
         this.transaction = null;
         this.broadcastResult = null;
-        this.isMonitoring = false;
-        this.monitoringStopFunction = null;
+        this.currentStep = 1;
+        this.completedSteps = [];
 
         // Step management with localStorage persistence
+        this.cleanupStaleData();
+        this.loadState();
+
         this.STEPS = {
             WALLET_CREATION: 1,
             MINING: 2,
@@ -267,7 +270,40 @@ export class AppState {
         this.isMonitoring = false;
     }
 
+    /**
+     * Clean up stale data from localStorage to prevent deployment issues
+     */
+    cleanupStaleData() {
+        try {
+            const transactionData = localStorage.getItem('bro_transaction_data');
+            if (transactionData) {
+                const parsed = JSON.parse(transactionData);
+                const staleThreshold = 24 * 60 * 60 * 1000; // 24 hours
+                const now = Date.now();
+                
+                // Check if data is older than threshold or contains known problematic txids
+                const staleTxids = [
+                    '4f5fc22d074d1743688f48866c22d1d805b30377dea9542945e3e9d9360cbb9e', // Known stale txid
+                ];
+                
+                const isStale = staleTxids.includes(parsed.txid) || 
+                               (parsed.timestamp && (now - parsed.timestamp) > staleThreshold);
+                
+                if (isStale) {
+                    console.log('🧹 Detected stale transaction data, clearing localStorage...');
+                    console.log('   Stale txid:', parsed.txid);
+                    this.reset();
+                    return;
+                }
+            }
+        } catch (error) {
+            console.warn('Error checking stale data, clearing localStorage:', error);
+            this.reset();
+        }
+    }
+
     reset() {
+        console.log('🧹 Clearing all localStorage data...');
         // Clear localStorage
         localStorage.removeItem('bro_current_step');
         localStorage.removeItem('bro_completed_steps');
@@ -284,7 +320,7 @@ export class AppState {
         this.utxo = null;
         this.transaction = null;
         this.broadcastResult = null;
-        this.currentStep = this.STEPS.WALLET_CREATION;
+        this.currentStep = 1;
         this.completedSteps = [];
         this.stopMonitoring();
 
@@ -293,7 +329,6 @@ export class AppState {
             enabled: true,
             completedSteps: this.completedSteps
         });
-
     }
 
     getState() {
