@@ -3,7 +3,7 @@
  * Uses embedded template constant for reliable loading
  */
 
-import { REQUEST_TEMPLATE } from '../config/constants.js';
+import { REQUEST_TEMPLATE } from './constants.js';
 
 /**
  * Template loader for payload generation
