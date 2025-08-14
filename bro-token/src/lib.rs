@@ -2,6 +2,7 @@ use anyhow::ensure;
 use bitcoin::consensus::encode::deserialize_hex;
 use bitcoin::hashes::Hash;
 use bitcoin::hex::DisplayHex;
+use bitcoin::{CompactTarget, Target};
 use charms_sdk::data::{App, B32, Data, NFT, TOKEN, Transaction, TxId, charm_values};
 use libbro::{compute_mining_hash, count_leading_zero_bits, mined_amount};
 use serde::{Deserialize, Serialize};
@@ -77,6 +78,9 @@ fn token_contract_satisfied(token_app: &App, tx: &Transaction, w: &Data) -> anyh
     can_mint_token(token_app, tx, w)
 }
 
+const TARGET_BITS: u32 = 0x1d00ffff; // testnet4
+// const TARGET_BITS: u32 = 0x17031ab6; // mainnet
+
 fn can_mint_token(token_app: &App, tx: &Transaction, w: &Data) -> anyhow::Result<()> {
     let w: PrivateInput = w.value()?;
     let mining_tx: bitcoin::Transaction = deserialize_hex(&w.tx)?;
@@ -96,6 +100,12 @@ fn can_mint_token(token_app: &App, tx: &Transaction, w: &Data) -> anyhow::Result
         tx_block_proof.extract_matches(&mut txs, &mut _indexes)?;
     }
     ensure!(txs.first() == Some(&mining_txid));
+    let block_hash = tx_block_proof
+        .header
+        .validate_pow(tx_block_proof.header.target())?;
+
+    let target = Target::from_compact(CompactTarget::from_consensus(TARGET_BITS));
+    ensure!(target.is_met_by(block_hash));
 
     let challenge_txid = mining_tx.input[0].previous_output.txid.to_string();
     let challenge_vout = mining_tx.input[0].previous_output.vout;
