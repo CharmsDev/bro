@@ -1,0 +1,347 @@
+/* ===================================
+   CONFIRMATION MONITORING STYLES
+   ===================================
+   Styles for transaction confirmation monitoring UI
+   ================================== */
+
+/* Step 5 Progress Container */
+.step5-progress-container {
+    background: var(--card-background);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.step5-progress-container h3 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Steps Container */
+.steps-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.step-item.pending {
+    background: #f8f9fa;
+    border-color: #e9ecef;
+}
+
+.step-item.active {
+    background: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.step-item.completed {
+    background: #e8f5e8;
+    border-color: #4caf50;
+}
+
+.step-item.error {
+    background: #ffebee;
+    border-color: #f44336;
+}
+
+/* Step Number */
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.step-item.pending .step-number {
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+.step-item.active .step-number {
+    background: #2196f3;
+    color: white;
+}
+
+.step-item.completed .step-number {
+    background: #4caf50;
+    color: white;
+}
+
+.step-item.error .step-number {
+    background: #f44336;
+    color: white;
+}
+
+/* Step Content */
+.step-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.step-name {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+
+.step-status {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.step-progress {
+    margin-top: 12px;
+}
+
+/* Confirmation Progress Styles */
+.confirmation-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.progress-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e3f2fd;
+    border-top: 2px solid #2196f3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.countdown {
+    font-weight: 600;
+    color: #2196f3;
+}
+
+.warning-line {
+    color: #ff9800;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.explorer-line {
+    margin-top: 8px;
+}
+
+.explorer-link {
+    color: #2196f3;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.explorer-link:hover {
+    text-decoration: underline;
+}
+
+/* Success Container */
+.success-container {
+    color: #4caf50;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Error Container */
+.error-container {
+    background: #ffebee;
+    border: 1px solid #ffcdd2;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.error-header {
+    color: #d32f2f;
+    font-weight: 600;
+}
+
+.network-error-info {
+    color: #ff9800;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.error-details {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.retry-info {
+    color: #2196f3;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.critical-info {
+    color: #ff5722;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Critical Error Container */
+.critical-error-container {
+    background: #fff3e0;
+    border: 2px solid #ff9800;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.critical-header {
+    color: #e65100;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.error-message {
+    color: #d32f2f;
+    font-weight: 600;
+}
+
+.error-stats {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+/* Recovery Options */
+.recovery-options {
+    display: flex;
+    gap: 12px;
+    margin: 8px 0;
+}
+
+.retry-button, .cancel-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.retry-button {
+    background: #4caf50;
+    color: white;
+}
+
+.retry-button:hover {
+    background: #45a049;
+    transform: translateY(-1px);
+}
+
+.cancel-button {
+    background: #f44336;
+    color: white;
+}
+
+.cancel-button:hover {
+    background: #da190b;
+    transform: translateY(-1px);
+}
+
+.help-text {
+    color: #666;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+/* Success and Error Messages */
+.success-message, .error-message {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.success-message {
+    background: #e8f5e8;
+    border: 1px solid #4caf50;
+    color: #2e7d32;
+}
+
+.success-message h4 {
+    color: #2e7d32;
+    margin-bottom: 12px;
+}
+
+.error-message {
+    background: #ffebee;
+    border: 1px solid #f44336;
+    color: #c62828;
+}
+
+.error-message h4 {
+    color: #c62828;
+    margin-bottom: 12px;
+}
+
+.results-summary {
+    margin-top: 16px;
+    text-align: left;
+}
+
+.results-summary p {
+    margin: 4px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .step5-progress-container {
+        padding: 16px;
+        margin: 16px 0;
+    }
+    
+    .step-item {
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    .recovery-options {
+        flex-direction: column;
+    }
+    
+    .retry-button, .cancel-button {
+        width: 100%;
+    }
+}

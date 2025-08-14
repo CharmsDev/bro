@@ -141,6 +141,22 @@ export class MintingManager {
         console.log('🛑 Minting process cancelled');
     }
 
+    // Reset confirmation errors and continue monitoring
+    resetConfirmationErrors() {
+        if (this.services.confirmationMonitor) {
+            this.services.confirmationMonitor.resetErrorState();
+            console.log('🔄 Confirmation monitoring errors reset - process will continue');
+        }
+    }
+
+    // Cancel confirmation monitoring specifically
+    cancelMonitoring() {
+        if (this.services.confirmationMonitor) {
+            this.services.confirmationMonitor.cancel();
+            console.log('⏹️ Confirmation monitoring cancelled');
+        }
+    }
+
     // Get current process status
     getStatus() {
         return {

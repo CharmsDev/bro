@@ -64,6 +64,9 @@ export class AppController {
             this.modules.broadcastComponent
         );
 
+        // Expose minting manager globally for UI recovery buttons
+        window.mintingManager = this.modules.mintingManager;
+
         // Setup event listeners BEFORE module initialization (required for wallet loading)
         this.setupStateEventListeners();
 

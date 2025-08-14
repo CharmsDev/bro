@@ -80,9 +80,15 @@ export class MintingUIManager {
         const progressElement = stepElement.querySelector('.step-progress');
         if (!progressElement) return;
 
+        const explorerUrl = `https://mempool.space/testnet4/tx/${txid}`;
+
         if (progress.status === 'pending') {
             progressElement.style.display = 'block';
-            const explorerUrl = `https://mempool.space/testnet4/tx/${txid}`;
+            
+            let errorInfo = '';
+            if (progress.consecutiveErrors > 0) {
+                errorInfo = `<div class="warning-line">⚠️ ${progress.consecutiveErrors} consecutive errors - using backoff delay</div>`;
+            }
 
             progressElement.innerHTML = `
                 <div class="confirmation-progress">
@@ -90,6 +96,7 @@ export class MintingUIManager {
                         <div class="spinner"></div>
                         <span>In Progress... (next check in <span class="countdown" data-seconds="${progress.nextCheck}">${progress.nextCheck}</span>s)</span>
                     </div>
+                    ${errorInfo}
                     <div class="explorer-line">
                         <a href="${explorerUrl}" target="_blank" class="explorer-link">View Transaction in Explorer</a>
                     </div>
@@ -107,9 +114,50 @@ export class MintingUIManager {
             `;
         } else if (progress.status === 'error') {
             progressElement.style.display = 'block';
+            
+            const networkErrorInfo = progress.isNetworkError ? 
+                '<div class="network-error-info">🌐 Network connectivity issue detected</div>' : '';
+            
+            const retryInfo = progress.canRetry ? 
+                '<div class="retry-info">🔄 Will automatically retry with backoff delay</div>' : 
+                '<div class="critical-info">⚠️ Too many consecutive errors - manual intervention may be needed</div>';
+
             progressElement.innerHTML = `
                 <div class="error-container">
-                    <span>❌ Error: ${progress.error}</span>
+                    <div class="error-header">❌ Error: ${progress.error}</div>
+                    ${networkErrorInfo}
+                    <div class="error-details">
+                        <small>Attempt: ${progress.retries + 1} | Consecutive errors: ${progress.consecutiveErrors}</small>
+                    </div>
+                    ${retryInfo}
+                    <div class="explorer-line">
+                        <a href="${explorerUrl}" target="_blank" class="explorer-link">Check Transaction Status</a>
+                    </div>
+                </div>
+            `;
+        } else if (progress.status === 'critical_error') {
+            progressElement.style.display = 'block';
+            progressElement.innerHTML = `
+                <div class="critical-error-container">
+                    <div class="critical-header">🚨 Critical Error - Manual Intervention Required</div>
+                    <div class="error-message">❌ ${progress.error}</div>
+                    <div class="error-stats">
+                        <small>Attempts: ${progress.retries + 1} | Consecutive errors: ${progress.consecutiveErrors}</small>
+                    </div>
+                    <div class="recovery-options">
+                        <button onclick="window.mintingManager?.resetConfirmationErrors()" class="retry-button">
+                            🔄 Reset & Continue Monitoring
+                        </button>
+                        <button onclick="window.mintingManager?.cancelMonitoring()" class="cancel-button">
+                            ⏹️ Stop Monitoring
+                        </button>
+                    </div>
+                    <div class="explorer-line">
+                        <a href="${explorerUrl}" target="_blank" class="explorer-link">Check Transaction Status Manually</a>
+                    </div>
+                    <div class="help-text">
+                        <small>💡 Check your internet connection and transaction status. If the transaction is confirmed, click "Reset & Continue".</small>
+                    </div>
                 </div>
             `;
         }

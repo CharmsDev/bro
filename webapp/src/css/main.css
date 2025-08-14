@@ -26,6 +26,7 @@
 @import './sections/mining.css';
 @import './sections/transaction.css';
 @import './sections/broadcast.css';
+@import './sections/confirmation-monitoring.css';
 @import './sections/faq.css';
 
 /* Utilities */
