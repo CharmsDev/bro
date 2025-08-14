@@ -36,7 +36,7 @@ export class PayloadGenerator {
             console.log('✅ Payload generated');
             
             // Add payload download functionality for debugging
-            this._offerPayloadDownload(payload);
+            await this._offerPayloadDownload(payload);
             
             return payload;
         } catch (error) {
@@ -47,22 +47,53 @@ export class PayloadGenerator {
 
     /**
      * Offer to download the generated payload as JSON file for debugging
+     * Shows a save dialog to let user choose location and filename
      */
-    _offerPayloadDownload(payload) {
+    async _offerPayloadDownload(payload) {
         try {
-            // Create timestamp for filename
+            // Create timestamp for default filename
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = `payload-${timestamp}.json`;
+            const defaultFilename = `payload-${timestamp}.json`;
             
-            // Create download link
             const jsonString = JSON.stringify(payload, null, 2);
+            
+            // Check if File System Access API is supported
+            if ('showSaveFilePicker' in window) {
+                try {
+                    // Use modern File System Access API
+                    const fileHandle = await window.showSaveFilePicker({
+                        suggestedName: defaultFilename,
+                        types: [{
+                            description: 'JSON files',
+                            accept: {
+                                'application/json': ['.json']
+                            }
+                        }]
+                    });
+                    
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(jsonString);
+                    await writable.close();
+                    
+                    console.log(`📥 Payload saved as: ${fileHandle.name}`);
+                    return;
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        console.log('💭 Save dialog was cancelled by user');
+                        return;
+                    }
+                    console.warn('File System Access API failed, falling back to download:', error);
+                }
+            }
+            
+            // Fallback to traditional download method
             const blob = new Blob([jsonString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             
             // Create temporary download link
             const link = document.createElement('a');
             link.href = url;
-            link.download = filename;
+            link.download = defaultFilename;
             link.style.display = 'none';
             
             // Add to DOM, click, and remove
@@ -73,10 +104,10 @@ export class PayloadGenerator {
             // Clean up URL
             URL.revokeObjectURL(url);
             
-            console.log(`📥 Payload downloaded as: ${filename}`);
+            console.log(`📥 Payload downloaded as: ${defaultFilename}`);
             
         } catch (error) {
-            console.warn('Failed to download payload:', error);
+            console.warn('Failed to save payload:', error);
         }
     }
 
