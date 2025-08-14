@@ -6,16 +6,17 @@
 
 /* Step 5 Progress Container */
 .step5-progress-container {
-    background: var(--card-background);
+    background: var(--glass-bg);
     border-radius: 12px;
     padding: 24px;
     margin: 20px 0;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--glass-border);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(20px);
 }
 
 .step5-progress-container h3 {
-    color: var(--primary-color);
+    color: var(--accent-blue);
     margin-bottom: 20px;
     font-size: 1.5rem;
     font-weight: 600;
@@ -32,30 +33,37 @@
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    padding: 16px;
-    border-radius: 8px;
+    padding: 18px;
+    border-radius: 10px;
     transition: all 0.3s ease;
     border: 1px solid transparent;
+    backdrop-filter: blur(10px);
+    margin-bottom: 8px;
 }
 
 .step-item.pending {
-    background: #f8f9fa;
-    border-color: #e9ecef;
+    background: rgba(100, 116, 139, 0.08);
+    border-color: rgba(100, 116, 139, 0.25);
+    opacity: 0.7;
 }
 
 .step-item.active {
-    background: #e3f2fd;
-    border-color: #2196f3;
+    background: rgba(2, 106, 163, 0.18);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 20px rgba(2, 106, 163, 0.2);
+    transform: translateY(-1px);
 }
 
 .step-item.completed {
-    background: #e8f5e8;
-    border-color: #4caf50;
+    background: var(--success-bg);
+    border-color: var(--success-color);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
 }
 
 .step-item.error {
-    background: #ffebee;
-    border-color: #f44336;
+    background: var(--error-bg);
+    border-color: var(--error-color);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
 }
 
 /* Step Number */
@@ -63,31 +71,32 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .step-item.pending .step-number {
-    background: #e9ecef;
-    color: #6c757d;
+    background: rgba(100, 116, 139, 0.3);
+    color: var(--text-secondary);
 }
 
 .step-item.active .step-number {
-    background: #2196f3;
+    background: var(--accent-blue);
     color: white;
 }
 
 .step-item.completed .step-number {
-    background: #4caf50;
+    background: var(--success-color);
     color: white;
 }
 
 .step-item.error .step-number {
-    background: #f44336;
+    background: var(--error-color);
     color: white;
 }
 
@@ -99,13 +108,15 @@
 
 .step-name {
     font-weight: 600;
-    color: var(--text-color);
-    margin-bottom: 4px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    font-size: 1.05rem;
 }
 
 .step-status {
-    font-size: 0.9rem;
-    color: var(--text-muted);
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .step-progress {

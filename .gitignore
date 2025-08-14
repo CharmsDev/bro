@@ -28,6 +28,7 @@ target/
 
 # tests
 /tests/node_modules
+/tests/payloads
 
 # RJJ
 Contract/
