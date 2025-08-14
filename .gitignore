@@ -29,6 +29,7 @@ target/
 # tests
 /tests/node_modules
 /tests/payloads
+webapp/src/assets/test/prover-txs.ts
 
 # RJJ
 Contract/
