@@ -1,4 +1,6 @@
 // Individual step execution for minting process
+import { signSpellTransaction } from '../../services/bitcoin/signSpellTx.js';
+
 export class MintingStepExecutor {
     constructor(services, uiManager) {
         this.confirmationMonitor = services.confirmationMonitor;
@@ -89,17 +91,16 @@ export class MintingStepExecutor {
         try {
             const startTime = Date.now();
 
-            // MOCK RESPONSE: Using test data instead of actual API call for faster testing
-            // Comment out the real API call:
+            // COMMENTED OUT: Real API call to prover
             // const proverResponse = await this.proverApiService.sendToProver(payload);
 
-            // Mock prover response with test transactions (must be array format)
+            // Mock prover response with new test transactions from prover (must be array format)
             const proverResponse = [
-                "0200000001525ba9b49e5aa34c566767d716930c9243d715d859914a6a42ac729e096ad7380200000000ffffffff01c0990700000000002251204179e238aa8797abb9c76dbe0d8187d2941552b6f361bd6376165d677de5c28000000000",
-                "02000000000102525ba9b49e5aa34c566767d716930c9243d715d859914a6a42ac729e096ad7380100000000ffffffff152048f09e99f81bbb5c498d3b8de966390a30fc63af68fe35dc6714859a20330000000000ffffffff03e803000000000000225120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc487053f1dc6880949dc684c31050000000000001600141db4ded10fa155036bfb40717ea68022be899fbbff91070000000000225120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc487053f1dc6880949dc684c0003410214cce33631f05471a31adf736645077f5d59b10b970cfa043dd21a541e84ffbcc9d725695e34084ccc29364dada8db7abf424caadb549d29c2bf7d4282d6c781fdd4020063057370656c6c4d080282a36776657273696f6e06627478a1646f75747381a1001b000000035d498080716170705f7075626c69635f696e70757473a18361749820187c18f818ee1871188618e40f187b18d910183218d11849186718bc18a1185218df09187f18720d18d618d81849185718a4182e18d61857188618ee9820186c18730a188c182518251844185a18cd188e18fe18cb188d18ae1865184918dc186418ce187818ef183c18501863181e18e018da18d918ab188f18761818f699010418a41859184c18590c188b18e31855188e1828185a1886187c18561830183d189f18c118af187317188d18f11418841118a7186718ad18cf181a18ca02181818dd031825185218f01892181a186018b4187c186f1875181a184418da18f218be18d418d818ed186218a80018cb1843186e183718ec1823187918b8187c1895188a08131899183318b218f518d218cc18fd187818a4185318d4186018a4185218c61824183c18a5187e1833186e18bf18d6181f18ce1818185100185f18e21827183418561827187d18db18a218c1184d18f7184a184300184018f518dc185218a3186c18b80d18c3184518b0181a1822183918c418e8185f18b818dd151888141837188f1886185c18a51518d2188018980e1876188f189b185409181a18ce184c18891854183a18fd18c718be18a41838188f183218e1181f18f718cb1848181918cb183c130f187a18e7184a18f14c9c18971825182c0d071856184d18bd1818187518e918ac185718330d1855186b183f18d80c184f186911183e188b187e18a318d5187b18700618cb186f18db18da182e18c9185b1822185118d0187a186d18b018c618c8189f1875182e120504184d186c18d0189c18a7185e189f18561832189c1858185e18d718811869186e18901824182f1888182b16187d182f18da1822185918dd183318c8187568202ecf1f2e827fc4801e00ce828bcb0bb1a3cbe4bd7c94725761aea5cd43d25412ac21c02ecf1f2e827fc4801e00ce828bcb0bb1a3cbe4bd7c94725761aea5cd43d2541200000000"
+                "0200000001197b2e0e9753261e8cb2eb72d2c255ae99aa2460a7813892dd78baabce6a401f0200000000ffffffff01c034020000000000225120d395f5b49a17f2f06ff03d982130d25cc5042e4d6e97611a9388bdf16fb9415700000000",
+                "02000000000102197b2e0e9753261e8cb2eb72d2c255ae99aa2460a7813892dd78baabce6a401f0100000000ffffffff67ebd633332f41b067314e3bdf67526d679efb98eda2334142f4174539e7c8ac0000000000ffffffff03e803000000000000225120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc487053f1dc6880949dc684c4e050000000000001600141db4ded10fa155036bfb40717ea68022be899fbbe02c020000000000225120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc487053f1dc6880949dc684c000341591b5a2f65fca7c0a1e042e2f8520a83c27932bc115ef68dbdc520d59c3203e5f297b3d2a5b0396328ea626127c3eaf3ff6f3cb878d19f2f967bd09ec8be80f481fdda020063057370656c6c4d080282a36776657273696f6e06627478a1646f75747381a1001b000000035d498080716170705f7075626c69635f696e70757473a18361749820187c18f818ee1871188618e40f187b18d910183218d11849186718bc18a1185218df09187f18720d18d618d81849185718a4182e18d61857188618ee9820186c18730a188c182518251844185a18cd188e18fe18cb188d18ae1865184918dc186418ce187818ef183c18501863181e18e018da18d918ab188f18761818f699010418a41859184c1859181a188e1318b3185a18fe187e18de061318270318c9188116186518a0189b1893181a18be184018321518db18bd18fe1871189a18c918a7186a182b181a18a518d5185218df18ec18ba18521840186b18a418ea18be186518af18271888181e18d2189518d018f6185a18c9183a185b131865185a183a18621828182218f01867188a18f8186f18dd187218e418e0187b184618a018cd188918e01870184e181c187918c018b118291872186918be18d518180418dc183e182118bc1887189018ba182518d518e7185f186e18c31856187018ad18ab18dc0e18a71882185e189118be18c7187b18ff183c18f4188d18df05185a18a31618f5185a182818b7184c18e018c1187a18711894181b18f512183c1860187118a3185c18261864182617186c1840182d184318e218a6189a188e181c0e1879186518fd182018ed1862187418ba18f1184ca24818f018c318ab18ed181d18ce189b1838183e182d0a18cb18bd18f2181d187c13182518b0188c189e0e1851189d186c18241891189018ba188a188e18d3183d1318a618df18df189b18dd18451828183f18b0186d1844182718571819185e18fc185f0118d70818d8186d18fe1885187618ff18ab183b181e183018de18781318a118ae18460718a6183d18c1189b18e718b6187f0618561887188d18271886186f6820cfd13cbd465bdcccc12570969cab2883899d296b65c7f6495d081e256a097b30ac21c0cfd13cbd465bdcccc12570969cab2883899d296b65c7f6495d081e256a097b3000000000"
             ];
 
-            console.log('🧪 Using MOCK prover response for testing');
+            console.log('🧪 Using NEW hardcoded prover response from real mining transaction');
 
             const duration = Date.now() - startTime;
 
@@ -107,6 +108,7 @@ export class MintingStepExecutor {
             this.proverApiService.validateProverResponse(proverResponse);
             this.uiManager.updateStepStatus(3, 'completed');
             console.log('✅ Prover API successful');
+
             return proverResponse;
         } catch (error) {
             this.uiManager.updateStepStatus(3, 'error');
@@ -117,17 +119,37 @@ export class MintingStepExecutor {
     // Step 5: Sign transactions
     async executeStep5_signTransactions(proverResponse, wallet) {
         this.uiManager.updateStepStatus(4, 'active');
-        console.log('🔐 Signing transactions...');
 
         try {
-            const signedTransactions = await this.transactionSigner.signProverTransactions(
-                proverResponse,
-                wallet
+            const { signCommitTransaction } = await import('../../services/bitcoin/signCommitTx.js');
+
+            const commitTxHex = proverResponse[0];
+            const spellTxHex = proverResponse[1];
+
+            // Sign commit transaction
+            const commitResult = await signCommitTransaction(commitTxHex);
+
+            // Sign spell transaction using the signed commit transaction
+            const spellResult = await signSpellTransaction(
+                spellTxHex,
+                commitResult.signedHex,
+                (message) => { }
             );
 
-            this.transactionSigner.validateSignedTransactions(signedTransactions);
+            const signedTransactions = [
+                {
+                    type: 'commit',
+                    signedHex: commitResult.signedHex,
+                    txid: commitResult.txid
+                },
+                {
+                    type: 'spell',
+                    signedHex: spellResult.signedHex,
+                    txid: spellResult.txid
+                }
+            ];
+
             this.uiManager.updateStepStatus(4, 'completed');
-            console.log(`✅ ${signedTransactions.length} transactions signed`);
             return signedTransactions;
         } catch (error) {
             this.uiManager.updateStepStatus(4, 'error');
@@ -139,6 +161,22 @@ export class MintingStepExecutor {
     async executeStep6_broadcastTransactions(signedTransactions) {
         this.uiManager.updateStepStatus(5, 'active');
         console.log('📡 Broadcasting transactions...');
+
+        // Print signed transactions in hex format for manual testing
+        console.log('\n=== SIGNED TRANSACTIONS (HEX) ===');
+        const txHexArray = [];
+        for (let i = 0; i < signedTransactions.length; i++) {
+            const signedTx = signedTransactions[i];
+            console.log(`TX ${i + 1} (${signedTx.txid}):`);
+            console.log(signedTx.signedHex);
+            txHexArray.push(`"${signedTx.signedHex}"`);
+        }
+
+        // Print bitcoin-cli command for manual testing
+        const bitcoinCliCommand = `bitcoin-cli testmempoolaccept '[${txHexArray.join(',')}]'`;
+        console.log('\n=== BITCOIN-CLI TEST COMMAND ===');
+        console.log(bitcoinCliCommand);
+        console.log('\n=====================================\n');
 
         try {
             const broadcastResults = [];

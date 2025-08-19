@@ -27,6 +27,7 @@ target/
 /webapp/node_modules/
 
 # tests
+/tests
 /tests/node_modules
 /tests/payloads
 webapp/src/assets/test/prover-txs.ts

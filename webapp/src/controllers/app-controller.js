@@ -1,6 +1,6 @@
 import { DOMElements } from '../managers/dom-elements.js';
 import { StepController } from '../managers/step-controller.js';
-import { WalletManager } from '../managers/wallet-manager.js';
+import { WalletManager } from '../managers/wallet/wallet-manager.js';
 import { MiningManager } from '../managers/mining-manager.js';
 import { TransactionManager } from '../managers/transaction-manager.js';
 import { WalletVisitManager } from '../managers/wallet-visit-manager.js';

@@ -97,6 +97,155 @@ export class WalletService {
         return this.generateTestnet4Address(seedPhrase, 1);
     }
 
+    // Generate Taproot keys (address + private key) for a specific index
+    async generateTaprootKeysForIndex(seedPhrase, index) {
+        console.log(`🔑 Generating keys for index ${index}...`);
+        
+        try {
+            const bitcoin = window.bitcoin;
+            const bip39 = window.bip39;
+            const bip32 = window.bip32;
+            const ecc = window.ecc;
+
+            if (!bitcoin || !bip39 || !bip32 || !ecc) {
+                throw new Error('Required libraries not available');
+            }
+
+            // Convert mnemonic to seed buffer
+            const seed = await bip39.mnemonicToSeed(seedPhrase);
+
+            // Generate BIP32 root key
+            const root = bip32.fromSeed(seed, bitcoin.networks.testnet);
+
+            // Use the same derivation path: m/86'/0'/0'/0/{index}
+            const derivationPath = `m/86'/0'/0'/0/${index}`;
+            const child = root.derivePath(derivationPath);
+            const privateKey = child.privateKey;
+            
+            if (!privateKey) {
+                throw new Error(`Could not derive private key for path: ${derivationPath}`);
+            }
+
+            // Get the public key and convert to x-only format for Taproot
+            const pubkey = child.publicKey;
+            const xOnlyPubkey = Buffer.from(pubkey.slice(1, 33));
+
+            // Apply Taproot tweaking
+            const tweak = bitcoin.crypto.taggedHash('TapTweak', xOnlyPubkey);
+
+            // Apply tweak to private key
+            const isOddY = child.publicKey[0] === 0x03;
+            const tweakedPrivateKey = ecc.privateAdd(
+                isOddY ? ecc.privateNegate(privateKey) : privateKey,
+                tweak
+            );
+            
+            if (!tweakedPrivateKey) {
+                throw new Error('Tweak resulted in invalid private key');
+            }
+
+            // Create P2TR payment object
+            const p2tr = bitcoin.payments.p2tr({
+                internalPubkey: xOnlyPubkey,
+                network: bitcoin.networks.testnet
+            });
+
+            console.log(`   Index ${index}: ${p2tr.address}`);
+
+            return {
+                index,
+                address: p2tr.address,
+                derivationPath,
+                privateKey: privateKey.toString('hex'),
+                tweakedPrivateKey: tweakedPrivateKey.toString('hex'),
+                internalPubkey: xOnlyPubkey.toString('hex'),
+                script: p2tr.output.toString('hex')
+            };
+
+        } catch (error) {
+            console.error(`Error generating keys for index ${index}:`, error);
+            throw error;
+        }
+    }
+
+    // Get tweaked private key for a specific address index
+    async getTweakedKeysForIndex(index) {
+        try {
+            const seedPhrase = this.getSeedPhrase();
+            if (!seedPhrase) {
+                throw new Error('Seed phrase not found in wallet storage');
+            }
+
+            const bitcoin = window.bitcoin;
+            const bip39 = window.bip39;
+            const bip32 = window.bip32;
+            const ecc = window.ecc;
+
+            if (!bitcoin || !bip39 || !bip32 || !ecc) {
+                throw new Error('Required libraries not available');
+            }
+
+            const seed = await bip39.mnemonicToSeed(seedPhrase);
+            const root = bip32.fromSeed(seed, bitcoin.networks.testnet);
+            const derivationPath = `m/86'/0'/0'/0/${index}`;
+            const child = root.derivePath(derivationPath);
+            const privateKey = child.privateKey;
+            
+            if (!privateKey) {
+                throw new Error(`Could not derive private key for path: ${derivationPath}`);
+            }
+
+            const xOnlyPubkey = Buffer.from(child.publicKey.slice(1, 33));
+            const tweak = bitcoin.crypto.taggedHash('TapTweak', xOnlyPubkey);
+            const isOddY = child.publicKey[0] === 0x03;
+            const tweakedPrivateKey = ecc.privateAdd(
+                isOddY ? ecc.privateNegate(privateKey) : privateKey,
+                tweak
+            );
+            
+            if (!tweakedPrivateKey) {
+                throw new Error('Tweak resulted in invalid private key');
+            }
+
+            const p2tr = bitcoin.payments.p2tr({
+                internalPubkey: xOnlyPubkey,
+                network: bitcoin.networks.testnet
+            });
+
+            return {
+                tweakedPrivateKey,
+                internalPubkey: xOnlyPubkey,
+                p2tr,
+                address: p2tr.address
+            };
+
+        } catch (error) {
+            console.error(`Error getting tweaked keys for index ${index}:`, error);
+            throw error;
+        }
+    }
+
+    // Get seed phrase from localStorage
+    getSeedPhrase() {
+        const walletData = JSON.parse(localStorage.getItem('wallet_data') || '{}');
+        return walletData.seedPhrase;
+    }
+
+    // Generate the first 3 addresses with their private keys
+    async generateMultipleAddresses(seedPhrase, count = 3) {
+        console.log(`🏗️ Generating ${count} addresses with private keys...`);
+        
+        const addresses = [];
+        
+        for (let i = 0; i < count; i++) {
+            const keyData = await this.generateTaprootKeysForIndex(seedPhrase, i);
+            addresses.push(keyData);
+        }
+
+        console.log(`✅ Generated ${count} addresses successfully`);
+        return addresses;
+    }
+
     // Copy text to clipboard
     async copyToClipboard(text) {
         try {
@@ -114,14 +263,48 @@ export class WalletService {
         }
     }
 
-    // Store wallet data in localStorage
-    storeWallet(seedPhrase, address) {
-        const walletData = {
-            seedPhrase,
-            address,
-            created: new Date().toISOString()
-        };
-        localStorage.setItem('charmsWallet', JSON.stringify(walletData));
+    // Store wallet data in localStorage with multiple addresses and private keys
+    async storeWallet(seedPhrase, address = null) {
+        console.log('💾 Storing wallet data with multiple addresses...');
+        
+        try {
+            // Generate the first 3 addresses with private keys
+            const addresses = await this.generateMultipleAddresses(seedPhrase, 3);
+            
+            const walletData = {
+                seedPhrase,
+                address: address || addresses[0].address, // Keep backward compatibility
+                addresses: addresses, // New: array of addresses with keys
+                created: new Date().toISOString()
+            };
+            
+            localStorage.setItem('charmsWallet', JSON.stringify(walletData));
+            
+            // Print wallet data to console for verification
+            console.log('📋 WALLET DATA STORED IN LOCALSTORAGE:');
+            console.log('=====================================');
+            console.log('Seed Phrase:', seedPhrase);
+            console.log('Primary Address (Index 0):', addresses[0].address);
+            console.log('');
+            
+            addresses.forEach((addr, i) => {
+                console.log(`🏠 ADDRESS ${i}:`);
+                console.log(`   Address: ${addr.address}`);
+                console.log(`   Derivation Path: ${addr.derivationPath}`);
+                console.log(`   Private Key: ${addr.privateKey}`);
+                console.log(`   Tweaked Private Key: ${addr.tweakedPrivateKey}`);
+                console.log(`   Internal Pubkey: ${addr.internalPubkey}`);
+                console.log(`   Script: ${addr.script}`);
+                console.log('');
+            });
+            
+            console.log('✅ Wallet data stored successfully with 3 addresses');
+            return walletData;
+            
+        } catch (error) {
+            console.error('❌ Error storing wallet data:', error);
+            throw error;
+        }
     }
 
     // Retrieve wallet data from localStorage

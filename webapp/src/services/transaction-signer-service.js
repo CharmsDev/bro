@@ -140,7 +140,7 @@ class ScureBitcoinTransactionSigner {
                 const signedResult = await this.signPSBT(
                     psbtHex,
                     { amount: 777 }, // Standard amount for BRO tokens
-                    wallet.mnemonic
+                    wallet.seedPhrase || wallet.mnemonic
                 );
 
                 signedTransactions.push({
@@ -229,7 +229,7 @@ class ScureBitcoinTransactionSigner {
             console.log('[ScureSigner] Transaction parsed, TXID:', tx.id);
 
             // Derive wallet keys
-            const { privateKey, p2tr } = await this.deriveTapKeys(wallet.mnemonic);
+            const { privateKey, p2tr } = await this.deriveTapKeys(wallet.seedPhrase || wallet.mnemonic);
 
             // Create a new transaction for signing
             const signedTx = new btc.Transaction({
