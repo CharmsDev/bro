@@ -1,4 +1,5 @@
 import * as bitcoin from 'bitcoinjs-lib';
+import { environmentConfig } from '../../config/environment.js';
 
 // Decode Bitcoin script to determine type
 export function decodeScript(script) {
@@ -86,9 +87,9 @@ export async function getUtxoValue(txid, vout) {
     try {
         // Fetching UTXO from QuickNode
 
-        // Hardcoded QuickNode credentials (bypass env variable issues)
-        const quickNodeUrl = 'https://holy-proud-lambo.btc-testnet4.quiknode.pro/cb3fefdb3473023b292894cd92ca9bd732ec9798/';
-        const quickNodeApiKey = 'cb3fefdb3473023b292894cd92ca9bd732ec9798';
+        // Get QuickNode credentials from centralized config
+        const quickNodeUrl = environmentConfig.getQuickNodeUrl();
+        const quickNodeApiKey = environmentConfig.getQuickNodeApiKey();
 
         if (!quickNodeUrl) {
             throw new Error('QuickNode URL not configured');

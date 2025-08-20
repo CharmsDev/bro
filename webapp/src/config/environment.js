@@ -1,15 +1,28 @@
 // Environment configuration for CharmsGión Bro
 class EnvironmentConfig {
     constructor() {
-        // Default configuration
+        // Get network from environment variables
+        const network = import.meta.env.VITE_BITCOIN_NETWORK;
+
+        // Select QuickNode credentials based on network
+        let quicknodeUrl, quicknodeApiKey;
+
+        if (network === 'mainnet') {
+            quicknodeUrl = import.meta.env.VITE_QUICKNODE_BITCOIN_MAINNET_URL;
+            quicknodeApiKey = import.meta.env.VITE_QUICKNODE_BITCOIN_MAINNET_API_KEY;
+        } else {
+            // Default to testnet4
+            quicknodeUrl = import.meta.env.VITE_QUICKNODE_BITCOIN_TESTNET_URL;
+            quicknodeApiKey = import.meta.env.VITE_QUICKNODE_API_KEY;
+        }
+
+        // Configuration object
         this.config = {
             bitcoin: {
-                network: 'testnet4',
-                apis: {
-                    mempool: {
-                        testnet4: 'https://mempool.space/testnet4/api',
-                        mainnet: 'https://mempool.space/api'
-                    }
+                network: network,
+                quicknode: {
+                    url: quicknodeUrl,
+                    apiKey: quicknodeApiKey
                 }
             }
         };
@@ -20,15 +33,14 @@ class EnvironmentConfig {
         return this.config.bitcoin.network;
     }
 
-    // Get the mempool API URL for the current network
-    getMempoolApiUrl() {
-        const network = this.getNetwork();
-        return this.config.bitcoin.apis.mempool[network];
+    // Get QuickNode URL
+    getQuickNodeUrl() {
+        return this.config.bitcoin.quicknode.url;
     }
 
-    // Get the broadcast API URL
-    getBroadcastApiUrl() {
-        return `${this.getMempoolApiUrl()}/tx`;
+    // Get QuickNode API Key
+    getQuickNodeApiKey() {
+        return this.config.bitcoin.quicknode.apiKey;
     }
 
     // Check if we're on testnet
@@ -36,9 +48,12 @@ class EnvironmentConfig {
         return this.getNetwork().includes('testnet');
     }
 
-    // Get transaction status API URL
-    getTransactionStatusUrl(txid) {
-        return `${this.getMempoolApiUrl()}/tx/${txid}`;
+    // Get explorer URL for transactions
+    getExplorerUrl(txid) {
+        const baseUrl = this.isTestnet()
+            ? 'https://mempool.space/testnet4'
+            : 'https://mempool.space';
+        return `${baseUrl}/tx/${txid}`;
     }
 }
 
