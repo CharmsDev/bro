@@ -4,6 +4,7 @@ import topLevelAwait from 'vite-plugin-top-level-await';
 
 export default defineConfig({
     root: 'src',
+    envDir: '../',
     plugins: [wasm(), topLevelAwait()],
     server: {
         port: 5179,
@@ -11,7 +12,6 @@ export default defineConfig({
     },
     define: {
         global: 'globalThis',
-        'process.env': {},
     },
     resolve: {
         alias: {

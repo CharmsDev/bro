@@ -1,4 +1,4 @@
-import config from '@/config';
+// Remove unused config import - using env variables directly
 
 // Broadcasts Bitcoin transactions using QuickNode API
 export async function broadcastTransactions(signedCommitTx, signedSpellTx, logCallback = () => { }) {
@@ -7,18 +7,29 @@ export async function broadcastTransactions(signedCommitTx, signedSpellTx, logCa
             throw new Error('Please sign the transactions first');
         }
 
-        const quicknodeUrl = process.env.NEXT_PUBLIC_QUICKNODE_BITCOIN_TESTNET_URL;
-        const apiKey = process.env.NEXT_PUBLIC_QUICKNODE_API_KEY;
+        // Determine network and select appropriate credentials
+        const network = import.meta.env.VITE_BITCOIN_NETWORK || 'testnet4';
+
+        let quicknodeUrl, apiKey;
+
+        if (network === 'mainnet') {
+            quicknodeUrl = import.meta.env.VITE_QUICKNODE_BITCOIN_MAINNET_URL;
+            apiKey = import.meta.env.VITE_QUICKNODE_BITCOIN_MAINNET_API_KEY;
+        } else {
+            // Default to testnet4
+            quicknodeUrl = import.meta.env.VITE_QUICKNODE_BITCOIN_TESTNET_URL;
+            apiKey = import.meta.env.VITE_QUICKNODE_API_KEY;
+        }
 
         if (!quicknodeUrl || !apiKey) {
-            throw new Error('QuickNode API credentials not configured');
+            throw new Error(`QuickNode API credentials not configured for ${network}`);
         }
 
         logCallback('Starting transaction broadcast process...');
-        logCallback('Broadcasting commit transaction...');
+        logCallback('Broadcasting both transactions as package...');
 
-        // Broadcast commit transaction first
-        const commitResponse = await fetch(quicknodeUrl, {
+        // Broadcast both transactions as a package using submitpackage
+        const packageResponse = await fetch(quicknodeUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -27,56 +38,30 @@ export async function broadcastTransactions(signedCommitTx, signedSpellTx, logCa
             body: JSON.stringify({
                 jsonrpc: '2.0',
                 id: 1,
-                method: 'sendrawtransaction',
-                params: [signedCommitTx.signedHex]
+                method: 'submitpackage',
+                params: [
+                    [signedCommitTx.signedHex, signedSpellTx.signedHex]
+                ]
             })
         });
 
-        if (!commitResponse.ok) {
-            throw new Error(`Commit broadcast failed: ${commitResponse.status}`);
+        if (!packageResponse.ok) {
+            throw new Error(`Package broadcast failed: ${packageResponse.status}`);
         }
 
-        const commitResult = await commitResponse.json();
+        const packageResult = await packageResponse.json();
 
-        if (commitResult.error) {
-            throw new Error(`Commit broadcast error: ${commitResult.error.message}`);
+        if (packageResult.error) {
+            throw new Error(`Package broadcast error: ${packageResult.error.message}`);
         }
 
-        const commitTxid = commitResult.result;
+        // Extract transaction IDs from package result
+        const results = packageResult.result;
+        const commitTxid = results.tx_results[0]?.txid || signedCommitTx.txid;
+        const spellTxid = results.tx_results[1]?.txid || signedSpellTx.txid;
 
-        logCallback(`Commit transaction broadcast successful!`);
+        logCallback(`Package broadcast successful!`);
         logCallback(`Commit transaction ID: ${commitTxid}`);
-
-        logCallback('Broadcasting spell transaction...');
-
-        // Broadcast spell transaction
-        const spellResponse = await fetch(quicknodeUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 2,
-                method: 'sendrawtransaction',
-                params: [signedSpellTx.signedHex]
-            })
-        });
-
-        if (!spellResponse.ok) {
-            throw new Error(`Spell broadcast failed: ${spellResponse.status}`);
-        }
-
-        const spellResult = await spellResponse.json();
-
-        if (spellResult.error) {
-            throw new Error(`Spell broadcast error: ${spellResult.error.message}`);
-        }
-
-        const spellTxid = spellResult.result;
-
-        logCallback(`Spell transaction broadcast successful!`);
         logCallback(`Spell transaction ID: ${spellTxid}`);
 
         return {

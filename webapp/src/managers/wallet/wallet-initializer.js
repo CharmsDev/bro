@@ -17,16 +17,9 @@ export class WalletInitializer {
         try {
             const existingWallet = this.wallet.getStoredWallet();
             if (existingWallet) {
-                console.log('Loaded existing wallet:', existingWallet);
-
-                // Check if wallet has new multi-address format
-                if (!existingWallet.addresses) {
-                    console.log('🔄 Wallet needs upgrade to multi-address format. Regenerating...');
-                    await this.upgradeWallet(existingWallet);
-                } else {
-                    console.log('✅ Wallet already has multi-address format');
-                    this.appState.completeWalletCreation(existingWallet);
-                }
+                console.log('✅ Wallet loaded');
+                console.log('🔄 Wallet needs upgrade to multi-address format. Regenerating...');
+                await this.upgradeWallet(existingWallet);
             } else {
                 console.log('No existing wallet found');
             }

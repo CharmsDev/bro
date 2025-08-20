@@ -52,12 +52,12 @@ export class MintingManager {
 
     // Initialize the MintingManager
     initialize() {
-        console.log('🔧 MintingManager initialized');
+        console.log('✅ Minting system ready');
     }
 
     // Execute the complete minting process
     async executeMintingProcess() {
-        console.log('🚀 Starting BRO Token Minting Process');
+        console.log('🔄 Loading mining data...');
 
         try {
             // Validate prerequisites and prepare data
@@ -77,7 +77,7 @@ export class MintingManager {
             return true;
 
         } catch (error) {
-            console.error('❌ Minting process failed:', error);
+            // Mining progress found
             this.uiManager.showError(error.message);
             return false;
         }
@@ -89,9 +89,9 @@ export class MintingManager {
         const transaction = this.appState.transaction;
         const broadcastResult = this.appState.broadcastResult;
 
-        console.log('🔍 Current app state:', state);
-        console.log('🔍 Transaction data:', transaction);
-        console.log('🔍 Broadcast result:', broadcastResult);
+        // Checking app state
+        console.log('✅ Mining data loaded');
+        // Broadcast result available
 
         // Validate prerequisites
         MintingDataValidator.validatePrerequisites(state, transaction, broadcastResult);
@@ -100,7 +100,7 @@ export class MintingManager {
         this.miningResult = MintingDataValidator.createMiningResult(transaction, this.appState);
         MintingDataValidator.validateMiningResult(this.miningResult);
 
-        console.log('✅ Process data prepared and validated');
+        console.log('✅ Process data validated');
     }
 
     // Execute all steps in sequence

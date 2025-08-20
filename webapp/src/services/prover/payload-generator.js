@@ -33,7 +33,7 @@ export class PayloadGenerator {
             const template = await this.templateLoader.loadTemplate();
             const payload = await this._generatePayloadCore(miningData, proofData, walletData, template);
             PayloadValidator.validatePayload(payload);
-            console.log('✅ Payload generated');
+            // Payload ready
             
             // Add payload download functionality for debugging
             await this._offerPayloadDownload(payload);
@@ -75,7 +75,7 @@ export class PayloadGenerator {
                     await writable.write(jsonString);
                     await writable.close();
                     
-                    console.log(`📥 Payload saved as: ${fileHandle.name}`);
+                    console.log(`Payload generated and saved as: ${fileHandle.name}`);
                     return;
                 } catch (error) {
                     if (error.name === 'AbortError') {
@@ -121,7 +121,7 @@ export class PayloadGenerator {
      * @returns {Promise<Object>} Generated payload
      */
     async _generatePayloadCore(miningData, proofData, walletData, template) {
-        console.log('🚀 Generating payload...');
+        // Generating payload
 
         // SINGLE SOURCE OF TRUTH: Refresh mining transaction data from localStorage
         const storedTx = PayloadUtils.loadMiningDataFromStorage();

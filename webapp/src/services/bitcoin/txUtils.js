@@ -84,7 +84,7 @@ export function getUtxoValueFromTxHex(txHex, vout) {
 // Get UTXO value using QuickNode Bitcoin API - strict mode, no fallbacks
 export async function getUtxoValue(txid, vout) {
     try {
-        console.log(`🔍 Fetching UTXO ${txid}:${vout} from QuickNode API...`);
+        // Fetching UTXO from QuickNode
 
         // Hardcoded QuickNode credentials (bypass env variable issues)
         const quickNodeUrl = 'https://holy-proud-lambo.btc-testnet4.quiknode.pro/cb3fefdb3473023b292894cd92ca9bd732ec9798/';
@@ -130,7 +130,7 @@ export async function getUtxoValue(txid, vout) {
         const valueInBtc = data.result.vout[vout].value;
         const valueInSatoshis = Math.round(valueInBtc * 100000000);
 
-        console.log(`✅ UTXO value found via QuickNode: ${valueInSatoshis} satoshis (${valueInBtc} BTC)`);
+        // UTXO value retrieved
         return valueInSatoshis;
 
     } catch (error) {
