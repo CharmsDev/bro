@@ -17,32 +17,69 @@ export class MintingUIManager {
 
         const stepsContainer = document.createElement('div');
         stepsContainer.className = 'steps-container';
-
-        this.steps.forEach((step, index) => {
-            const stepElement = document.createElement('div');
-            stepElement.className = 'step-item pending';
-            stepElement.id = `step-${index}`;
-
-            stepElement.innerHTML = `
-                <div class="step-number">${index + 1}</div>
-                <div class="step-content">
-                    <div class="step-name">${step.name}</div>
-                    <div class="step-status">Pending</div>
-                    <div class="step-progress" style="display: none;"></div>
-                </div>
-            `;
-
-            stepsContainer.appendChild(stepElement);
-        });
-
         step5Container.appendChild(stepsContainer);
 
+        // Append to claim section
         const claimSection = document.querySelector('.claim-section');
         if (claimSection) {
             claimSection.appendChild(step5Container);
         }
 
-        console.log('🎨 Minting UI initialized');
+        // Check for existing broadcast data and show completion status
+        this.checkAndRestoreBroadcastStatus();
+
+        console.log('🎯 Step 5 UI initialized');
+    }
+
+    // Check for existing broadcast data and restore completion status
+    checkAndRestoreBroadcastStatus() {
+        const broadcastData = localStorage.getItem('bro_broadcast_data');
+        if (broadcastData) {
+            try {
+                const data = JSON.parse(broadcastData);
+                console.log('📦 Found existing broadcast data:', data);
+                
+                // Show completion status with transaction details
+                this.showBroadcastCompletionStatus(data);
+            } catch (error) {
+                console.error('❌ Error parsing broadcast data:', error);
+            }
+        }
+    }
+
+    // Show broadcast completion status (for page refresh scenarios)
+    showBroadcastCompletionStatus(broadcastData) {
+        const step5Container = document.getElementById('step5-progress');
+        if (!step5Container) return;
+
+        // Get environment config for explorer links
+        import('../../config/environment.js').then(({ environmentConfig }) => {
+            const statusMessage = document.createElement('div');
+            statusMessage.className = 'success-message';
+            
+            const spellTxid = broadcastData.spellTxid;
+            const explorerUrl = environmentConfig.getExplorerUrl(spellTxid);
+            
+            statusMessage.innerHTML = `
+                <h4>✅ BRO Token Minting Completed</h4>
+                <p>Your BRO tokens have been successfully minted and broadcasted to the network.</p>
+                <div class="results-summary">
+                    <p><strong>Status:</strong> Transactions Broadcasted</p>
+                    <p><strong>Completed:</strong> ${new Date(broadcastData.timestamp).toLocaleString()}</p>
+                    <div class="transaction-details">
+                        <div class="tx-item">
+                            <span class="tx-label">Spell Transaction ID:</span>
+                            <span class="tx-value">${spellTxid}</span>
+                        </div>
+                        <div class="tx-actions">
+                            <a href="${explorerUrl}" target="_blank" class="explorer-btn">View on Mempool.space</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            step5Container.appendChild(statusMessage);
+        });
     }
 
     // Update step status in UI
@@ -217,18 +254,35 @@ export class MintingUIManager {
         const step5Container = document.getElementById('step5-progress');
         if (!step5Container) return;
 
-        const successMessage = document.createElement('div');
-        successMessage.className = 'success-message';
-        successMessage.innerHTML = `
-            <h4>🎉 BRO Tokens Successfully Minted!</h4>
-            <p>Your BRO tokens have been minted and are now available in your wallet.</p>
-            <div class="results-summary">
-                <p><strong>Transactions Broadcasted:</strong> ${broadcastResults?.length || 0}</p>
-                <p><strong>Final Status:</strong> Complete</p>
-            </div>
-        `;
+        // Get environment config for explorer links
+        import('../../config/environment.js').then(({ environmentConfig }) => {
+            const successMessage = document.createElement('div');
+            successMessage.className = 'success-message';
+            
+            const commitTxid = broadcastResults?.commitData?.txid || 'N/A';
+            const spellTxid = broadcastResults?.spellData?.txid || 'N/A';
+            const explorerUrl = environmentConfig.getExplorerUrl(spellTxid);
+            
+            successMessage.innerHTML = `
+                <h4>🎉 BRO Tokens Successfully Minted!</h4>
+                <p>Your BRO tokens have been minted and are now available in your wallet.</p>
+                <div class="results-summary">
+                    <p><strong>Transactions Broadcasted:</strong> 2</p>
+                    <p><strong>Final Status:</strong> Complete</p>
+                    <div class="transaction-details">
+                        <div class="tx-item">
+                            <span class="tx-label">Spell Transaction ID:</span>
+                            <span class="tx-value">${spellTxid}</span>
+                        </div>
+                        <div class="tx-actions">
+                            <a href="${explorerUrl}" target="_blank" class="explorer-btn">View on Mempool.space</a>
+                        </div>
+                    </div>
+                </div>
+            `;
 
-        step5Container.appendChild(successMessage);
+            step5Container.appendChild(successMessage);
+        });
     }
 
     // Show error message

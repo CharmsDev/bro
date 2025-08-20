@@ -174,6 +174,15 @@ export class MintingStepExecutor {
                 (message) => console.log(`[BROADCAST] ${message}`)
             );
 
+            // Save broadcast results to localStorage for persistence
+            const broadcastData = {
+                commitTxid: result.commitData.txid,
+                spellTxid: result.spellData.txid,
+                status: 'broadcast',
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('bro_broadcast_data', JSON.stringify(broadcastData));
+            
             this.uiManager.updateStepStatus(5, 'completed');
             console.log(`✅ Step 5 completed - Commit: ${result.commitData.txid}`);
             console.log(`✅ Step 5 completed - Spell: ${result.spellData.txid}`);
