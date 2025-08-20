@@ -18,10 +18,6 @@ export class WalletService {
 
     // Generate Taproot address using exact same method as source wallet
     async generateTestnet4Address(seedPhrase, index = 0) {
-        console.log('=== TAPROOT ADDRESS GENERATION DEBUG ===');
-        console.log('Input seed phrase:', seedPhrase);
-        console.log('Input index:', index);
-
         try {
             const bitcoin = window.bitcoin;
             const bip39 = window.bip39;
@@ -41,33 +37,26 @@ export class WalletService {
 
             // Convert seed phrase to seed using BIP39
             const seed = await bip39.mnemonicToSeed(seedPhrase);
-            console.log('Seed generated from mnemonic');
 
             // Derive the master node
             const masterNode = bip32.fromSeed(seed, network);
-            console.log('Master node created');
 
             // Use the same derivation path as source wallet: m/86'/0'/0'
             // Note: Source wallet uses mainnet-style path even for testnet
             const derivationPath = "m/86'/0'/0'";
-            console.log('Derivation path:', derivationPath);
 
             const accountNode = masterNode.derivePath(derivationPath);
-            console.log('Account node derived');
 
             // Derive the chain node (0 for receiving addresses, 1 for change addresses)
             const chainNode = accountNode.derive(0); // Always use receiving chain for demo
-            console.log('Chain node derived');
 
             // Derive the address node at the specified index
             const addressNode = chainNode.derive(index);
-            console.log('Address node derived for index:', index);
 
             // Get the public key and convert to x-only format for Taproot
             const pubkey = addressNode.publicKey;
             // Convert to Buffer explicitly and remove the first byte (type prefix)
             const xOnlyPubkey = Buffer.from(pubkey.slice(1, 33));
-            console.log('X-only pubkey:', xOnlyPubkey.toString('hex'));
 
             // Create a P2TR address using the same parameters as source wallet
             const { address } = bitcoin.payments.p2tr({
@@ -75,14 +64,6 @@ export class WalletService {
                 network,
                 // Use the default taproot tree which is what Bitcoin Core uses
             });
-
-            console.log('Generated Taproot address:', address);
-            console.log('Address length:', address.length);
-            console.log('Address validation:', {
-                startsWithTb1p: address.startsWith('tb1p'),
-                hasCorrectLength: address.length === 62
-            });
-            console.log('=== END TAPROOT ADDRESS GENERATION DEBUG ===');
 
             return address;
 
@@ -99,8 +80,6 @@ export class WalletService {
 
     // Generate Taproot keys (address + private key) for a specific index
     async generateTaprootKeysForIndex(seedPhrase, index) {
-        console.log(`🔑 Generating keys for index ${index}...`);
-        
         try {
             const bitcoin = window.bitcoin;
             const bip39 = window.bip39;
@@ -149,8 +128,6 @@ export class WalletService {
                 internalPubkey: xOnlyPubkey,
                 network: bitcoin.networks.testnet
             });
-
-            console.log(`   Index ${index}: ${p2tr.address}`);
 
             return {
                 index,
@@ -233,8 +210,6 @@ export class WalletService {
 
     // Generate the first 3 addresses with their private keys
     async generateMultipleAddresses(seedPhrase, count = 3) {
-        console.log(`🏗️ Generating ${count} addresses with private keys...`);
-        
         const addresses = [];
         
         for (let i = 0; i < count; i++) {
@@ -242,7 +217,6 @@ export class WalletService {
             addresses.push(keyData);
         }
 
-        console.log(`✅ Generated ${count} addresses successfully`);
         return addresses;
     }
 
@@ -265,8 +239,6 @@ export class WalletService {
 
     // Store wallet data in localStorage with multiple addresses and private keys
     async storeWallet(seedPhrase, address = null) {
-        console.log('💾 Storing wallet data with multiple addresses...');
-        
         try {
             // Generate the first 3 addresses with private keys
             const addresses = await this.generateMultipleAddresses(seedPhrase, 3);
@@ -280,25 +252,9 @@ export class WalletService {
             
             localStorage.setItem('charmsWallet', JSON.stringify(walletData));
             
-            // Print wallet data to console for verification
-            console.log('📋 WALLET DATA STORED IN LOCALSTORAGE:');
-            console.log('=====================================');
-            console.log('Seed Phrase:', seedPhrase);
-            console.log('Primary Address (Index 0):', addresses[0].address);
-            console.log('');
+            console.log('✅ Wallet data stored in localStorage');
+            console.log('📍 Primary address:', addresses[0].address);
             
-            addresses.forEach((addr, i) => {
-                console.log(`🏠 ADDRESS ${i}:`);
-                console.log(`   Address: ${addr.address}`);
-                console.log(`   Derivation Path: ${addr.derivationPath}`);
-                console.log(`   Private Key: ${addr.privateKey}`);
-                console.log(`   Tweaked Private Key: ${addr.tweakedPrivateKey}`);
-                console.log(`   Internal Pubkey: ${addr.internalPubkey}`);
-                console.log(`   Script: ${addr.script}`);
-                console.log('');
-            });
-            
-            console.log('✅ Wallet data stored successfully with 3 addresses');
             return walletData;
             
         } catch (error) {

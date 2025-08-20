@@ -198,6 +198,44 @@ export class WalletEventHandlers {
             this.transactionManager.reset();
         }
 
+        // Reset UI to show wallet creation buttons
+        this.resetUIToInitialState();
+
         console.log('✅ All data cleared - page reset to initial state');
+    }
+
+    /**
+     * Reset UI to initial wallet creation state
+     */
+    resetUIToInitialState() {
+        // Show wallet creation buttons
+        this.dom.show('walletControls');
+
+        // Hide wallet boxes
+        this.dom.hide('seedPhraseBox');
+        this.dom.hide('addressMonitoringBox');
+
+        // Hide funding monitoring
+        this.dom.hide('fundingMonitoring');
+        this.dom.hide('utxoFoundDisplay');
+
+        // Reset seed phrase display
+        this.dom.hide('seedPhraseDisplay');
+        const showSeedBtn = this.dom.get('showSeedBtn');
+        const copySeedBtn = this.dom.get('copySeedBtn');
+        if (showSeedBtn) showSeedBtn.style.display = 'inline-block';
+        if (copySeedBtn) copySeedBtn.style.display = 'none';
+
+        // Clear displayed data
+        this.dom.setText('walletAddress', 'Loading...');
+        this.dom.setText('seedPhraseText', 'Loading...');
+        this.dom.setText('foundUtxoTxid', '-');
+        this.dom.setText('foundUtxoVout', '-');
+        this.dom.setText('foundUtxoAmount', '-');
+        this.dom.setText('fundingStatus', 'Waiting for funds...');
+
+        // Show address note again
+        const addressNote = document.querySelector('.address-note');
+        if (addressNote) addressNote.style.display = 'block';
     }
 }
