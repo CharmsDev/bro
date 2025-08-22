@@ -12,8 +12,6 @@ export class ConfirmationMonitorService {
 
     // Wait for transaction confirmation and return block hash
     async waitForConfirmation(txid, onProgress = null) {
-        console.log(`🔍 Starting confirmation monitoring for txid: ${txid}`);
-        
         this.cancelled = false;
         this.consecutiveErrors = 0;
         let retries = 0;
@@ -38,7 +36,7 @@ export class ConfirmationMonitorService {
             }
 
             retries++;
-            
+
             if (retries < this.maxRetries && !this.cancelled) {
                 const delay = this._calculateBackoffDelay(this.consecutiveErrors);
                 await this.sleep(delay);
@@ -57,8 +55,6 @@ export class ConfirmationMonitorService {
         const blockHash = txData.status.block_hash;
         const blockHeight = txData.status.block_height;
         const confirmations = txData.status.confirmations || 1;
-
-        console.log(`✅ Transaction confirmed in block: ${blockHash} (height: ${blockHeight})`);
 
         if (onProgress) {
             onProgress({
@@ -88,18 +84,14 @@ export class ConfirmationMonitorService {
                 consecutiveErrors: this.consecutiveErrors
             });
         }
-
-        console.log(`⏳ Transaction still pending... (attempt ${retries + 1}/${this.maxRetries})`);
     }
 
     // Helper method to handle transaction errors with recovery logic
     async _handleTransactionError(error, retries, onProgress) {
         this.consecutiveErrors++;
-        
+
         const isNetworkError = this._isNetworkError(error);
         const isRecoverableError = this._isRecoverableError(error);
-        
-        console.error(`❌ Error checking transaction status (${this.consecutiveErrors}/${this.maxConsecutiveErrors}):`, error.message);
 
         if (onProgress) {
             onProgress({
@@ -115,8 +107,6 @@ export class ConfirmationMonitorService {
 
         // If too many consecutive errors, offer manual retry option
         if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
-            console.warn(`⚠️ Too many consecutive errors (${this.consecutiveErrors}). Manual intervention may be required.`);
-            
             if (onProgress) {
                 onProgress({
                     status: 'critical_error',
@@ -126,7 +116,7 @@ export class ConfirmationMonitorService {
                     requiresManualRetry: true
                 });
             }
-            
+
             // Wait for potential manual intervention
             await this.sleep(60000); // Wait 1 minute before continuing
             this.consecutiveErrors = 0; // Reset counter to allow continuation
@@ -146,8 +136,8 @@ export class ConfirmationMonitorService {
             'Network request failed',
             'TypeError: Failed to fetch'
         ];
-        
-        return networkErrorPatterns.some(pattern => 
+
+        return networkErrorPatterns.some(pattern =>
             error.message.includes(pattern) || error.toString().includes(pattern)
         );
     }
@@ -158,8 +148,8 @@ export class ConfirmationMonitorService {
             'Transaction not found in mempool or recent blocks',
             'Invalid transaction ID'
         ];
-        
-        return !nonRecoverablePatterns.some(pattern => 
+
+        return !nonRecoverablePatterns.some(pattern =>
             error.message.includes(pattern)
         );
     }
@@ -169,35 +159,33 @@ export class ConfirmationMonitorService {
         if (consecutiveErrors === 0) {
             return this.pollingInterval;
         }
-        
+
         // Exponential backoff: 30s, 60s, 120s, 240s, 300s (max)
         const backoffMultiplier = Math.min(Math.pow(2, consecutiveErrors - 1), 10);
         const delay = Math.min(this.pollingInterval * backoffMultiplier, this.maxBackoffDelay);
-        
-        console.log(`⏱️ Using backoff delay: ${delay / 1000}s (errors: ${consecutiveErrors})`);
+
         return delay;
     }
 
     // Fetch transaction data with timeout and retry logic
     async _fetchTxDataWithRetry(txid, maxAttempts = 3) {
         let lastError;
-        
+
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 return await this._fetchTxDataWithTimeout(txid);
             } catch (error) {
                 lastError = error;
-                
+
                 if (attempt < maxAttempts && this._isNetworkError(error)) {
-                    console.log(`🔄 Retrying request (${attempt}/${maxAttempts}) after network error`);
                     await this.sleep(2000 * attempt); // Progressive delay
                     continue;
                 }
-                
+
                 throw error;
             }
         }
-        
+
         throw lastError;
     }
 
@@ -205,26 +193,26 @@ export class ConfirmationMonitorService {
     async _fetchTxDataWithTimeout(txid) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
-        
+
         try {
             const response = await fetch(`${this.mempoolApiUrl}/tx/${txid}`, {
                 signal: controller.signal
             });
-            
+
             clearTimeout(timeoutId);
-            
+
             if (!response.ok) {
                 return await this._handleApiError(response, txid);
             }
-            
+
             return await response.json();
         } catch (error) {
             clearTimeout(timeoutId);
-            
+
             if (error.name === 'AbortError') {
                 throw new Error(`Request timeout after ${this.requestTimeout / 1000}s`);
             }
-            
+
             throw error;
         }
     }
@@ -233,14 +221,11 @@ export class ConfirmationMonitorService {
     async _handleApiError(response, txid) {
         if (response.status === 404) {
             // Transaction not found - search in recent blocks
-            console.log(`⚠️ Transaction ${txid} not found in mempool API (404)`);
-            
             try {
                 const recentBlocks = await this.getRecentBlocks(10);
                 for (const block of recentBlocks) {
                     const blockTxs = await this.getBlockTransactions(block.id);
                     if (blockTxs.includes(txid)) {
-                        console.log(`✅ Found transaction in block ${block.id}`);
                         return {
                             status: {
                                 confirmed: true,
@@ -252,19 +237,18 @@ export class ConfirmationMonitorService {
                     }
                 }
             } catch (blockSearchError) {
-                console.log(`⚠️ Could not search recent blocks: ${blockSearchError.message}`);
+                console.error('Error searching recent blocks:', blockSearchError);
             }
-            
+
             throw new Error(`Transaction not found in mempool or recent blocks. Check if transaction ID is correct.`);
         }
-        
+
         throw new Error(`Failed to fetch transaction data: ${response.status} ${response.statusText}`);
     }
 
     // Public method to manually retry after errors
     resetErrorState() {
         this.consecutiveErrors = 0;
-        console.log('🔄 Error state reset - monitoring will resume normal operation');
     }
 
     // Get transaction data from mempool API (legacy method for backward compatibility)

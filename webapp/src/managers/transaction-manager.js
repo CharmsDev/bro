@@ -19,8 +19,6 @@ export class TransactionManager {
     restoreTransactionState() {
         // Check if we have a saved transaction
         if (this.appState && this.appState.transaction) {
-            console.log('🔄 Restoring transaction state from localStorage');
-
             // Show the transaction display with saved data
             this.showTransactionData(this.appState.transaction);
 
@@ -29,7 +27,6 @@ export class TransactionManager {
 
             // Enable broadcasting if we're on step 4 or later
             if (this.appState.currentStep >= this.appState.STEPS.BROADCAST) {
-                console.log('🔄 Enabling broadcast for restored transaction');
                 // Get broadcast component and enable it
                 const broadcastComponent = window.appController?.getModule('broadcastComponent');
                 if (broadcastComponent) {
@@ -64,8 +61,6 @@ export class TransactionManager {
         if (transactionSection) {
             transactionSection.classList.add('completed');
         }
-
-        console.log('✅ Transaction data restored to UI');
     }
 
     disableCreateTransactionButton() {
@@ -94,10 +89,6 @@ export class TransactionManager {
                     const wallet = new CharmsWallet();
                     const changeAddress = await wallet.generateChangeAddress(this.appState.wallet.seedPhrase);
 
-                    console.log('Using change address:', changeAddress);
-
-                    console.log('Creating unsigned PSBT...');
-
                     // Get mining result - either completed result or best from progress
                     let miningData = this.appState.miningResult;
                     if (!miningData && window.BitcoinMiner) {
@@ -122,15 +113,9 @@ export class TransactionManager {
                     );
 
                     const psbtHex = unsignedTx.serialize();
-                    console.log('✅ PSBT created successfully');
-                    console.log('PSBT hex length:', psbtHex.length);
 
-                    console.log('Initializing @scure/btc-signer...');
+                    // Initialize @scure/btc-signer
                     const signer = new ScureBitcoinTransactionSigner();
-
-                    console.log('Signing PSBT...');
-                    console.log('PSBT hex to sign:', psbtHex.substring(0, 100) + '...');
-                    console.log('UTXO for signing:', this.appState.utxo);
 
                     const utxoWithScript = {
                         ...this.appState.utxo,
@@ -147,10 +132,6 @@ export class TransactionManager {
                     const txid = signResult.txid;
                     const rawTx = signResult.signedTxHex;
                     const size = signResult.signedTx.virtualSize();
-
-                    console.log('✅ Transaction signed and finalized successfully!');
-                    console.log('Final transaction hex:', rawTx);
-                    console.log('Transaction size:', size, 'bytes');
 
                     // OP_RETURN only contains the nonce (as stored in the actual transaction)
                     const nonceString = miningData.nonce.toString();
@@ -171,11 +152,8 @@ export class TransactionManager {
                     }
 
                     // Complete transaction creation step
-                    console.log('🔍 [TRANSACTION DEBUG] Getting miningReward from appState...');
                     const miningReward = this.appState.miningReward;
-                    console.log('🔍 [TRANSACTION DEBUG] appState.miningReward value:', miningReward);
-                    console.log('🔍 [TRANSACTION DEBUG] appState.miningResult:', this.appState.miningResult);
-                    
+
                     const transactionData = {
                         txid: txid,
                         txHex: rawTx,
@@ -189,7 +167,6 @@ export class TransactionManager {
                     };
 
                     this.appState.completeTransactionCreation(transactionData);
-                    console.log('Real transaction created successfully:', transactionData);
 
                     // Disable create transaction button permanently and update text
                     createTransaction.disabled = true;
@@ -222,7 +199,5 @@ export class TransactionManager {
             createTransaction.classList.remove('disabled');
             createTransaction.innerHTML = '<span>Create Transaction</span>';
         }
-
-        console.log('🔄 Transaction manager reset completed');
     }
 }

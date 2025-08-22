@@ -260,30 +260,19 @@ export class AppState {
         return this.wallet !== null && this.miningResult !== null;
     }
 
-    // Getter para calcular la recompensa desde el resultado del mining
+    // Getter to calculate the reward from the mining result
     get miningReward() {
         if (!this.miningResult || !this.miningResult.bestHash || !this.miningResult.bestNonce) {
-            console.log('🔍 [APPSTATE DEBUG] No miningResult data available');
             return 0;
         }
 
         try {
-            // Usar el calculador de recompensas global si está disponible
             if (window.calculateRewardInfo) {
                 const rewardInfo = window.calculateRewardInfo(this.miningResult.bestNonce, this.miningResult.bestHash);
-
-                // 🔍 DEBUG: Verificar cálculo de recompensa
-                console.log('🔍 [APPSTATE DEBUG] miningResult:', this.miningResult);
-                console.log('🔍 [APPSTATE DEBUG] calculated rewardInfo:', rewardInfo);
-                console.log('🔍 [APPSTATE DEBUG] rawAmount (satoshis):', rewardInfo.rawAmount);
-
                 return Number(rewardInfo.rawAmount);
-            } else {
-                console.warn('🔍 [APPSTATE DEBUG] calculateRewardInfo not available globally');
-                return 0;
             }
-        } catch (error) {
-            console.error('🔍 [APPSTATE DEBUG] Error calculating mining reward:', error);
+            return 0;
+        } catch (_) {
             return 0;
         }
     }
