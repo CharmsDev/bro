@@ -15,6 +15,6 @@ export mined_amount=36100000000
 prev_txs=$(b getrawtransaction ${mining_txid})
 app_bins=$(charms app build)
 
-funding_utxo=118aca1eadce14ef507eff39651e680f55b694b82ae27ac8b3722972976306a6:2
+funding_utxo=aea10a1e1591b5ac852c574c0a419c1c18296a1c9f86412caf0d0e0616b3e4e4:2
 funding_utxo_value=$(b gettxout ${funding_utxo%%:*} ${funding_utxo##*:} | jq '(.value * 100000000) | floor')
 change_address=$(b getrawchangeaddress)
