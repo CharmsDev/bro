@@ -50,9 +50,6 @@
                         <button id="createWalletBtn" class="wallet-btn">
                             <span>Create New Wallet</span>
                         </button>
-                        <button id="loadDemoWalletBtn" class="wallet-btn secondary">
-                            <span>Load Demo Wallet</span>
-                        </button>
                     </div>
 
                     <!-- Box 1: Seed Phrase -->
@@ -62,8 +59,9 @@
                             <button id="showSeedBtn" class="seed-btn">Show Seed Phrase</button>
                             <button id="copySeedBtn" class="seed-btn" style="display: none;">Copy Seed
                                 Phrase</button>
+                            <button id="copyDirectSeedBtn" class="seed-btn">Copy Seed Phrase</button>
                             <button id="resetWalletBtn" class="seed-btn" style="background: #dc2626;">🗑️ Reset
-                                Wallet (Dev)</button>
+                                Wallet</button>
                         </div>
                         <div id="seedPhraseDisplay" class="seedphrase-value" style="display: none;">
                             <div id="seedPhraseText">Loading...</div>
@@ -85,7 +83,8 @@
                         <p class="address-note">Send funds to this address to begin minting BRO tokens (10,000
                             satoshi minimum)</p>
                         <p class="faucet-info">
-                            💧 Get testnet funds: <a href="https://testnet4.dev" target="_blank" rel="noopener noreferrer">testnet4.dev</a>
+                            💧 Get testnet funds: <a href="https://testnet4.dev" target="_blank"
+                                rel="noopener noreferrer">testnet4.dev</a>
                         </p>
 
                         <!-- UTXO Monitoring Section -->
@@ -176,14 +175,11 @@
                                     <div class="best-stats">
                                         <span class="best-stat">Nonce: <span id="bestNonce"
                                                 class="best-value">-</span></span>
-                                        <span class="best-stat">Zero Bits: <span id="bestLeadingZeros"
-                                                class="best-value highlight">0</span></span>
                                     </div>
                                 </div>
                                 <div id="bestHash" class="hash-value best">No best hash yet...</div>
                             </div>
                         </div>
-
 
                         <div id="rewardDisplay" class="reward-display">
                             <h4>💰 Token Reward Calculation</h4>
@@ -216,13 +212,10 @@
                             </div>
                         </div>
 
-
-                        <div id="successMessage" class="success-message" style="display: none;">
+                        <div id="successMessage" class="mining-success-box" style="display: none;">
                             <h4>🎉 Mining Stopped - Best Result Claimed!</h4>
                             <p>Best hash found with nonce: <span id="finalNonce"></span></p>
-                            <p>Leading zero bits: <span id="finalLeadingZeros" class="highlight"></span></p>
                             <p>Best hash: <span id="finalHash"></span></p>
-                            <p>Your reward: <span id="finalTokenReward" class="reward-amount">-</span> $BRO</p>
                         </div>
                     </div>
                 </section>

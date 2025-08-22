@@ -7,13 +7,13 @@ export class DOMElements {
         return {
             // Wallet elements
             createWalletBtn: document.getElementById('createWalletBtn'),
-            loadDemoWalletBtn: document.getElementById('loadDemoWalletBtn'),
             walletControls: document.querySelector('.wallet-controls'),
             seedPhraseBox: document.getElementById('seedPhraseBox'),
             walletAddress: document.getElementById('walletAddress'),
             copyAddressBtn: document.getElementById('copyAddressBtn'),
             showSeedBtn: document.getElementById('showSeedBtn'),
             copySeedBtn: document.getElementById('copySeedBtn'),
+            copyDirectSeedBtn: document.getElementById('copyDirectSeedBtn'),
             seedPhraseDisplay: document.getElementById('seedPhraseDisplay'),
             seedPhraseText: document.getElementById('seedPhraseText'),
             resetWalletBtn: document.getElementById('resetWalletBtn'),

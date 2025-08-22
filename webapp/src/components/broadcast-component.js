@@ -1,5 +1,5 @@
 // Bitcoin Transaction Broadcasting Component
-import { broadcastService } from '../services/broadcast-service.js';
+import { broadcastTransaction, getExplorerUrl } from '../services/bitcoin/broadcastTx.js';
 
 class BroadcastComponent {
     constructor() {
@@ -25,12 +25,8 @@ class BroadcastComponent {
             this.broadcastBtn.addEventListener('click', () => this.handleBroadcast());
         }
 
-        console.log('🔄 BroadcastComponent initializing with appState:', !!this.appState);
-
         // Restore broadcast state if needed
         this.restoreBroadcastState();
-
-        console.log('✅ Broadcast component initialized');
     }
 
     /**
@@ -38,20 +34,11 @@ class BroadcastComponent {
      */
     restoreBroadcastState() {
         if (!this.appState) {
-            console.log('❌ No appState available for broadcast restoration');
             return;
         }
 
-        console.log('🔄 Checking broadcast state:', {
-            hasBroadcastResult: !!this.appState.broadcastResult,
-            hasTransaction: !!this.appState.transaction,
-            currentStep: this.appState.currentStep,
-            broadcastStep: this.appState.STEPS.BROADCAST
-        });
-
         // If we have a broadcast result, show it
         if (this.appState.broadcastResult) {
-            console.log('🔄 Restoring broadcast result from localStorage');
             this.broadcastResult = this.appState.broadcastResult;
             this.updateBroadcastStatus('success', 'Transaction broadcast successful!');
             this.displayBroadcastResult(this.appState.broadcastResult);
@@ -65,15 +52,7 @@ class BroadcastComponent {
         }
         // If we have a transaction but no broadcast result, enable broadcasting
         else if (this.appState.transaction && this.appState.currentStep >= this.appState.STEPS.BROADCAST) {
-            console.log('🔄 Enabling broadcast for existing transaction:', this.appState.transaction.txid);
             this.enableBroadcasting(this.appState.transaction);
-        }
-        // If we're on step 4 but no transaction yet, wait for it
-        else if (this.appState.currentStep === this.appState.STEPS.BROADCAST) {
-            console.log('🔄 On broadcast step but no transaction yet, keeping button disabled');
-        }
-        else {
-            console.log('🔄 Not ready for broadcast yet');
         }
     }
 
@@ -97,18 +76,7 @@ class BroadcastComponent {
             this.broadcastBtn.style.opacity = '1';
             this.broadcastBtn.style.cursor = 'pointer';
             this.broadcastBtn.innerHTML = '<span>📡 Broadcast to Network</span>';
-
-            console.log('✅ Broadcast button force-enabled:', {
-                disabled: this.broadcastBtn.disabled,
-                hasDisabledClass: this.broadcastBtn.classList.contains('disabled'),
-                pointerEvents: this.broadcastBtn.style.pointerEvents,
-                opacity: this.broadcastBtn.style.opacity
-            });
-        } else {
-            console.error('❌ Broadcast button not found!');
         }
-
-        console.log('✅ Broadcasting enabled for transaction:', transaction.txid);
     }
 
     /**
@@ -139,7 +107,7 @@ class BroadcastComponent {
             this.broadcastBtn.innerHTML = '<span>Broadcasting...</span>';
 
             // Broadcast the transaction to the Bitcoin network
-            const result = await broadcastService.broadcastTransaction(this.currentTransaction.txHex);
+            const result = await broadcastTransaction(this.currentTransaction.txHex);
 
             this.broadcastResult = result;
 
@@ -157,7 +125,6 @@ class BroadcastComponent {
                 this.appState.completeBroadcast(result);
             }
 
-            console.log('✅ Transaction broadcast completed:', result);
 
         } catch (error) {
             console.error('❌ Broadcast failed:', error);
@@ -220,7 +187,7 @@ class BroadcastComponent {
         }
 
         if (explorerLinkElement) {
-            const explorerUrl = broadcastService.getExplorerUrl(result.txid);
+            const explorerUrl = getExplorerUrl(result.txid);
             explorerLinkElement.href = explorerUrl;
             explorerLinkElement.style.display = 'inline-block';
         }
@@ -243,22 +210,8 @@ class BroadcastComponent {
             explorerLinkElement.style.display = 'none';
         }
 
-        // Log detailed error for debugging
-        console.log('🔍 Detailed Error Information:', {
-            message: error.message,
-            name: error.name,
-            stack: error.stack
-        });
     }
 
-    /**
-     * Enable the next step after successful broadcast
-     * @deprecated This is now handled by the step controller
-     */
-    enableNextStep() {
-        // This functionality is now handled by the centralized step system
-
-    }
 
     /**
      * Get the current broadcast result

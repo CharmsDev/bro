@@ -25,10 +25,32 @@ export class MintingUIManager {
             claimSection.appendChild(step5Container);
         }
 
-        // Check for existing broadcast data and show completion status
-        this.checkAndRestoreBroadcastStatus();
+        // Initialize the step elements
+        this.initializeSteps(stepsContainer);
 
-        console.log('🎯 Step 5 UI initialized');
+        // Note: Broadcast status restoration removed to prevent premature completion display
+
+    }
+
+    // Initialize the 6 step elements for the minting process
+    initializeSteps(stepsContainer) {
+        this.steps.forEach((step, index) => {
+            const stepElement = document.createElement('div');
+            stepElement.id = `step-${index}`;
+            stepElement.className = 'step-item pending';
+            
+            stepElement.innerHTML = `
+                <div class="step-number">${index + 1}</div>
+                <div class="step-content">
+                    <div class="step-name">${step.name}</div>
+                    <div class="step-status">Pending</div>
+                    <div class="step-progress" style="display: none;"></div>
+                </div>
+            `;
+            
+            stepsContainer.appendChild(stepElement);
+        });
+        
     }
 
     // Check for existing broadcast data and restore completion status
@@ -37,12 +59,11 @@ export class MintingUIManager {
         if (broadcastData) {
             try {
                 const data = JSON.parse(broadcastData);
-                console.log('📦 Found existing broadcast data:', data);
                 
                 // Show completion status with transaction details
                 this.showBroadcastCompletionStatus(data);
             } catch (error) {
-                console.error('❌ Error parsing broadcast data:', error);
+                // Silently handle parsing errors
             }
         }
     }
@@ -246,7 +267,6 @@ export class MintingUIManager {
             </div>
         `;
 
-        console.log('📋 Payload displayed in UI for review');
     }
 
     // Show success message

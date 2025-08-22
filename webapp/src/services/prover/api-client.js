@@ -18,7 +18,6 @@ export class ProverApiClient {
      */
     async sendToProver(payload) {
         console.log('🚀 Sending payload to prover API...');
-
         try {
             const response = await fetch(this.apiUrl, {
                 method: 'POST',

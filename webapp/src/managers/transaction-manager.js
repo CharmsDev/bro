@@ -171,6 +171,11 @@ export class TransactionManager {
                     }
 
                     // Complete transaction creation step
+                    console.log('🔍 [TRANSACTION DEBUG] Getting miningReward from appState...');
+                    const miningReward = this.appState.miningReward;
+                    console.log('🔍 [TRANSACTION DEBUG] appState.miningReward value:', miningReward);
+                    console.log('🔍 [TRANSACTION DEBUG] appState.miningResult:', this.appState.miningResult);
+                    
                     const transactionData = {
                         txid: txid,
                         txHex: rawTx,
@@ -180,7 +185,7 @@ export class TransactionManager {
                         inputTxid: this.appState.utxo.txid,
                         inputVout: this.appState.utxo.vout,
                         difficulty: miningData.bestLeadingZeros,
-                        reward: this.appState.miningReward
+                        reward: miningReward
                     };
 
                     this.appState.completeTransactionCreation(transactionData);

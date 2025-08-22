@@ -27,10 +27,11 @@ target/
 /webapp/node_modules/
 
 # tests
-/tests
 /tests/node_modules
-/tests/payloads
 webapp/src/assets/test/prover-txs.ts
+tests/block-proof
+tests/block-proof/bitcoinjs-test
+tests/commitTx
 
 # RJJ
 Contract/

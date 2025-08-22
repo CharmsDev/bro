@@ -15,10 +15,10 @@ export class WalletEventHandlers {
      */
     setupEventListeners() {
         this.setupCreateWalletButton();
-        this.setupLoadDemoWalletButton();
         this.setupCopyAddressButton();
         this.setupShowSeedButton();
         this.setupCopySeedButton();
+        this.setupCopyDirectSeedButton();
         this.setupResetWalletButton();
     }
 
@@ -30,7 +30,6 @@ export class WalletEventHandlers {
         if (createWalletBtn) {
             createWalletBtn.addEventListener('click', async () => {
                 if (!this.wallet) {
-                    console.error('❌ Wallet functionality not available');
                     return;
                 }
 
@@ -43,45 +42,7 @@ export class WalletEventHandlers {
 
                     this.appState.completeWalletCreation(walletData);
                 } catch (error) {
-                    console.error('Error creating wallet:', error);
                     console.error('❌ Error creating wallet. Please try again.');
-                }
-            });
-        }
-    }
-
-    /**
-     * Load demo wallet button handler
-     */
-    setupLoadDemoWalletButton() {
-        const loadDemoWalletBtn = this.dom.get('loadDemoWalletBtn');
-        
-        if (loadDemoWalletBtn) {
-            loadDemoWalletBtn.addEventListener('click', async () => {
-                if (!this.wallet) {
-                    console.error('❌ Wallet functionality not available');
-                    return;
-                }
-
-                try {
-                    // Reset app state and clear previous data
-                    this.resetAppState();
-
-                    // Load demo wallet with standard test seed phrase
-                    const demoSeedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-                    const address = await this.wallet.generateTestnet4Address(demoSeedPhrase, 0);
-
-                    await this.wallet.storeWallet(demoSeedPhrase, address);
-                    const walletData = { seedPhrase: demoSeedPhrase, address };
-
-                    if (this.appState) {
-                        this.appState.completeWalletCreation(walletData);
-                    }
-
-                    console.log('✅ Demo wallet loaded successfully');
-                } catch (error) {
-                    console.error('Error loading demo wallet:', error);
-                    console.error('❌ Error loading demo wallet. Please try again.');
                 }
             });
         }
@@ -103,7 +64,7 @@ export class WalletEventHandlers {
                             copyAddressBtn.innerHTML = '<span>📋</span>';
                         }, 2000);
                     } catch (error) {
-                        console.error('Error copying address:', error);
+                        // Silently handle clipboard errors
                     }
                 }
             });
@@ -145,7 +106,30 @@ export class WalletEventHandlers {
                             copySeedBtn.textContent = 'Copy Seed Phrase';
                         }, 2000);
                     } catch (error) {
-                        console.error('Error copying seed phrase:', error);
+                        // Silently handle clipboard errors
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Copy seed phrase directly to clipboard button handler
+     */
+    setupCopyDirectSeedButton() {
+        const copyDirectSeedBtn = this.dom.get('copyDirectSeedBtn');
+        if (copyDirectSeedBtn) {
+            copyDirectSeedBtn.addEventListener('click', async () => {
+                const currentWallet = this.appState.wallet;
+                if (currentWallet && this.wallet) {
+                    try {
+                        await this.wallet.copyToClipboard(currentWallet.seedPhrase);
+                        copyDirectSeedBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyDirectSeedBtn.textContent = 'Copy Seed Phrase';
+                        }, 2000);
+                    } catch (error) {
+                        // Silently handle clipboard errors
                     }
                 }
             });
@@ -167,28 +151,13 @@ export class WalletEventHandlers {
     }
 
     /**
-     * Reset app state for demo wallet loading
-     */
-    resetAppState() {
-        if (this.appState) {
-            this.appState.reset();
-        }
-
-        if (this.transactionManager) {
-            this.transactionManager.reset();
-        }
-
-        this.wallet.clearWallet();
-    }
-
-    /**
      * Perform full application reset
      */
     performFullReset() {
         localStorage.clear();
 
         this.appState.reset();
-        
+
         // Reset managers if available
         if (this.miningManager) {
             this.miningManager.reset();
@@ -201,7 +170,6 @@ export class WalletEventHandlers {
         // Reset UI to show wallet creation buttons
         this.resetUIToInitialState();
 
-        console.log('✅ All data cleared - page reset to initial state');
     }
 
     /**

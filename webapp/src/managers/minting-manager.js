@@ -7,18 +7,16 @@ import { MintingDataValidator } from './minting/minting-data-validator.js';
 import { MintingStepExecutor } from './minting/minting-step-executor.js';
 
 export class MintingManager {
-    constructor(appState, domElements, broadcastService) {
+    constructor(appState, domElements) {
         this.appState = appState;
         this.dom = domElements;
-        this.broadcastService = broadcastService;
 
         // Initialize services
         this.services = {
             confirmationMonitor: new ConfirmationMonitorService(),
             txProofService: new TxProofService(),
             proverApiService: new ProverApiService(),
-            transactionSigner: new ScureBitcoinTransactionSigner(),
-            broadcastService: broadcastService
+            transactionSigner: new ScureBitcoinTransactionSigner()
         };
 
         // Process state
@@ -52,13 +50,11 @@ export class MintingManager {
 
     // Initialize the MintingManager
     initialize() {
-        console.log('✅ Minting system ready');
+        // Minting system is ready
     }
 
     // Execute the complete minting process
     async executeMintingProcess() {
-        console.log('🔄 Loading mining data...');
-
         try {
             // Validate prerequisites and prepare data
             this.prepareProcessData();
@@ -73,11 +69,9 @@ export class MintingManager {
             this.appState.completeStep(5);
             this.uiManager.showSuccess(this.broadcastResults);
 
-            console.log('✅ Minting process completed successfully!');
             return true;
 
         } catch (error) {
-            // Mining progress found
             this.uiManager.showError(error.message);
             return false;
         }
@@ -89,9 +83,6 @@ export class MintingManager {
         const transaction = this.appState.transaction;
         const broadcastResult = this.appState.broadcastResult;
 
-        // Checking app state
-        console.log('✅ Mining data loaded');
-        // Broadcast result available
 
         // Validate prerequisites
         MintingDataValidator.validatePrerequisites(state, transaction, broadcastResult);
@@ -100,7 +91,6 @@ export class MintingManager {
         this.miningResult = MintingDataValidator.createMiningResult(transaction, this.appState);
         MintingDataValidator.validateMiningResult(this.miningResult);
 
-        console.log('✅ Process data validated');
     }
 
     // Execute all steps in sequence
@@ -138,14 +128,12 @@ export class MintingManager {
         this.cancelled = true;
         this.services.confirmationMonitor.cancel();
         this.uiManager.cleanup();
-        console.log('🛑 Minting process cancelled');
     }
 
     // Reset confirmation errors and continue monitoring
     resetConfirmationErrors() {
         if (this.services.confirmationMonitor) {
             this.services.confirmationMonitor.resetErrorState();
-            console.log('🔄 Confirmation monitoring errors reset - process will continue');
         }
     }
 
@@ -153,7 +141,6 @@ export class MintingManager {
     cancelMonitoring() {
         if (this.services.confirmationMonitor) {
             this.services.confirmationMonitor.cancel();
-            console.log('⏹️ Confirmation monitoring cancelled');
         }
     }
 
