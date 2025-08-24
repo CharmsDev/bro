@@ -18,5 +18,4 @@ export function initializeLibraries() {
     window.ECPair = ECPair;
     window.CryptoJS = CryptoJS;
 
-    console.log('✅ Core libraries initialized');
 }

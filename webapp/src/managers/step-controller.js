@@ -1,6 +1,9 @@
+import environmentConfig from '../config/environment.js';
+
 export class StepController {
     constructor(domElements) {
         this.dom = domElements;
+        this.disableLocks = environmentConfig.getDisableStepLocks?.() === true;
         this.STEPS = {
             WALLET_CREATION: 1,
             MINING: 2,
@@ -51,11 +54,6 @@ export class StepController {
 
         // Restore data displays if available
         this.restoreDataDisplays(appState);
-
-        console.log('🔄 Steps initialized:', {
-            currentStep: state.currentStep,
-            completedSteps: state.completedSteps
-        });
     }
 
     // Update all steps based on current step and completed steps
@@ -63,7 +61,7 @@ export class StepController {
         for (let step = 1; step <= 6; step++) {
             const isCompleted = completedSteps.includes(step);
             const isActive = step === currentStep;
-            const canAccess = step <= currentStep;
+            const canAccess = this.disableLocks ? true : step <= currentStep;
 
             this.updateStepState(step, isCompleted, isActive, canAccess);
         }
@@ -82,7 +80,7 @@ export class StepController {
                 section.classList.add('completed');
             } else if (isActive) {
                 section.classList.add('active');
-            } else if (!canAccess) {
+            } else if (!canAccess && !this.disableLocks) {
                 section.classList.add('disabled');
             }
         }
@@ -104,12 +102,13 @@ export class StepController {
                     if (this.appState && this.appState.canStartMining()) {
                         this.enableButton(button);
                     } else {
+                        // Even if locks are disabled, keep functional requirement for mining
                         this.disableButton(button);
                     }
                     return;
                 }
 
-                if (canAccess && !isCompleted) {
+                if ((canAccess && !isCompleted) || this.disableLocks) {
                     this.enableButton(button);
                 } else {
                     this.disableButton(button);
@@ -117,7 +116,6 @@ export class StepController {
             }
         });
 
-        console.log(`🔄 Step ${step} updated:`, { isCompleted, isActive, canAccess });
     }
 
     enableButton(button) {
@@ -167,7 +165,6 @@ export class StepController {
             const miningProgress = miner.loadMiningProgress();
             if (miningProgress) {
                 this.dom.show('miningDisplay');
-                console.log('🔧 StepController: Showing miningDisplay for saved progress');
             }
         }
 
@@ -185,42 +182,34 @@ export class StepController {
     // Legacy methods for backward compatibility
     enableMiningStep() {
         // This is now handled by updateAllSteps
-        console.log('✅ Mining step enabled (via new step system)');
     }
 
     enableTransactionStep() {
         // This is now handled by updateAllSteps
-        console.log('✅ Transaction step enabled (via new step system)');
     }
 
     enableTransactionCreation(appState) {
         // This is now handled by updateAllSteps
-        console.log('✅ Transaction creation enabled (via new step system)');
     }
 
     enableBroadcastStep() {
         // This is now handled by updateAllSteps
-        console.log('✅ Broadcast step enabled (via new step system)');
     }
 
     enableClaimStep() {
         // This is now handled by updateAllSteps
-        console.log('✅ Claim step enabled (via new step system)');
     }
 
     enableClaimTokensStep() {
         // This is now handled by updateAllSteps
-        console.log('✅ Claim tokens step enabled (via new step system)');
     }
 
     enableWalletVisitStep() {
         // This is now handled by updateAllSteps
-        console.log('✅ Wallet visit step enabled (via new step system)');
     }
 
     updateStepVisualState(step, enabled) {
         // This is now handled by updateAllSteps
-        console.log(`✅ Step ${step} visual state updated (via new step system)`);
     }
 
     resetAllSteps() {
@@ -249,22 +238,25 @@ export class StepController {
             stepConfig.buttons.forEach(buttonId => {
                 const button = this.dom.get(buttonId);
                 if (button) {
-                    if (parseInt(step) === this.STEPS.WALLET_CREATION) {
-                        // Enable step 1 buttons (create wallet, load demo)
+                    if (this.disableLocks) {
+                        // Enable all buttons when locks are disabled (mining functional check handled elsewhere)
                         this.enableButton(button);
                     } else {
-                        // Disable all other buttons
-                        this.disableButton(button);
+                        if (parseInt(step) === this.STEPS.WALLET_CREATION) {
+                            // Enable step 1 buttons (create wallet, load demo)
+                            this.enableButton(button);
+                        } else {
+                            // Disable all other buttons
+                            this.disableButton(button);
+                        }
                     }
                 }
             });
         });
 
-        console.log('🔄 All steps reset - Step 1 buttons enabled');
     }
 
     initializeMiningStep() {
         // This is now handled by updateAllSteps
-        console.log('✅ Mining step initialized (via new step system)');
     }
 }

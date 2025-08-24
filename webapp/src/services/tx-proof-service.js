@@ -1,11 +1,12 @@
 /**
- * TxProofService - Bitcoin transaction proof generator using mempool.space API
- * Uses mempool.space merkleblock-proof endpoint for Bitcoin Core compatible proofs
+ * TxProofService - Bitcoin transaction proof generator using QuickNode (Bitcoin Core RPC)
+ * Uses gettxoutproof for Bitcoin Core compatible proofs
  */
+import QuickNodeClient from './bitcoin/quicknode-client.js';
 
 export class TxProofService {
     constructor() {
-        this.mempoolApiUrl = 'https://mempool.space/testnet4/api';
+        this.client = new QuickNodeClient();
     }
 
     /**
@@ -15,32 +16,26 @@ export class TxProofService {
      * @returns {Promise<Object>} Proof data object with proof hex and metadata
      */
     async getTxProof(txid, blockHash = null) {
-        console.log(`🔍 Generating Bitcoin Core compatible proof for transaction: ${txid}`);
-
         try {
             // Get transaction data to find the block if blockHash not provided
             let finalBlockHash = blockHash;
             let blockHeight = null;
-            
+
             if (!blockHash) {
                 const txData = await this.fetchTxData(txid);
-                
-                if (!txData.status.confirmed) {
+                // QuickNode/Bitcoin Core: confirmations >= 1 implies confirmed
+                if (!txData.confirmations || txData.confirmations < 1) {
                     throw new Error('Transaction is not confirmed');
                 }
-
-                finalBlockHash = txData.status.block_hash;
-                blockHeight = txData.status.block_height;
+                finalBlockHash = txData.blockhash;
+                // Fetch height from block header
+                const header = await this.client.getBlockHeader(finalBlockHash, true);
+                blockHeight = header.height;
             }
-            
-            console.log(`📦 Block: ${finalBlockHash}${blockHeight ? ` (height: ${blockHeight})` : ''}`);
 
-            // Fetch proof directly from mempool.space API
-            console.log('🚀 Fetching Bitcoin Core proof from mempool.space...');
-            const proof = await this.fetchMerkleBlockProof(txid);
-            
-            console.log(`✅ Proof fetched: ${proof.length / 2} bytes`);
-            
+            // Fetch proof directly from RPC
+            const proof = await this.fetchMerkleBlockProof(txid, finalBlockHash);
+
             // Return proof data object (compatible with existing API)
             return {
                 txid,
@@ -52,33 +47,25 @@ export class TxProofService {
             };
 
         } catch (error) {
-            console.error(`❌ Error generating proof:`, error);
             throw error;
         }
     }
 
     /**
-     * Fetch merkleblock proof directly from mempool.space API
+     * Fetch merkleblock proof directly from QuickNode RPC
      * @param {string} txid - Transaction ID
      * @returns {Promise<string>} Proof hex string
      */
-    async fetchMerkleBlockProof(txid) {
-        const response = await fetch(`${this.mempoolApiUrl}/tx/${txid}/merkleblock-proof`);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch merkleblock proof: ${response.status}`);
-        }
-        return response.text();
+    async fetchMerkleBlockProof(txid, blockHash) {
+        return this.client.getTxOutProof([txid], blockHash);
     }
 
     /**
-     * Fetch transaction data from mempool API
+     * Fetch transaction data from QuickNode RPC
      */
     async fetchTxData(txid) {
-        const response = await fetch(`${this.mempoolApiUrl}/tx/${txid}`);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch transaction data: ${response.status}`);
-        }
-        return response.json();
+        // verbose true to get JSON with blockhash/confirmations
+        return this.client.getRawTransaction(txid, true);
     }
 
     /**
@@ -88,24 +75,22 @@ export class TxProofService {
         if (!proofData || typeof proofData !== 'object') {
             throw new Error('Invalid proof: must be a proof data object');
         }
-        
+
         if (!proofData.proof || typeof proofData.proof !== 'string') {
             throw new Error('Invalid proof: proof hex string is required');
         }
-        
+
         if (proofData.proof.length % 2 !== 0) {
             throw new Error('Invalid proof: hex string must have even length');
         }
-        
+
         if (!/^[0-9a-fA-F]+$/.test(proofData.proof)) {
             throw new Error('Invalid proof: contains non-hex characters');
         }
-        
+
         if (!proofData.txid || !proofData.blockHash || !proofData.merkleRoot) {
             throw new Error('Invalid proof: missing required fields (txid, blockHash, merkleRoot)');
         }
-        
-        console.log(`✅ Proof validation passed: ${proofData.proof.length / 2} bytes`);
         return true;
     }
 }

@@ -1,5 +1,5 @@
 // Bitcoin Transaction Broadcasting Component
-import { broadcastService } from '../services/broadcast-service.js';
+import { broadcastTransaction, getExplorerUrl } from '../services/bitcoin/broadcastTx.js';
 
 class BroadcastComponent {
     constructor() {
@@ -25,34 +25,34 @@ class BroadcastComponent {
             this.broadcastBtn.addEventListener('click', () => this.handleBroadcast());
         }
 
-        console.log('🔄 BroadcastComponent initializing with appState:', !!this.appState);
-
         // Restore broadcast state if needed
         this.restoreBroadcastState();
-
-        console.log('✅ Broadcast component initialized');
     }
 
     /**
      * Restore broadcast state from localStorage
      */
     restoreBroadcastState() {
+        console.log(' [BROADCAST] Starting restoreBroadcastState...');
+
         if (!this.appState) {
-            console.log('❌ No appState available for broadcast restoration');
+            console.log(' [BROADCAST] No appState available');
             return;
         }
 
-        console.log('🔄 Checking broadcast state:', {
-            hasBroadcastResult: !!this.appState.broadcastResult,
-            hasTransaction: !!this.appState.transaction,
-            currentStep: this.appState.currentStep,
-            broadcastStep: this.appState.STEPS.BROADCAST
-        });
+        console.log(' [BROADCAST] AppState broadcastResult:', this.appState.broadcastResult);
+
+        // Check localStorage directly for debugging
+        const broadcastData = localStorage.getItem('bro_broadcast_data');
+        console.log(' [BROADCAST] localStorage bro_broadcast_data:', broadcastData);
 
         // If we have a broadcast result, show it
         if (this.appState.broadcastResult) {
-            console.log('🔄 Restoring broadcast result from localStorage');
+            console.log(' [BROADCAST] Found broadcast result, restoring UI...');
             this.broadcastResult = this.appState.broadcastResult;
+
+            console.log(' [BROADCAST] Broadcast result data:', JSON.stringify(this.broadcastResult, null, 2));
+
             this.updateBroadcastStatus('success', 'Transaction broadcast successful!');
             this.displayBroadcastResult(this.appState.broadcastResult);
 
@@ -60,20 +60,17 @@ class BroadcastComponent {
             if (this.broadcastBtn) {
                 this.broadcastBtn.disabled = true;
                 this.broadcastBtn.classList.add('disabled');
-                this.broadcastBtn.innerHTML = '<span>✅ Already Broadcast</span>';
+                this.broadcastBtn.innerHTML = '<span> Already Broadcast</span>';
+                console.log(' [BROADCAST] Broadcast button disabled');
             }
-        }
-        // If we have a transaction but no broadcast result, enable broadcasting
-        else if (this.appState.transaction && this.appState.currentStep >= this.appState.STEPS.BROADCAST) {
-            console.log('🔄 Enabling broadcast for existing transaction:', this.appState.transaction.txid);
-            this.enableBroadcasting(this.appState.transaction);
-        }
-        // If we're on step 4 but no transaction yet, wait for it
-        else if (this.appState.currentStep === this.appState.STEPS.BROADCAST) {
-            console.log('🔄 On broadcast step but no transaction yet, keeping button disabled');
-        }
-        else {
-            console.log('🔄 Not ready for broadcast yet');
+
+            // Show the broadcast display
+            if (this.broadcastDisplay) {
+                this.broadcastDisplay.style.display = 'block';
+                console.log(' [BROADCAST] Broadcast display shown');
+            }
+        } else {
+            console.log(' [BROADCAST] No broadcast result found in appState');
         }
     }
 
@@ -83,7 +80,7 @@ class BroadcastComponent {
      */
     enableBroadcasting(transaction) {
         if (!transaction || !transaction.txHex) {
-            console.error('❌ Invalid transaction provided for broadcasting');
+            console.error(' Invalid transaction provided for broadcasting');
             return;
         }
 
@@ -96,19 +93,8 @@ class BroadcastComponent {
             this.broadcastBtn.style.pointerEvents = 'auto';
             this.broadcastBtn.style.opacity = '1';
             this.broadcastBtn.style.cursor = 'pointer';
-            this.broadcastBtn.innerHTML = '<span>📡 Broadcast to Network</span>';
-
-            console.log('✅ Broadcast button force-enabled:', {
-                disabled: this.broadcastBtn.disabled,
-                hasDisabledClass: this.broadcastBtn.classList.contains('disabled'),
-                pointerEvents: this.broadcastBtn.style.pointerEvents,
-                opacity: this.broadcastBtn.style.opacity
-            });
-        } else {
-            console.error('❌ Broadcast button not found!');
+            this.broadcastBtn.innerHTML = '<span> Broadcast to Network</span>';
         }
-
-        console.log('✅ Broadcasting enabled for transaction:', transaction.txid);
     }
 
     /**
@@ -128,7 +114,7 @@ class BroadcastComponent {
      */
     async handleBroadcast() {
         if (!this.currentTransaction) {
-            console.error('❌ No transaction available for broadcasting');
+            console.error(' No transaction available for broadcasting');
             return;
         }
 
@@ -139,28 +125,27 @@ class BroadcastComponent {
             this.broadcastBtn.innerHTML = '<span>Broadcasting...</span>';
 
             // Broadcast the transaction to the Bitcoin network
-            const result = await broadcastService.broadcastTransaction(this.currentTransaction.txHex);
+            const result = await broadcastTransaction(this.currentTransaction.txHex);
 
             this.broadcastResult = result;
 
             // Update UI with success
-            this.updateBroadcastStatus('success', '✅ Transaction broadcast successful! Transaction is now in the mempool.');
+            this.updateBroadcastStatus('success', ' Transaction broadcast successful! Transaction is now in the mempool.');
             this.displayBroadcastResult(result);
 
             // Permanently disable the broadcast button since it's successful
             this.broadcastBtn.disabled = true;
             this.broadcastBtn.classList.add('disabled');
-            this.broadcastBtn.innerHTML = '<span>✅ Successfully Broadcast</span>';
+            this.broadcastBtn.innerHTML = '<span> Successfully Broadcast</span>';
 
             // Complete broadcast step
             if (this.appState) {
                 this.appState.completeBroadcast(result);
             }
 
-            console.log('✅ Transaction broadcast completed:', result);
 
         } catch (error) {
-            console.error('❌ Broadcast failed:', error);
+            console.error(' Broadcast failed:', error);
 
             // Show error information
             const errorMessage = error.message.length > 100
@@ -168,7 +153,7 @@ class BroadcastComponent {
                 : error.message;
 
             // Update UI with error
-            this.updateBroadcastStatus('error', `❌ Broadcast failed: ${errorMessage}`);
+            this.updateBroadcastStatus('error', ' Broadcast failed: ' + errorMessage);
 
             // Show additional error details in the broadcast display
             this.displayErrorDetails(error);
@@ -179,7 +164,7 @@ class BroadcastComponent {
             this.broadcastBtn.style.pointerEvents = 'auto';
             this.broadcastBtn.style.opacity = '1';
             this.broadcastBtn.style.cursor = 'pointer';
-            this.broadcastBtn.innerHTML = '<span>🔄 Retry Broadcast</span>';
+            this.broadcastBtn.innerHTML = '<span> Retry Broadcast</span>';
         }
     }
 
@@ -208,21 +193,64 @@ class BroadcastComponent {
     }
 
     /**
-     * Display the broadcast result
-     * @param {Object} result - The broadcast result
+     * Display broadcast result in the UI
+     * @param {Object} result - The broadcast result object
      */
     displayBroadcastResult(result) {
+        console.log(' [BROADCAST] displayBroadcastResult called with:', JSON.stringify(result, null, 2));
+
         const txidElement = document.getElementById('broadcastTxid');
         const explorerLinkElement = document.getElementById('explorerLink');
 
+        console.log(' [BROADCAST] DOM elements found:');
+        console.log('  - txidElement:', !!txidElement);
+        console.log('  - explorerLinkElement:', !!explorerLinkElement);
+
+        // Step 4 should show the mining transaction txid, not commit/spell txids
+        let txidToDisplay = null;
+
+        if (result.txid) {
+            // Standard Step 4 mining transaction broadcast result
+            txidToDisplay = result.txid;
+            console.log(' [BROADCAST] Using standard mining txid:', txidToDisplay);
+        } else if (this.appState && this.appState.transaction && this.appState.transaction.txid) {
+            // Fallback: get mining transaction txid from Step 3 data
+            txidToDisplay = this.appState.transaction.txid;
+            console.log(' [BROADCAST] Using mining transaction txid from Step 3 data:', txidToDisplay);
+        } else {
+            console.error(' [BROADCAST] No mining transaction txid available');
+            console.log(' [BROADCAST] Available data:');
+            console.log('  - result:', result);
+            console.log('  - appState.transaction:', this.appState?.transaction);
+            return;
+        }
+
         if (txidElement) {
-            txidElement.textContent = result.txid;
+            console.log(' [BROADCAST] Setting txid:', txidToDisplay);
+            txidElement.textContent = txidToDisplay;
+            console.log(' [BROADCAST] txidElement updated with:', txidElement.textContent);
+        } else {
+            console.error(' [BROADCAST] txidElement not found in DOM');
         }
 
         if (explorerLinkElement) {
-            const explorerUrl = broadcastService.getExplorerUrl(result.txid);
+            const explorerUrl = getExplorerUrl(txidToDisplay);
+            console.log(' [BROADCAST] Setting explorer URL:', explorerUrl);
             explorerLinkElement.href = explorerUrl;
             explorerLinkElement.style.display = 'inline-block';
+            console.log(' [BROADCAST] explorerLinkElement updated');
+        } else {
+            console.error(' [BROADCAST] explorerLinkElement not found in DOM');
+        }
+
+        // Double-check final state
+        console.log(' [BROADCAST] Final verification:');
+        if (txidElement) {
+            console.log('  - Final txid text:', txidElement.textContent);
+        }
+        if (explorerLinkElement) {
+            console.log('  - Final explorer href:', explorerLinkElement.href);
+            console.log('  - Final explorer display:', explorerLinkElement.style.display);
         }
     }
 
@@ -235,7 +263,7 @@ class BroadcastComponent {
         const explorerLinkElement = document.getElementById('explorerLink');
 
         if (txidElement) {
-            txidElement.textContent = '🚨 Error occurred';
+            txidElement.textContent = ' Error occurred';
             txidElement.style.color = '#ef4444';
         }
 
@@ -243,22 +271,8 @@ class BroadcastComponent {
             explorerLinkElement.style.display = 'none';
         }
 
-        // Log detailed error for debugging
-        console.log('🔍 Detailed Error Information:', {
-            message: error.message,
-            name: error.name,
-            stack: error.stack
-        });
     }
 
-    /**
-     * Enable the next step after successful broadcast
-     * @deprecated This is now handled by the step controller
-     */
-    enableNextStep() {
-        // This functionality is now handled by the centralized step system
-
-    }
 
     /**
      * Get the current broadcast result

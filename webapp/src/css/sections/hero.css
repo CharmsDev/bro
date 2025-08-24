@@ -107,27 +107,43 @@ header h2 {
     gap: 1.5rem;
 }
 
-/* Mobile Responsiveness */
+/* Make a specific info item span the full width */
+.info-item--full {
+    grid-column: 1 / -1;
+    text-align: left;
+}
+
+.info-item-explainer {
+    margin-top: 0.5rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
 @media (max-width: 768px) {
     header {
         padding: 2rem 0;
     }
-    
+
     .hero {
         padding: 3rem 0;
     }
-    
+
     .token-img {
         width: 150px;
         height: 150px;
     }
-    
+
     .token-container {
         padding: 20px;
     }
-    
+
     .hero .description {
         font-size: 1.1rem;
         padding: 0 1rem;
+    }
+
+    .info-item-explainer {
+        font-size: 0.95rem;
     }
 }

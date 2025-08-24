@@ -1,6 +1,10 @@
+ import { environmentConfig } from '../config/environment.js';
+import QuickNodeClient from './bitcoin/quicknode-client.js';
+
 export class BitcoinAPIService {
     constructor() {
-        this.baseUrl = 'https://mempool.space/testnet4/api';
+        // QuickNode RPC client with Blockbook add-on for complete Bitcoin operations
+        this.client = new QuickNodeClient();
         this.basePollingInterval = 20000;
         this.minPollingInterval = 15000;
         this.maxPollingInterval = 180000;
@@ -11,36 +15,23 @@ export class BitcoinAPIService {
 
     async getAddressInfo(address) {
         try {
-            const response = await fetch(`${this.baseUrl}/address/${address}`);
-            if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
-            }
-            return await response.json();
+            const info = await this.client.getAddressInfo(address);
+            return info;
         } catch (error) {
-            console.error('Error fetching address info:', error);
             throw error;
         }
     }
 
     async getAddressUtxos(address) {
         try {
-            const url = `${this.baseUrl}/address/${address}/utxo?t=${Date.now()}`;
-            const response = await fetch(url);
-
-            if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await this.client.getAddressUtxos(address);
             return Array.isArray(data) ? data : [];
         } catch (error) {
-            console.error('Error fetching UTXOs:', error);
             throw error;
         }
     }
 
     async monitorAddress(address, onUtxoFound, onStatusUpdate, onError) {
-        console.log(`Starting continuous monitoring for address: ${address}`);
 
         let pollingCount = 0;
         let currentInterval = this.basePollingInterval;
@@ -77,24 +68,22 @@ export class BitcoinAPIService {
                         currentInterval * this.recoveryMultiplier,
                         this.minPollingInterval
                     );
-                    console.log(`Optimizing interval to ${currentInterval}ms after ${consecutiveSuccesses} successes`);
                 }
 
                 if (utxos && utxos.length > 0) {
-                    const validUtxos = utxos.filter(utxo => utxo.value >= 10000);
+                    const validUtxos = utxos.filter(utxo => parseInt(utxo.value) >= 10000);
 
                     if (validUtxos.length > 0) {
                         const utxo = validUtxos[0];
                         const formattedUtxo = {
                             txid: utxo.txid,
                             vout: utxo.vout,
-                            amount: utxo.value,
+                            amount: parseInt(utxo.value),
                             scriptPubKey: '',
                             address: address,
-                            confirmations: utxo.status?.confirmed ? utxo.status.block_height : 0
+                            confirmations: utxo.confirmations || 0
                         };
 
-                        console.log('🎉 UTXO found! Stopping monitoring:', formattedUtxo);
                         isMonitoring = false;
                         if (onUtxoFound) {
                             onUtxoFound(formattedUtxo);
@@ -106,7 +95,6 @@ export class BitcoinAPIService {
                 setTimeout(poll, currentInterval);
 
             } catch (error) {
-                console.error('Polling error:', error);
                 consecutiveErrors++;
                 consecutiveSuccesses = 0;
 
@@ -123,13 +111,11 @@ export class BitcoinAPIService {
                         currentInterval * this.backoffMultiplier,
                         this.maxPollingInterval
                     );
-                    console.log(`⚠️ Rate limit hit! Backing off to ${currentInterval}ms (${Math.round(currentInterval / 1000)}s)`);
                 } else if (consecutiveErrors >= this.maxConsecutiveErrors) {
                     currentInterval = Math.min(
                         currentInterval * 1.5,
                         this.maxPollingInterval
                     );
-                    console.log(`⚠️ ${consecutiveErrors} consecutive errors, backing off to ${currentInterval}ms`);
                 }
 
                 const isFatalError = !isRateLimit && !isNetworkError && consecutiveErrors > 10;
@@ -157,7 +143,6 @@ export class BitcoinAPIService {
 
                     setTimeout(poll, currentInterval);
                 } else {
-                    console.error('💀 Fatal error, stopping monitoring:', error);
                     isMonitoring = false;
                     if (onError) {
                         onError(error);
@@ -166,12 +151,10 @@ export class BitcoinAPIService {
             }
         };
 
-        console.log(`🚀 Starting continuous monitoring with ${this.basePollingInterval}ms base interval`);
         poll();
 
         return () => {
             isMonitoring = false;
-            console.log('🛑 Monitoring stopped by user');
         };
     }
 }

@@ -19,7 +19,6 @@ export class MintingDataValidator {
             throw new Error('Transaction not broadcast. Please complete Step 4 (Broadcast Transaction) first.');
         }
 
-        console.log('✅ All prerequisites met: wallet, transaction, and broadcast completed');
         return true;
     }
 
@@ -30,12 +29,10 @@ export class MintingDataValidator {
         // Try to get changeAmount from stored outputs first
         if (transaction.outputs && transaction.outputs[2]) {
             changeAmount = transaction.outputs[2].value;
-            console.log('✅ Change amount extracted from stored outputs:', changeAmount);
             return changeAmount;
         }
 
         // Fallback: decode transaction hex using bitcoinjs-lib
-        console.log('⚠️ Transaction outputs not found in stored data, decoding from hex...');
         try {
             const bitcoin = window.bitcoin;
             if (!bitcoin) {
@@ -45,7 +42,6 @@ export class MintingDataValidator {
             const decodedTx = bitcoin.Transaction.fromHex(transaction.txHex);
             if (decodedTx && decodedTx.outs && decodedTx.outs[2]) {
                 changeAmount = decodedTx.outs[2].value;
-                console.log('✅ Successfully extracted changeAmount from transaction hex:', changeAmount);
                 return changeAmount;
             } else {
                 throw new Error('Could not find output at index 2 in decoded transaction');
@@ -60,10 +56,6 @@ export class MintingDataValidator {
     static createMiningResult(transaction, appState) {
         const changeAmount = this.extractChangeAmount(transaction, appState);
 
-        console.log('🎯 Creating mining result with CORRECT transaction data:');
-        console.log('  - Using transaction.txid (MINING TX):', transaction.txid);
-        console.log('  - NOT extracting from inputs (those are PREVIOUS tx data)');
-        console.log('  - Will use vout 1 for input, vout 2 for funding');
 
         // Use stored transaction reward
         let reward = transaction.reward;
@@ -75,7 +67,6 @@ export class MintingDataValidator {
             changeAmount: changeAmount        // ← Calculated change
         };
 
-        console.log('✅ Mining result created (WITHOUT incorrect input extraction):', result);
         return result;
     }
 
@@ -94,7 +85,6 @@ export class MintingDataValidator {
         }
 
         // NO longer require inputTxid/inputVout - we use the mining txid directly
-        console.log('✅ Mining result validation passed (using mining txid directly)');
     }
 
     // Validate wallet data
@@ -107,7 +97,6 @@ export class MintingDataValidator {
             throw new Error('Wallet address not found');
         }
 
-        console.log('✅ Wallet data validated successfully');
         return true;
     }
 
@@ -125,7 +114,6 @@ export class MintingDataValidator {
             throw new Error('Block height not found in confirmation data');
         }
 
-        console.log('✅ Confirmation data validated successfully');
         return true;
     }
 
@@ -147,7 +135,6 @@ export class MintingDataValidator {
             throw new Error('Transaction ID not found in proof data');
         }
 
-        console.log('✅ Proof data validated successfully');
         return true;
     }
 
@@ -165,7 +152,6 @@ export class MintingDataValidator {
             throw new Error('Prover response is empty');
         }
 
-        console.log('✅ Prover response validated successfully');
         return true;
     }
 
@@ -193,7 +179,6 @@ export class MintingDataValidator {
             }
         }
 
-        console.log('✅ Signed transactions validated successfully');
         return true;
     }
 }

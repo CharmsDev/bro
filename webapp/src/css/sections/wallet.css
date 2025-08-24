@@ -6,7 +6,7 @@
 
 /* Wallet Section */
 .wallet-section {
-    max-width: 800px;
+    max-width: 820px;
     margin: 3rem auto;
     padding: 2.5rem;
     background: linear-gradient(to bottom right, #1e293b, #0f172a);
@@ -23,15 +23,7 @@
     box-shadow: 0 8px 32px rgba(2, 106, 163, 0.1);
 }
 
-.wallet-section h3 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    background: linear-gradient(to right, var(--accent-blue), #0ea5e9);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
+/* Wallet section h3 styling moved to boxes.css as .step-title and .step-title-1 */
 
 .wallet-description {
     font-size: 1.1rem;
@@ -136,7 +128,7 @@
 
 /* Wallet Visit Section */
 .wallet-visit-section {
-    max-width: 800px;
+    max-width: 820px;
     margin: 3rem auto;
     padding: 2.5rem;
     background: linear-gradient(to bottom right, #1e293b, #0f172a);
@@ -152,6 +144,51 @@
     border-color: var(--accent-blue);
     transform: translateY(-2px);
     box-shadow: 0 8px 32px rgba(2, 106, 163, 0.1);
+}
+
+/* Wallet Visit Controls */
+.wallet-visit-controls {
+    margin-top: 1.5rem;
+}
+
+.wallet-visit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.25rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(2, 106, 163, 0.15));
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    color: #dbeafe;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.wallet-visit-btn:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(2, 106, 163, 0.25));
+    border-color: rgba(59, 130, 246, 0.6);
+    transform: translateY(-1px);
+}
+
+/* Green success variant for explorer links and similar actions */
+.wallet-visit-btn.wallet-visit-btn--success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #d1fae5;
+}
+
+.wallet-visit-btn.wallet-visit-btn--success:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.25));
+    border-color: rgba(16, 185, 129, 0.6);
+    transform: translateY(-1px);
+}
+
+.wallet-visit-btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+    filter: grayscale(0.2);
 }
 
 /* Section States */

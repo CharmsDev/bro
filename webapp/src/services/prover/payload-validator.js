@@ -10,7 +10,6 @@ export class PayloadValidator {
      * @throws {Error} If validation fails
      */
     static validatePayload(payload) {
-        console.log('🔍 Validating payload structure...');
 
         const requiredFields = [
             'spell',
@@ -43,9 +42,7 @@ export class PayloadValidator {
 
         // Calculate payload size
         const payloadSize = JSON.stringify(payload).length;
-        console.log(`📊 Payload size: ${Math.round(payloadSize / 1024)} KB`);
 
-        console.log('✅ Payload validation passed');
     }
 
     /**
@@ -168,7 +165,6 @@ export class PayloadValidator {
      * @throws {Error} If validation fails
      */
     static validateProverResponse(response) {
-        console.log('🔍 Validating prover response...');
 
         // Expected response should contain transaction data
         // Based on the example, it should be an array of hex strings
@@ -191,6 +187,5 @@ export class PayloadValidator {
             }
         }
 
-        console.log(`✅ Prover response validation passed: ${response.length} transactions`);
     }
 }

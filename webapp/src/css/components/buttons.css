@@ -6,6 +6,40 @@
    ================================== */
 
 /* ===================================
+   EXPLORER LINK BUTTON
+   ===================================
+   Unified style for "View on Mempool.space" links
+   ================================== */
+
+.explorer-link {
+    color: var(--accent-orange);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid rgba(209, 133, 10, 0.3);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: inline-block;
+    cursor: pointer;
+    background: transparent;
+}
+
+.explorer-link:hover {
+    background: rgba(209, 133, 10, 0.1);
+    border-color: var(--accent-orange);
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(209, 133, 10, 0.2);
+}
+
+.explorer-link:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(209, 133, 10, 0.2);
+}
+
+/* ===================================
    STEP-SPECIFIC BUTTON STYLES
    ================================== */
 

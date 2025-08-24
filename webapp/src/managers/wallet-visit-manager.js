@@ -38,7 +38,6 @@ export class WalletVisitManager {
 
             this.markStepCompleted();
 
-            console.log('✅ Step 5: Redirected to Charms Wallet');
         } catch (error) {
             console.error('Error visiting wallet:', error);
             console.error('❌ Error opening wallet. Please try again.');
@@ -69,9 +68,7 @@ export class WalletVisitManager {
     }
 
     enableWalletVisitStep() {
-        console.log('🔧 WalletVisitManager.enableWalletVisitStep() called');
         const visitWalletBtn = this.dom.get('visitWalletBtn');
-        console.log('🔧 visitWalletBtn element:', !!visitWalletBtn);
 
         if (visitWalletBtn) {
             visitWalletBtn.classList.remove('disabled');
@@ -82,7 +79,6 @@ export class WalletVisitManager {
                 walletVisitSection.classList.add('active');
             }
 
-            console.log('✅ Step 5: Visit Wallet enabled');
         } else {
             console.error('❌ visitWalletBtn element not found');
         }

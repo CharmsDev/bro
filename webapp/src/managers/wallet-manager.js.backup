@@ -9,46 +9,40 @@ export class WalletManager {
         this.transactionManager = transactionManager;
     }
 
-    initialize() {
-        this.checkExistingWallet();
+    async initialize() {
+        await this.checkExistingWallet();
         this.setupEventListeners();
     }
 
-    checkExistingWallet() {
+    async checkExistingWallet() {
         if (!this.wallet) return;
 
         try {
             const existingWallet = this.wallet.getStoredWallet();
             if (existingWallet) {
-                const address = existingWallet.address;
 
-                // Validate address format
-                const isValidFormat = address &&
-                    typeof address === 'string' &&
-                    (
-                        (address.startsWith('tb1q') && address.length === 42) ||
-                        (address.startsWith('tb1p') && address.length === 62)
-                    );
+                // Check if wallet has new multi-address format
+                if (!existingWallet.addresses) {
 
-                if (isValidFormat) {
-                    this.appState.completeWalletCreation(existingWallet);
-                    console.log('Loaded existing wallet:', existingWallet);
+                    try {
+                        // Regenerate wallet with existing seed phrase to get 3 addresses
+                        await this.wallet.storeWallet(existingWallet.seedPhrase);
+                        const upgradedWallet = this.wallet.getStoredWallet();
 
-                    // Show wallet info and start monitoring if no UTXO yet
-                    this.showWalletInfo(existingWallet);
-
-                    this.appState.loadMiningResult();
+                        this.appState.completeWalletCreation(upgradedWallet);
+                    } catch (error) {
+                        console.error('❌ Error upgrading wallet:', error);
+                        // Fall back to existing wallet data
+                        this.appState.completeWalletCreation(existingWallet);
+                    }
                 } else {
-                    console.log('Found invalid wallet address format, clearing:', address, typeof address);
-                    this.wallet.clearWallet();
-                    this.dom.show('walletControls');
-                    this.dom.hide('seedPhraseBox');
-                    this.dom.hide('addressMonitoringBox');
+                    this.appState.completeWalletCreation(existingWallet);
                 }
+            } else {
             }
         } catch (error) {
             console.error('Error checking existing wallet, clearing localStorage:', error);
-            localStorage.clear();
+            this.wallet.clearWallet();
             this.dom.show('walletControls');
             this.dom.hide('seedPhraseBox');
             this.dom.hide('addressMonitoringBox');
@@ -77,7 +71,7 @@ export class WalletManager {
                     const seedPhrase = this.wallet.generateSeedPhrase();
                     const address = await this.wallet.generateTestnet4Address(seedPhrase, 0);
 
-                    this.wallet.storeWallet(seedPhrase, address);
+                    await this.wallet.storeWallet(seedPhrase, address);
                     const walletData = { seedPhrase, address };
 
                     this.appState.completeWalletCreation(walletData);
@@ -91,13 +85,9 @@ export class WalletManager {
 
     setupLoadDemoWalletButton() {
         const loadDemoWalletBtn = this.dom.get('loadDemoWalletBtn');
-        console.log('Setting up demo wallet button:', !!loadDemoWalletBtn);
 
         if (loadDemoWalletBtn) {
             loadDemoWalletBtn.addEventListener('click', async () => {
-                console.log('Demo wallet button clicked');
-                console.log('Wallet instance available:', !!this.wallet);
-                console.log('AppState available:', !!this.appState);
 
                 if (!this.wallet) {
                     console.error('❌ Wallet functionality not available');
@@ -119,12 +109,10 @@ export class WalletManager {
 
                     // BIP39 compliant demo seed phrase
                     const demoSeedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-                    console.log('Generating address for demo seed phrase...');
 
                     const address = await this.wallet.generateTestnet4Address(demoSeedPhrase, 0);
-                    console.log('Generated demo address:', address);
 
-                    this.wallet.storeWallet(demoSeedPhrase, address);
+                    await this.wallet.storeWallet(demoSeedPhrase, address);
                     const walletData = { seedPhrase: demoSeedPhrase, address };
 
                     if (this.appState) {
@@ -133,8 +121,6 @@ export class WalletManager {
                         console.error('AppState not available');
                     }
 
-                    console.log('✅ Demo wallet loaded successfully');
-                    console.log('Address:', address);
                 } catch (error) {
                     console.error('Error loading demo wallet:', error);
                     console.error('❌ Error loading demo wallet. Please try again.');
@@ -224,7 +210,6 @@ export class WalletManager {
                     // Reset UI to initial state
                     this.resetToInitialState();
 
-                    console.log('✅ All data cleared - page reset to initial state');
                 }
             });
         }
@@ -346,7 +331,5 @@ export class WalletManager {
         // Hide monitoring display
         this.dom.hide('fundingMonitoring');
 
-        console.log('✅ UTXO found in Step 1:', utxo);
-        console.log('🚀 Step 2 (Mining) should now be enabled');
     }
 }

@@ -1,0 +1,222 @@
+/* ===================================
+   REUSABLE BOXES
+   ===================================
+   Common box styles for success messages, summaries, etc.
+   ================================== */
+
+/* Success Box - Reusable across all steps */
+.success-box {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05));
+    border: 2px solid rgba(34, 197, 94, 0.3);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.1);
+    transition: all var(--transition-normal);
+    text-align: center;
+}
+
+.success-box:hover {
+    border-color: rgba(34, 197, 94, 0.5);
+    box-shadow: 0 6px 25px rgba(34, 197, 94, 0.15);
+    transform: translateY(-1px);
+}
+
+.success-box h4 {
+    color: var(--success-color);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.success-box p {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.success-box span {
+    color: var(--success-color);
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+}
+
+.success-box .highlight {
+    color: var(--accent-orange);
+    font-weight: 700;
+    font-size: 1.1em;
+    text-shadow: 0 0 8px rgba(209, 133, 10, 0.5);
+}
+
+.success-box .reward-amount {
+    color: var(--success-color);
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+/* Step Box Title Colors - Cohesive 6-step progression */
+.step-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+/* Step 1: Wallet - Blue */
+.step-title-1 {
+    background: linear-gradient(to right, #0ea5e9, #0284c7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #0ea5e9; /* Fallback for browsers that don't support background-clip */
+}
+
+/* Step 2: Mining - Orange */
+.step-title-2 {
+    background: linear-gradient(to right, #f59e0b, #d97706);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #f59e0b; /* Fallback */
+}
+
+/* Step 3: Transaction - Purple */
+.step-title-3 {
+    background: linear-gradient(to right, #8b5cf6, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #8b5cf6; /* Fallback */
+}
+
+/* Step 4: Broadcast - Soft Indigo */
+.step-title-4 {
+    background: linear-gradient(to right, #6366f1, #4f46e5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #6366f1; /* Fallback */
+}
+
+/* Step 5: Confirmation - Emerald Green */
+.step-title-5 {
+    background: linear-gradient(to right, #10b981, #047857);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #10b981; /* Fallback */
+}
+
+/* Step 6: Claim - Pale Red */
+.step-title-6 {
+    background: linear-gradient(to right, #f87171, #ef4444);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #f87171; /* Fallback */
+}
+
+/* Mining Success Box - Blue theme to differentiate from green reward calculation */
+.mining-success-box {
+    background: linear-gradient(135deg, rgba(2, 106, 163, 0.1), rgba(3, 105, 161, 0.05));
+    border: 2px solid rgba(2, 106, 163, 0.3);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(2, 106, 163, 0.1);
+    transition: all var(--transition-normal);
+    text-align: center;
+}
+
+.mining-success-box:hover {
+    border-color: rgba(2, 106, 163, 0.5);
+    box-shadow: 0 6px 25px rgba(2, 106, 163, 0.15);
+    transform: translateY(-1px);
+}
+
+.mining-success-box h4 {
+    color: var(--accent-blue);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.mining-success-box p {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.mining-success-box span {
+    color: var(--accent-blue);
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+}
+
+.mining-success-box .highlight {
+    color: var(--accent-orange);
+    font-weight: 700;
+    font-size: 1.1em;
+    text-shadow: 0 0 8px rgba(209, 133, 10, 0.5);
+}
+
+.mining-success-box .reward-amount {
+    color: var(--accent-blue);
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+/* Error Box - For future use */
+.error-box {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+    border: 2px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.1);
+    transition: all var(--transition-normal);
+    text-align: center;
+}
+
+.error-box h4 {
+    color: var(--error-color);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+}
+
+.error-box p {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+/* Warning Box - For future use */
+.warning-box {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+    border: 2px solid rgba(245, 158, 11, 0.3);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.1);
+    transition: all var(--transition-normal);
+    text-align: center;
+}
+
+.warning-box h4 {
+    color: var(--accent-orange);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+}

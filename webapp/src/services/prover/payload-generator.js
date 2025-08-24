@@ -4,7 +4,7 @@
  */
 
 import { PROVER_CONFIG } from './config.js';
-import { MempoolClient } from './mempool-client.js';
+import QuickNodeClient from '../bitcoin/quicknode-client.js';
 import { PayloadUtils } from './payload-utils.js';
 import { TemplateLoader } from './template-loader.js';
 import { PayloadValidator } from './payload-validator.js';
@@ -12,7 +12,7 @@ import { PayloadValidator } from './payload-validator.js';
 
 export class PayloadGenerator {
     constructor() {
-        this.mempoolClient = new MempoolClient();
+        this.quickNodeClient = new QuickNodeClient();
         this.templateLoader = new TemplateLoader();
     }
 
@@ -33,11 +33,11 @@ export class PayloadGenerator {
             const template = await this.templateLoader.loadTemplate();
             const payload = await this._generatePayloadCore(miningData, proofData, walletData, template);
             PayloadValidator.validatePayload(payload);
-            console.log('✅ Payload generated');
-            
-            // Add payload download functionality for debugging
-            this._offerPayloadDownload(payload);
-            
+            // Payload ready
+
+            // Offer the generated payload for download
+            await this._offerPayloadDownload(payload);
+
             return payload;
         } catch (error) {
             console.error('❌ Payload generation failed:', error);
@@ -47,36 +47,48 @@ export class PayloadGenerator {
 
     /**
      * Offer to download the generated payload as JSON file for debugging
+     * Shows a save dialog to let user choose location and filename
      */
-    _offerPayloadDownload(payload) {
+    async _offerPayloadDownload(payload) {
         try {
-            // Create timestamp for filename
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = `payload-${timestamp}.json`;
-            
-            // Create download link
+            const defaultFilename = `payload-${timestamp}.json`;
             const jsonString = JSON.stringify(payload, null, 2);
+
+            // Use the File System Access API if available
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const fileHandle = await window.showSaveFilePicker({
+                        suggestedName: defaultFilename,
+                        types: [{
+                            description: 'JSON files',
+                            accept: { 'application/json': ['.json'] }
+                        }]
+                    });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(jsonString);
+                    await writable.close();
+                    return;
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        return; // User cancelled the save dialog
+                    }
+                }
+            }
+
+            // Fallback to the traditional download method
             const blob = new Blob([jsonString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            
-            // Create temporary download link
             const link = document.createElement('a');
             link.href = url;
-            link.download = filename;
+            link.download = defaultFilename;
             link.style.display = 'none';
-            
-            // Add to DOM, click, and remove
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
-            // Clean up URL
             URL.revokeObjectURL(url);
-            
-            console.log(`📥 Payload downloaded as: ${filename}`);
-            
         } catch (error) {
-            console.warn('Failed to download payload:', error);
+            // Silently fail on download error
         }
     }
 
@@ -90,36 +102,80 @@ export class PayloadGenerator {
      * @returns {Promise<Object>} Generated payload
      */
     async _generatePayloadCore(miningData, proofData, walletData, template) {
-        console.log('🚀 Generating payload...');
+        // Prefer reward passed from minting flow; fallback to calculateRewardInfo if not present
+        let reward = (typeof miningData?.reward === 'number' && isFinite(miningData.reward)) ? miningData.reward : 0;
 
-        // SINGLE SOURCE OF TRUTH: Refresh mining transaction data from localStorage
-        const storedTx = PayloadUtils.loadMiningDataFromStorage();
+        // Fallback 1: AppState.miningReward (already uses calculateRewardInfo under the hood)
+        if (!reward) {
+            try {
+                const appReward = window.appController?.appState?.miningReward;
+                if (typeof appReward === 'number' && appReward > 0) {
+                    reward = appReward;
+                    // Using reward from AppState.miningReward
+                }
+            } catch (_) { /* ignore */ }
+        }
 
-        // Build canonical mining object EXCLUSIVELY from localStorage values
+        // Fallback 2: Use calculateRewardInfo with miningResult (prefer AppState, then localStorage)
+        if (!reward && window.calculateRewardInfo) {
+            try {
+                const stateResult = window.appController?.appState?.miningResult || null;
+                const miningResultStr = stateResult ? null : localStorage.getItem('miningResult');
+                const miningResult = stateResult || (miningResultStr ? JSON.parse(miningResultStr) : null);
+                if (miningResult?.bestNonce && miningResult?.bestHash) {
+                    const info = window.calculateRewardInfo(miningResult.bestNonce, miningResult.bestHash);
+                    reward = Number(info?.rawAmount) || 0;
+                    // Calculated reward via calculateRewardInfo
+                }
+            } catch (_) { /* ignore */ }
+        }
+
+        // Fallback 3: Try BitcoinMiner.loadMiningResult() (mirrors AppState fallback)
+        if (!reward && window.calculateRewardInfo && window.BitcoinMiner) {
+            try {
+                const miner = new window.BitcoinMiner();
+                const result = miner.loadMiningResult();
+                if (result?.bestNonce && result?.bestHash) {
+                    const info = window.calculateRewardInfo(result.bestNonce, result.bestHash);
+                    reward = Number(info?.rawAmount) || 0;
+                    // Calculated reward via BitcoinMiner.loadMiningResult()
+                }
+            } catch (_) { /* ignore */ }
+        }
+
+        // Fallback 4: Try miningProgress if result not finalized yet
+        if (!reward && window.calculateRewardInfo) {
+            try {
+                const progressStr = localStorage.getItem('miningProgress');
+                const progress = progressStr ? JSON.parse(progressStr) : null;
+                if (progress?.bestNonce && progress?.bestHash) {
+                    const info = window.calculateRewardInfo(progress.bestNonce, progress.bestHash);
+                    reward = Number(info?.rawAmount) || 0;
+                    // Calculated reward via localStorage.miningProgress
+                }
+            } catch (_) { /* ignore */ }
+        }
+
+        // Reward calculation complete
+
+        // Build a canonical mining object
         let mining = {
-            txid: storedTx?.txid,                    // ← MINING transaction ID (CORRECT)
-            txHex: storedTx?.txHex,                  // ← MINING transaction hex
-            difficulty: (typeof storedTx?.difficulty === 'number') ? storedTx.difficulty : undefined,
-            reward: (typeof storedTx?.reward === 'number') ? storedTx.reward : undefined,
-            changeAmount: (typeof storedTx?.changeAmount === 'number') ? storedTx.changeAmount : undefined
+            txid: miningData?.txid,
+            txHex: miningData?.txHex,
+            reward: reward,
+            changeAmount: miningData?.changeAmount
         };
 
-
-
         await this._fillMissingTxHex(mining);
-
-        // Log debugging info
-        PayloadUtils.logLocalStorageDebug();
-        console.log('👛 walletData snapshot:', walletData);
 
         // Resolve wallet address
         const resolvedAddress = PayloadUtils.resolveWalletAddress(walletData);
 
-        // Generate app_id and calculate mined amount
+        // Generate app_id and compute mined amount for $01 replacement
         const appId = await PayloadUtils.generateAppId(mining);
-        const minedAmount = PayloadUtils.calculateMinedAmount(mining.difficulty, mining.reward);
+        const minedAmount = Number(reward) || 0;
 
-
+        // Mined amount calculated
 
         // Deep clone template to avoid mutations
         const payload = JSON.parse(JSON.stringify(template));
@@ -131,32 +187,21 @@ export class PayloadGenerator {
         this._updatePayloadWithProofData(payload, proofData, mining);
 
         // Handle optional fields
-        await this._updateOptionalFields(payload, mining, storedTx, template);
-
-        // Log comprehensive diagnostics
-        this._logPayloadDiagnostics(payload);
-
-        // Detect leftover placeholders
-        this._checkForPlaceholders(payload);
-
-        // Sanity warnings
-        this._performSanityChecks(payload);
+        await this._updateOptionalFields(payload, mining, miningData, template);
 
         return payload;
     }
 
-
-
     /**
-     * Fill missing transaction hex from mempool API
+     * Fill missing transaction hex from QuickNode API
      * @private
      */
     async _fillMissingTxHex(mining) {
         if (!mining.txHex && mining.txid) {
             try {
-                mining.txHex = await this.mempoolClient.fetchTxHex(mining.txid);
+                mining.txHex = await this.quickNodeClient.getRawTransaction(mining.txid, false);
             } catch (e) {
-                console.warn('⚠️ Could not fetch tx hex:', e.message);
+                // Silently fail if the transaction hex cannot be fetched
             }
         }
     }
@@ -166,24 +211,15 @@ export class PayloadGenerator {
      * @private
      */
     _updatePayloadWithMiningData(payload, mining, resolvedAddress, walletData, minedAmount) {
-        // CRITICAL FIX: The tx field should contain the MINING TRANSACTION HEX (created in Step 3)
+        // The `tx` field must contain the hex of the mining transaction
         payload.spell.private_inputs["$01"].tx = mining.txHex;
-        console.log('🔧 Using mining transaction hex in payload (Step 3 transaction)');
-        
-        // Extract mining transaction ID for logging and validation
-        const miningTxId = mining.txid || mining.transactionId || mining.miningTxId;
-        if (miningTxId) {
-            console.log('🆔 Mining transaction ID (Step 3):', miningTxId);
-        } else {
-            console.warn('⚠️  Mining transaction ID not explicitly provided in miningData');
-        }
-        
-        // Use the MINING transaction UTXO with vout 1 (the token output)
+
+        // Use the mining transaction UTXO with vout 1 (the token output)
         payload.spell.ins[0].utxo_id = `${mining.txid}:1`;
         payload.spell.outs[0].address = resolvedAddress || walletData.address;
-        payload.spell.outs[0].charms["$01"] = minedAmount;
-        
 
+        payload.spell.outs[0].charms["$01"] = minedAmount;
+        // Payload amount injection complete
     }
 
     /**
@@ -191,45 +227,8 @@ export class PayloadGenerator {
      * @private
      */
     _updatePayloadWithProofData(payload, proofData, mining) {
-
-        
         if (proofData && (proofData.proof || proofData.blockProof || proofData.txBlockProof || proofData.merkleProof)) {
-            const selectedProof = proofData.proof || proofData.blockProof || proofData.txBlockProof || proofData.merkleProof;
-            payload.spell.private_inputs["$01"].tx_block_proof = selectedProof;
-            
-
-            
-            // CRITICAL: Check that proof does not contain OLD input txid and ideally references the mining tx
-            const oldTxId = mining.inputTxid;
-            const expectedMiningTxId = mining.txid;
-            const miningTxId = mining.txid || mining.transactionId || mining.miningTxId;
-            
-            if (selectedProof.includes(oldTxId)) {
-                console.error('🚨🚨🚨 CRITICAL ERROR: Block proof contains OLD input transaction ID:', oldTxId);
-                console.error('🚨🚨🚨 This proof is for the WRONG transaction! It should be for mining tx:', expectedMiningTxId);
-            }
-            
-            if (selectedProof.includes(expectedMiningTxId)) {
-                console.log('✅ CORRECT: Block proof contains expected mining transaction ID:', expectedMiningTxId);
-            } else {
-                console.error('🚨 ERROR: Block proof does NOT contain expected mining transaction ID:', expectedMiningTxId);
-            }
-            
-            console.log('🔗 Using block proof for mining transaction (Step 3 tx)');
-            if (miningTxId) {
-                console.log('🔗 Block proof corresponds to mining tx:', miningTxId);
-            }
-        }
-
-        if (!payload.spell.private_inputs["$01"].tx_block_proof) {
-            const miningTxId = mining.txid || mining.transactionId || mining.miningTxId;
-            console.warn('⚠️  tx_block_proof is missing in payload. Expecting proofData.proof (hex) from TxProofService for the mining transaction (Step 3)');
-            if (miningTxId) {
-                console.warn('⚠️  Missing block proof for mining transaction:', miningTxId);
-            }
-        } else {
-            const proofHead = payload.spell.private_inputs["$01"].tx_block_proof.slice(0, 32);
-            console.log('🔗 tx_block_proof length/head for mining transaction:', payload.spell.private_inputs["$01"].tx_block_proof.length, proofHead);
+            payload.spell.private_inputs["$01"].tx_block_proof = proofData.proof || proofData.blockProof || proofData.txBlockProof || proofData.merkleProof;
         }
     }
 
@@ -238,30 +237,20 @@ export class PayloadGenerator {
      * @private
      */
     async _updateOptionalFields(payload, mining, storedTx, template) {
-        // prev_txs must include the raw hex of the mining transaction itself
-        // This is the transaction that we're proving, which becomes the "previous transaction"
-        // for the prover to reference
+        // The `prev_txs` field must contain the raw hex of the mining transaction.
+        // This transaction is being proven and serves as a reference for the prover.
         let miningTxHex = null;
         try {
-            // Use the mining transaction hex directly if available, otherwise fetch it
-            if (mining.txHex) {
-                miningTxHex = mining.txHex;
-                console.log('✅ Using mining transaction hex from miningData');
-            } else {
-                miningTxHex = await this.mempoolClient.fetchTxHex(mining.txid);
-                console.log('✅ Fetched mining transaction hex from mempool API');
-            }
+            miningTxHex = mining.txHex || await this.quickNodeClient.getRawTransaction(mining.txid, false);
         } catch (e) {
-            console.warn('Could not get mining tx hex for prev_txs:', e.message);
+            // Silently fail if the transaction hex is unavailable
         }
-        
+
         if (Array.isArray(payload.prev_txs)) {
             if (miningTxHex) {
                 payload.prev_txs = [miningTxHex];
-                console.log('🔗 Set prev_txs to mining transaction hex');
             } else {
                 delete payload.prev_txs;
-                console.warn('⚠️ Could not set prev_txs - no mining transaction hex available');
             }
         } else {
             delete payload.prev_txs;
@@ -269,11 +258,10 @@ export class PayloadGenerator {
 
         // Funding/config fields
         const fundingVout = (storedTx && typeof storedTx.fundingVout === 'number') ? storedTx.fundingVout : 2;
-        
+
         if ('funding_utxo' in template) {
-            // Use MINING transaction ID with vout 2 (the funding/change output)
+            // Use the mining transaction ID with vout 2 for the funding/change output
             payload.funding_utxo = `${mining.txid}:2`;
-            console.log('🎯 Set funding_utxo to MINING transaction:', `${mining.txid}:2`);
         } else {
             delete payload.funding_utxo;
         }
@@ -302,84 +290,24 @@ export class PayloadGenerator {
      */
     async _setFundingUtxoValue(payload, mining, fundingVout) {
         try {
-            // Use MINING transaction (not parent) to get vout 2 value
-            const miningTx = await this.mempoolClient.fetchTxJson(mining.txid);
+            // Use the mining transaction to get the value from vout 2
+            const miningTx = await this.quickNodeClient.getRawTransaction(mining.txid, true);
             const vout = miningTx.vout?.[2]; // Always use vout 2 for funding
-            if (!vout || typeof vout.value !== 'number') {
-                console.warn('Could not derive funding_utxo_value from mining tx vout 2; vout missing or invalid');
-            } else {
-                // mempool API returns satoshis in vout.value
+
+            if (vout && typeof vout.value === 'number') {
                 payload.funding_utxo_value = vout.value;
-                console.log('🔗 funding_utxo_value derived from MINING tx vout 2:', payload.funding_utxo_value);
             }
         } catch (e) {
-            console.warn('Could not fetch MINING tx JSON for funding_utxo_value:', e.message);
+            // Silently fail if the transaction JSON cannot be fetched
         }
-        
+
+        // Fallback to `changeAmount` if the funding value could not be derived
         if (!(typeof payload.funding_utxo_value === 'number' && payload.funding_utxo_value > 0)) {
             if (typeof mining.changeAmount === 'number' && mining.changeAmount > 0) {
                 payload.funding_utxo_value = mining.changeAmount;
-                console.log('🔁 funding_utxo_value fallback to miningData.changeAmount:', payload.funding_utxo_value);
             } else {
-                console.warn('Removing funding_utxo_value: could not derive and no valid fallback.');
                 delete payload.funding_utxo_value;
             }
-        }
-    }
-
-    /**
-     * Log comprehensive payload diagnostics
-     * @private
-     */
-    _logPayloadDiagnostics(payload) {
-        console.log('🧷 Replacement audit:', {
-            appResourcePath: payload.spell.apps["$01"],
-            txHexLen: payload.spell.private_inputs["$01"].tx?.length,
-            txHexHead: payload.spell.private_inputs["$01"].tx?.slice(0, 24),
-            txBlockProofType: typeof payload.spell.private_inputs["$01"].tx_block_proof,
-            txBlockProofLen: payload.spell.private_inputs["$01"].tx_block_proof ? payload.spell.private_inputs["$01"].tx_block_proof.length : 0,
-            utxo_in: payload.spell.ins[0].utxo_id,
-            out_address: payload.spell.outs[0].address,
-            output_amount: payload.spell.outs[0].charms["$01"],
-            prev_txs_count: Array.isArray(payload.prev_txs) ? payload.prev_txs.length : 'n/a',
-            prev_tx0_len: Array.isArray(payload.prev_txs) && payload.prev_txs[0] ? payload.prev_txs[0].length : 0,
-            funding_utxo: payload.funding_utxo,
-            funding_value_type: typeof payload.funding_utxo_value,
-            change_address: payload.change_address,
-            fee_rate_type: typeof payload.fee_rate,
-            chain: payload.chain
-        });
-    }
-
-    /**
-     * Check for unresolved placeholders
-     * @private
-     */
-    _checkForPlaceholders(payload) {
-        const jsonPreview = JSON.stringify(payload);
-        if (jsonPreview.includes('{{')) {
-            console.warn('⚠️  Detected unresolved placeholders in payload JSON. Please review template and assignments.');
-        } else {
-            console.log('✅ No unresolved placeholders detected in payload.');
-        }
-    }
-
-    /**
-     * Perform sanity checks on payload
-     * @private
-     */
-    _performSanityChecks(payload) {
-        if (!Array.isArray(payload.prev_txs) || payload.prev_txs.length === 0) {
-            console.warn('⚠️  prev_txs is empty; API typically requires parent transaction hex for each input.');
-        }
-        
-        // Non-fatal validation: hex checks
-        const hexRe = /^[0-9a-fA-F]+$/;
-        if (payload.spell.private_inputs["$01"].tx && !hexRe.test(payload.spell.private_inputs["$01"].tx)) {
-            console.warn('⚠️  tx field contains non-hex characters.');
-        }
-        if (payload.spell.private_inputs["$01"].tx_block_proof && !hexRe.test(payload.spell.private_inputs["$01"].tx_block_proof)) {
-            console.warn('⚠️  tx_block_proof contains non-hex characters.');
         }
     }
 }

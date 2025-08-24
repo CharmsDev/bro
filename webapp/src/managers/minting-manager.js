@@ -7,18 +7,16 @@ import { MintingDataValidator } from './minting/minting-data-validator.js';
 import { MintingStepExecutor } from './minting/minting-step-executor.js';
 
 export class MintingManager {
-    constructor(appState, domElements, broadcastService) {
+    constructor(appState, domElements) {
         this.appState = appState;
         this.dom = domElements;
-        this.broadcastService = broadcastService;
 
         // Initialize services
         this.services = {
             confirmationMonitor: new ConfirmationMonitorService(),
             txProofService: new TxProofService(),
             proverApiService: new ProverApiService(),
-            transactionSigner: new ScureBitcoinTransactionSigner(),
-            broadcastService: broadcastService
+            transactionSigner: new ScureBitcoinTransactionSigner()
         };
 
         // Process state
@@ -52,19 +50,17 @@ export class MintingManager {
 
     // Initialize the MintingManager
     initialize() {
-        console.log('🔧 MintingManager initialized');
+        // Minting system is ready
     }
 
     // Execute the complete minting process
     async executeMintingProcess() {
-        console.log('🚀 Starting BRO Token Minting Process');
-
         try {
             // Validate prerequisites and prepare data
             this.prepareProcessData();
 
             // Initialize UI
-            this.uiManager.initializeUI();
+            this.uiManager.initializeForFreshStart();
 
             // Execute each step sequentially
             await this.executeAllSteps();
@@ -73,11 +69,9 @@ export class MintingManager {
             this.appState.completeStep(5);
             this.uiManager.showSuccess(this.broadcastResults);
 
-            console.log('✅ Minting process completed successfully!');
             return true;
 
         } catch (error) {
-            console.error('❌ Minting process failed:', error);
             this.uiManager.showError(error.message);
             return false;
         }
@@ -89,9 +83,6 @@ export class MintingManager {
         const transaction = this.appState.transaction;
         const broadcastResult = this.appState.broadcastResult;
 
-        console.log('🔍 Current app state:', state);
-        console.log('🔍 Transaction data:', transaction);
-        console.log('🔍 Broadcast result:', broadcastResult);
 
         // Validate prerequisites
         MintingDataValidator.validatePrerequisites(state, transaction, broadcastResult);
@@ -100,7 +91,6 @@ export class MintingManager {
         this.miningResult = MintingDataValidator.createMiningResult(transaction, this.appState);
         MintingDataValidator.validateMiningResult(this.miningResult);
 
-        console.log('✅ Process data prepared and validated');
     }
 
     // Execute all steps in sequence
@@ -138,7 +128,20 @@ export class MintingManager {
         this.cancelled = true;
         this.services.confirmationMonitor.cancel();
         this.uiManager.cleanup();
-        console.log('🛑 Minting process cancelled');
+    }
+
+    // Reset confirmation errors and continue monitoring
+    resetConfirmationErrors() {
+        if (this.services.confirmationMonitor) {
+            this.services.confirmationMonitor.resetErrorState();
+        }
+    }
+
+    // Cancel confirmation monitoring specifically
+    cancelMonitoring() {
+        if (this.services.confirmationMonitor) {
+            this.services.confirmationMonitor.cancel();
+        }
     }
 
     // Get current process status

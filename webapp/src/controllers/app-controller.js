@@ -1,6 +1,6 @@
 import { DOMElements } from '../managers/dom-elements.js';
 import { StepController } from '../managers/step-controller.js';
-import { WalletManager } from '../managers/wallet-manager.js';
+import { WalletManager } from '../managers/wallet/wallet-manager.js';
 import { MiningManager } from '../managers/mining-manager.js';
 import { TransactionManager } from '../managers/transaction-manager.js';
 import { WalletVisitManager } from '../managers/wallet-visit-manager.js';
@@ -64,6 +64,9 @@ export class AppController {
             this.modules.broadcastComponent
         );
 
+        // Expose minting manager globally for UI recovery buttons
+        window.mintingManager = this.modules.mintingManager;
+
         // Setup event listeners BEFORE module initialization (required for wallet loading)
         this.setupStateEventListeners();
 
@@ -82,6 +85,17 @@ export class AppController {
 
         // Setup Step 5 event listener
         this.setupStep5EventListener();
+
+        // Restore Step 5 summary and enable Step 6 on reload if we already broadcasted
+        try {
+            const broadcastData = this.appState?.broadcastResult;
+            if (broadcastData) {
+                // Create Step 5 UI container if missing
+                this.modules.mintingManager.uiManager.initializeForPageRefresh();
+                // Enable Step 6 visit wallet button and mark section active
+                this.modules.walletVisitManager.enableWalletVisitStep();
+            }
+        } catch (_) { /* noop */ }
 
         this.logInitializationStatus();
     }
@@ -150,9 +164,7 @@ export class AppController {
                     console.error('❌ Failed to start minting process. Please try again.');
                 }
             });
-            console.log('✅ Step 5 event listener configured');
         } else {
-            console.warn('⚠️ Claim tokens button not found');
         }
     }
 

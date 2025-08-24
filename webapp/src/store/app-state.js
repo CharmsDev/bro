@@ -5,6 +5,7 @@ export class AppState {
         this.utxo = null;
         this.transaction = null;
         this.broadcastResult = null;
+        this.signedTransactions = null;
         this.currentStep = 1;
         this.completedSteps = [];
         this.isMonitoring = false;
@@ -32,7 +33,7 @@ export class AppState {
         this.currentStep = this.loadCurrentStep();
         this.completedSteps = this.loadCompletedSteps();
         this.cleanupStaleData();
-        this.loadPersistedData();
+        this.loadFromStorage();
     }
 
     on(event, callback) {
@@ -66,27 +67,95 @@ export class AppState {
         localStorage.setItem('bro_completed_steps', JSON.stringify(this.completedSteps));
     }
 
-    loadPersistedData() {
+    loadFromStorage() {
+        console.log('🔄 [APP-STATE] Starting loadFromStorage...');
+
         // Load wallet data
         const walletData = localStorage.getItem('bro_wallet_data');
+        console.log('💾 [APP-STATE] Wallet data from localStorage:', walletData);
         if (walletData) {
-            this.wallet = JSON.parse(walletData);
+            const data = JSON.parse(walletData);
+            this.wallet = data;
+        }
+
+        // Load UTXO data
+        const utxoData = localStorage.getItem('bro_utxo_data');
+        console.log('💾 [APP-STATE] UTXO data from localStorage:', utxoData);
+        if (utxoData) {
+            this.utxo = JSON.parse(utxoData);
         }
 
         // Load transaction data
         const transactionData = localStorage.getItem('bro_transaction_data');
+        console.log('💾 [APP-STATE] Transaction data from localStorage:', transactionData);
         if (transactionData) {
             this.transaction = JSON.parse(transactionData);
         }
 
         // Load broadcast result
         const broadcastData = localStorage.getItem('bro_broadcast_data');
+        console.log('💾 [APP-STATE] Broadcast data from localStorage:', broadcastData);
         if (broadcastData) {
             this.broadcastResult = JSON.parse(broadcastData);
+            console.log('✅ [APP-STATE] Broadcast result loaded:', JSON.stringify(this.broadcastResult, null, 2));
+        } else {
+            console.log('⚠️ [APP-STATE] No broadcast data found in localStorage');
+        }
+
+        // Load signed transactions
+        const signedTxData = localStorage.getItem('bro_signed_transactions');
+        console.log('💾 [APP-STATE] Signed transactions from localStorage:', signedTxData);
+        if (signedTxData) {
+            this.signedTransactions = JSON.parse(signedTxData);
         }
 
         // Load mining result for transaction creation validation
         this.loadMiningResult();
+
+        console.log('📊 [APP-STATE] Final state after loading:');
+        console.log('  - wallet:', this.wallet);
+        console.log('  - utxo:', this.utxo);
+        console.log('  - transaction:', this.transaction);
+        console.log('  - broadcastResult:', this.broadcastResult);
+        console.log('  - signedTransactions:', this.signedTransactions);
+    }
+
+    loadMiningResult() {
+        // First try to load from localStorage directly
+        const storedResult = localStorage.getItem('miningResult');
+        if (storedResult) {
+            try {
+                const result = JSON.parse(storedResult);
+                this.miningResult = result;
+                if (!this.isStepCompleted(this.STEPS.MINING)) {
+                    this.completeStep(this.STEPS.MINING);
+                }
+                this.emit('miningCompleted', result);
+                return result;
+            } catch (error) {
+                // Silently handle parsing errors
+            }
+        }
+
+        // Fallback to BitcoinMiner if available
+        if (window.BitcoinMiner) {
+            try {
+                const miner = new window.BitcoinMiner();
+                const result = miner.loadMiningResult();
+                if (result) {
+                    this.miningResult = result;
+                    if (!this.isStepCompleted(this.STEPS.MINING)) {
+                        this.completeStep(this.STEPS.MINING);
+                    }
+                    this.emit('miningCompleted', result);
+                    return result;
+                }
+            } catch (error) {
+                // Silently handle BitcoinMiner errors
+            }
+        }
+
+        return null;
     }
 
     completeStep(step) {
@@ -135,44 +204,6 @@ export class AppState {
         this.completeStep(this.STEPS.WALLET_CREATION);
         this.emit('walletCreated', wallet);
 
-    }
-
-    loadMiningResult() {
-        // First try to load from localStorage directly
-        const storedResult = localStorage.getItem('miningResult');
-        if (storedResult) {
-            try {
-                const result = JSON.parse(storedResult);
-                this.miningResult = result;
-                if (!this.isStepCompleted(this.STEPS.MINING)) {
-                    this.completeStep(this.STEPS.MINING);
-                }
-                this.emit('miningCompleted', result);
-                return result;
-            } catch (error) {
-                console.error('Error parsing stored mining result:', error);
-            }
-        }
-
-        // Fallback to BitcoinMiner if available
-        if (window.BitcoinMiner) {
-            try {
-                const miner = new window.BitcoinMiner();
-                const result = miner.loadMiningResult();
-                if (result) {
-                    this.miningResult = result;
-                    if (!this.isStepCompleted(this.STEPS.MINING)) {
-                        this.completeStep(this.STEPS.MINING);
-                    }
-                    this.emit('miningCompleted', result);
-                    return result;
-                }
-            } catch (error) {
-                console.error('Error loading mining result from BitcoinMiner:', error);
-            }
-        }
-
-        return null;
     }
 
     completeMining(result) {
@@ -254,6 +285,23 @@ export class AppState {
         return this.wallet !== null && this.miningResult !== null;
     }
 
+    // Getter to calculate the reward from the mining result
+    get miningReward() {
+        if (!this.miningResult || !this.miningResult.bestHash || !this.miningResult.bestNonce) {
+            return 0;
+        }
+
+        try {
+            if (window.calculateRewardInfo) {
+                const rewardInfo = window.calculateRewardInfo(this.miningResult.bestNonce, this.miningResult.bestHash);
+                return Number(rewardInfo.rawAmount);
+            }
+            return 0;
+        } catch (_) {
+            return 0;
+        }
+    }
+
     startMonitoring(stopFunction) {
         this.isMonitoring = true;
         this.monitoringStopFunction = stopFunction;
@@ -277,36 +325,33 @@ export class AppState {
                 const parsed = JSON.parse(transactionData);
                 const staleThreshold = 24 * 60 * 60 * 1000; // 24 hours
                 const now = Date.now();
-                
+
                 // Check if data is older than threshold or contains known problematic txids
                 const staleTxids = [
                     '4f5fc22d074d1743688f48866c22d1d805b30377dea9542945e3e9d9360cbb9e', // Known stale txid
                 ];
-                
-                const isStale = staleTxids.includes(parsed.txid) || 
-                               (parsed.timestamp && (now - parsed.timestamp) > staleThreshold);
-                
+
+                const isStale = staleTxids.includes(parsed.txid) ||
+                    (parsed.timestamp && (now - parsed.timestamp) > staleThreshold);
+
                 if (isStale) {
-                    console.log('🧹 Detected stale transaction data, clearing localStorage...');
-                    console.log('   Stale txid:', parsed.txid);
                     this.reset();
                     return;
                 }
             }
         } catch (error) {
-            console.warn('Error checking stale data, clearing localStorage:', error);
             this.reset();
         }
     }
 
     reset() {
-        console.log('🧹 Clearing all localStorage data...');
         // Clear localStorage
         localStorage.removeItem('bro_current_step');
         localStorage.removeItem('bro_completed_steps');
         localStorage.removeItem('bro_wallet_data');
         localStorage.removeItem('bro_transaction_data');
         localStorage.removeItem('bro_broadcast_data');
+        localStorage.removeItem('bro_signed_transactions');
         // Clear mining data
         localStorage.removeItem('miningProgress');
         localStorage.removeItem('miningResult');
@@ -317,6 +362,7 @@ export class AppState {
         this.utxo = null;
         this.transaction = null;
         this.broadcastResult = null;
+        this.signedTransactions = null;
         this.currentStep = 1;
         this.completedSteps = [];
         this.stopMonitoring();
@@ -335,6 +381,7 @@ export class AppState {
             hasUtxo: !!this.utxo,
             hasTransaction: !!this.transaction,
             hasBroadcastResult: !!this.broadcastResult,
+            hasSignedTransactions: !!this.signedTransactions,
             currentStep: this.currentStep,
             completedSteps: this.completedSteps,
             isMonitoring: this.isMonitoring,

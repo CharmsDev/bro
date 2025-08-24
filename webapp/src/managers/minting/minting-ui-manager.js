@@ -3,10 +3,59 @@ export class MintingUIManager {
     constructor(steps) {
         this.steps = steps;
         this.countdownInterval = null;
+        this._broadcastShown = false;
     }
 
-    // Initialize UI for step 5 process
+    // FRESH START: Initialize UI when user clicks Step 5 button (coming from Step 4)
+    initializeForFreshStart() {
+        // Avoid duplicate containers
+        if (document.getElementById('step5-progress')) return;
+
+        this._createStep5Container();
+
+        // Show the steps container - we're starting fresh
+        const stepsContainer = document.querySelector('#step5-progress .steps-container');
+        if (stepsContainer) {
+            stepsContainer.style.display = 'block';
+        }
+
+        // Show the title - we're starting fresh
+        const header = document.querySelector('#step5-progress h3');
+        if (header) {
+            header.style.display = 'block';
+        }
+    }
+
+    // PAGE REFRESH: Initialize UI when page reloads with existing broadcast data
+    initializeForPageRefresh() {
+        // Avoid duplicate containers
+        if (document.getElementById('step5-progress')) return;
+
+        this._createStep5Container();
+
+        // Immediately hide steps and title - we're showing completed state
+        const stepsContainer = document.querySelector('#step5-progress .steps-container');
+        if (stepsContainer) {
+            stepsContainer.style.display = 'none';
+        }
+
+        const header = document.querySelector('#step5-progress h3');
+        if (header) {
+            header.style.display = 'none';
+        }
+
+        // Show the broadcast completion status
+        this.checkAndRestoreBroadcastStatus();
+    }
+
+    // DEPRECATED: Keep for backward compatibility, but redirect to fresh start
     initializeUI() {
+        console.warn('initializeUI() is deprecated. Use initializeForFreshStart() or initializeForPageRefresh()');
+        this.initializeForFreshStart();
+    }
+
+    // Private method to create the base Step 5 container structure
+    _createStep5Container() {
         const step5Container = document.createElement('div');
         step5Container.id = 'step5-progress';
         step5Container.className = 'step5-progress-container';
@@ -17,11 +66,24 @@ export class MintingUIManager {
 
         const stepsContainer = document.createElement('div');
         stepsContainer.className = 'steps-container';
+        step5Container.appendChild(stepsContainer);
 
+        // Append to claim section
+        const claimSection = document.querySelector('.claim-section');
+        if (claimSection) {
+            claimSection.appendChild(step5Container);
+        }
+
+        // Initialize the step elements
+        this.initializeSteps(stepsContainer);
+    }
+
+    // Initialize the 6 step elements for the minting process
+    initializeSteps(stepsContainer) {
         this.steps.forEach((step, index) => {
             const stepElement = document.createElement('div');
-            stepElement.className = 'step-item pending';
             stepElement.id = `step-${index}`;
+            stepElement.className = 'step-item pending';
 
             stepElement.innerHTML = `
                 <div class="step-number">${index + 1}</div>
@@ -35,14 +97,70 @@ export class MintingUIManager {
             stepsContainer.appendChild(stepElement);
         });
 
-        step5Container.appendChild(stepsContainer);
+    }
 
-        const claimSection = document.querySelector('.claim-section');
-        if (claimSection) {
-            claimSection.appendChild(step5Container);
+    // Check for existing broadcast data and restore completion status
+    checkAndRestoreBroadcastStatus() {
+        const broadcastData = localStorage.getItem('bro_broadcast_data');
+        if (broadcastData) {
+            try {
+                const data = JSON.parse(broadcastData);
+
+                // Show completion status with transaction details
+                this.showBroadcastCompletionStatus(data);
+            } catch (error) {
+                // Silently handle parsing errors
+            }
         }
+    }
 
-        console.log('🎨 Minting UI initialized');
+    // Show broadcast completion status (for page refresh scenarios)
+    showBroadcastCompletionStatus(broadcastData) {
+        const step5Container = document.getElementById('step5-progress');
+        if (!step5Container) return;
+
+        // Hide steps list if present
+        const stepsContainer = step5Container.querySelector('.steps-container');
+        if (stepsContainer) stepsContainer.style.display = 'none';
+
+        // Hide Step 5 title when restoring on reload
+        const header = step5Container.querySelector('h3');
+        if (header) header.style.display = 'none';
+
+        // If a success box is already present, avoid adding another
+        const existing = step5Container.querySelector('.step5-success-message');
+        if (existing) return;
+
+        // Get environment config for explorer links
+        import('../../config/environment.js').then(({ environmentConfig }) => {
+            const statusMessage = document.createElement('div');
+            // Use dark broadcast panel style to match Step 4
+            statusMessage.className = 'broadcast-display step5-success-message';
+
+            const spellTxid = broadcastData.spellTxid;
+            const explorerUrl = environmentConfig.getExplorerUrl(spellTxid);
+
+            statusMessage.innerHTML = `
+                <div class="broadcast-details">
+                    <div class="broadcast-item">
+                        <span class="broadcast-label">Status:</span>
+                        <span class="status-value">BRO tokens minteados y broadcasted</span>
+                    </div>
+                    <div class="broadcast-item">
+                        <span class="broadcast-label">Transaction ID:</span>
+                        <span class="broadcast-value">${spellTxid}</span>
+                    </div>
+                    <div class="broadcast-item">
+                        <span class="broadcast-label">Explorer:</span>
+                        <a href="${explorerUrl}" target="_blank" class="explorer-link">View on Mempool.space</a>
+                    </div>
+                </div>
+            `;
+
+            if (step5Container) {
+                step5Container.appendChild(statusMessage);
+            }
+        });
     }
 
     // Update step status in UI
@@ -62,8 +180,8 @@ export class MintingUIManager {
                 const statusText = {
                     'pending': 'Pending',
                     'active': 'In Progress...',
-                    'completed': 'Completed ✅',
-                    'error': 'Error ❌'
+                    'completed': 'Completed ',
+                    'error': 'Error '
                 };
                 statusElement.textContent = statusText[status] || status;
             }
@@ -80,9 +198,15 @@ export class MintingUIManager {
         const progressElement = stepElement.querySelector('.step-progress');
         if (!progressElement) return;
 
+        const explorerUrl = `https://mempool.space/testnet4/tx/${txid}`; // Keep mempool.space for UI explorer links
+
         if (progress.status === 'pending') {
             progressElement.style.display = 'block';
-            const explorerUrl = `https://mempool.space/testnet4/tx/${txid}`;
+
+            let errorInfo = '';
+            if (progress.consecutiveErrors > 0) {
+                errorInfo = `<div class="warning-line"> ${progress.consecutiveErrors} consecutive errors - using backoff delay</div>`;
+            }
 
             progressElement.innerHTML = `
                 <div class="confirmation-progress">
@@ -90,6 +214,7 @@ export class MintingUIManager {
                         <div class="spinner"></div>
                         <span>In Progress... (next check in <span class="countdown" data-seconds="${progress.nextCheck}">${progress.nextCheck}</span>s)</span>
                     </div>
+                    ${errorInfo}
                     <div class="explorer-line">
                         <a href="${explorerUrl}" target="_blank" class="explorer-link">View Transaction in Explorer</a>
                     </div>
@@ -102,14 +227,55 @@ export class MintingUIManager {
             progressElement.style.display = 'block';
             progressElement.innerHTML = `
                 <div class="success-container">
-                    <span>✅ Confirmed in block ${progress.blockHeight} with ${progress.confirmations} confirmations</span>
+                    <span> Confirmed in block ${progress.blockHeight} with ${progress.confirmations} confirmations</span>
                 </div>
             `;
         } else if (progress.status === 'error') {
             progressElement.style.display = 'block';
+
+            const networkErrorInfo = progress.isNetworkError ?
+                '<div class="network-error-info"> Network connectivity issue detected</div>' : '';
+
+            const retryInfo = progress.canRetry ?
+                '<div class="retry-info"> Will automatically retry with backoff delay</div>' :
+                '<div class="critical-info"> Too many consecutive errors - manual intervention may be needed</div>';
+
             progressElement.innerHTML = `
                 <div class="error-container">
-                    <span>❌ Error: ${progress.error}</span>
+                    <div class="error-header"> Error: ${progress.error}</div>
+                    ${networkErrorInfo}
+                    <div class="error-details">
+                        <small>Attempt: ${progress.retries + 1} | Consecutive errors: ${progress.consecutiveErrors}</small>
+                    </div>
+                    ${retryInfo}
+                    <div class="explorer-line">
+                        <a href="${explorerUrl}" target="_blank" class="explorer-link">Check Transaction Status</a>
+                    </div>
+                </div>
+            `;
+        } else if (progress.status === 'critical_error') {
+            progressElement.style.display = 'block';
+            progressElement.innerHTML = `
+                <div class="critical-error-container">
+                    <div class="critical-header"> Critical Error - Manual Intervention Required</div>
+                    <div class="error-message"> ${progress.error}</div>
+                    <div class="error-stats">
+                        <small>Attempts: ${progress.retries + 1} | Consecutive errors: ${progress.consecutiveErrors}</small>
+                    </div>
+                    <div class="recovery-options">
+                        <button onclick="window.mintingManager?.resetConfirmationErrors()" class="retry-button">
+                            Reset & Continue Monitoring
+                        </button>
+                        <button onclick="window.mintingManager?.cancelMonitoring()" class="cancel-button">
+                            Stop Monitoring
+                        </button>
+                    </div>
+                    <div class="explorer-line">
+                        <a href="${explorerUrl}" target="_blank" class="explorer-link">Check Transaction Status Manually</a>
+                    </div>
+                    <div class="help-text">
+                        <small> Check your internet connection and transaction status. If the transaction is confirmed, click "Reset & Continue".</small>
+                    </div>
                 </div>
             `;
         }
@@ -148,7 +314,7 @@ export class MintingUIManager {
         progressElement.style.display = 'block';
         progressElement.innerHTML = `
             <div class="payload-review">
-                <h5>📋 Payload for Review:</h5>
+                <h5> Payload for Review:</h5>
                 <div class="payload-summary">
                     <p><strong>Size:</strong> ${Math.round(payloadJson.length / 1024)} KB</p>
                     <p><strong>WASM Binary:</strong> ${payload.binaries ? Object.keys(payload.binaries).length : 0} files</p>
@@ -156,12 +322,11 @@ export class MintingUIManager {
                 </div>
                 <textarea class="payload-text" readonly rows="15" cols="80">${payloadJson}</textarea>
                 <div class="payload-actions">
-                    <button onclick="navigator.clipboard.writeText(this.parentElement.previousElementSibling.value)" class="copy-button">📋 Copy to Clipboard</button>
+                    <button onclick="navigator.clipboard.writeText(this.parentElement.previousElementSibling.value)" class="copy-button"> Copy to Clipboard</button>
                 </div>
             </div>
         `;
 
-        console.log('📋 Payload displayed in UI for review');
     }
 
     // Show success message
@@ -169,18 +334,53 @@ export class MintingUIManager {
         const step5Container = document.getElementById('step5-progress');
         if (!step5Container) return;
 
-        const successMessage = document.createElement('div');
-        successMessage.className = 'success-message';
-        successMessage.innerHTML = `
-            <h4>🎉 BRO Tokens Successfully Minted!</h4>
-            <p>Your BRO tokens have been minted and are now available in your wallet.</p>
-            <div class="results-summary">
-                <p><strong>Transactions Broadcasted:</strong> ${broadcastResults?.length || 0}</p>
-                <p><strong>Final Status:</strong> Complete</p>
-            </div>
-        `;
+        // Hide steps list after success
+        const stepsContainer = step5Container.querySelector('.steps-container');
+        if (stepsContainer) stepsContainer.style.display = 'none';
 
-        step5Container.appendChild(successMessage);
+        // Hide Step 5 title after success
+        const header = step5Container.querySelector('h3');
+        if (header) header.style.display = 'none';
+
+        // If a success box is already present, avoid adding another
+        const existing = step5Container.querySelector('.step5-success-message');
+        if (existing) return;
+
+        // Get environment config for explorer links
+        import('../../config/environment.js').then(({ environmentConfig }) => {
+            const successMessage = document.createElement('div');
+            // Use dark broadcast panel style to match Step 4
+            successMessage.className = 'broadcast-display step5-success-message';
+
+            const commitTxid = broadcastResults?.commitData?.txid || 'N/A';
+            const spellTxid = broadcastResults?.spellData?.txid || 'N/A';
+            const explorerUrl = environmentConfig.getExplorerUrl(spellTxid);
+
+            successMessage.innerHTML = `
+                <div class="broadcast-details">
+                    <div class="broadcast-item">
+                        <span class="broadcast-label">Status:</span>
+                        <span class="status-value">BRO tokens minteados y broadcasted</span>
+                    </div>
+                    <div class="broadcast-item">
+                        <span class="broadcast-label">Commit Transaction ID:</span>
+                        <span class="broadcast-value">${commitTxid}</span>
+                    </div>
+                    <div class="broadcast-item">
+                        <span class="broadcast-label">Spell Transaction ID:</span>
+                        <span class="broadcast-value">${spellTxid}</span>
+                    </div>
+                    <div class="broadcast-item">
+                        <span class="broadcast-label">Explorer:</span>
+                        <a href="${explorerUrl}" target="_blank" class="explorer-link">View on Mempool.space</a>
+                    </div>
+                </div>
+            `;
+
+            if (step5Container) {
+                step5Container.appendChild(successMessage);
+            }
+        });
     }
 
     // Show error message
@@ -191,7 +391,7 @@ export class MintingUIManager {
         const errorElement = document.createElement('div');
         errorElement.className = 'error-message';
         errorElement.innerHTML = `
-            <h4>❌ Minting Process Failed</h4>
+            <h4> Minting Process Failed</h4>
             <p>${errorMessage}</p>
             <button onclick="location.reload()" class="retry-button">Retry Process</button>
         `;

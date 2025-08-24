@@ -23,24 +23,20 @@ export class PayloadUtils {
             .map(b => b.toString(16).padStart(2, '0'))
             .join('');
 
-        console.log(`📝 Generated app_id: ${hashHex} from MINING UTXO: ${appUtxo}`);
         return hashHex;
     }
 
     /**
-     * Calculate mined amount based on difficulty and reward
-     * @param {number} difficulty - Mining difficulty
-     * @param {number} baseReward - Base reward amount (default from config)
-     * @returns {number} Mined amount in smallest units
+     * Calculates the mined amount in the smallest unit based on the token reward.
+     * @param {number} reward - The reward amount in BRO tokens.
+     * @returns {number} The mined amount in the smallest unit.
      */
-    static calculateMinedAmount(difficulty, baseReward = PROVER_CONFIG.DEFAULT_BASE_REWARD) {
+    static calculateMinedAmount(reward) {
+        if (typeof reward !== 'number') {
+            return 0;
+        }
         // Convert to smallest unit (equivalent to satoshis)
-        // Use the actual reward from the mining calculation
-        const broTokens = baseReward;
-        const smallestUnit = broTokens * Math.pow(10, PROVER_CONFIG.DECIMAL_PLACES);
-
-        console.log(`💰 Calculated mined amount: ${broTokens} BRO (${smallestUnit} smallest units)`);
-        return smallestUnit;
+        return reward * Math.pow(10, PROVER_CONFIG.DECIMAL_PLACES);
     }
 
     /**
@@ -79,7 +75,7 @@ export class PayloadUtils {
                 : null;
             return raw ? JSON.parse(raw) : null;
         } catch (e) {
-            console.warn('Could not read/parse bro_transaction_data from localStorage:', e.message);
+            // Silently fail if localStorage is not available or data is corrupt
             return null;
         }
     }
@@ -106,36 +102,12 @@ export class PayloadUtils {
                     }
                 }
             } catch (e) {
-                console.warn('Could not read bro_wallet_data from localStorage:', e.message);
+                // Silently fail on parsing error
             }
         }
 
-        if (!resolvedAddress) {
-            console.warn('Wallet address unresolved; change_address may fail validation');
-        }
 
         return resolvedAddress;
     }
 
-    /**
-     * Log localStorage contents safely for debugging
-     */
-    static logLocalStorageDebug() {
-        try {
-            const lsKeys = Object.keys(localStorage || {}).filter(k => 
-                typeof localStorage.getItem === 'function'
-            );
-            const lsDump = {};
-            for (const k of lsKeys) {
-                try { 
-                    lsDump[k] = localStorage.getItem(k); 
-                } catch (e) { 
-                    /* ignore */ 
-                }
-            }
-            console.log('💾 localStorage dump (safe):', lsDump);
-        } catch (_) { 
-            /* non-browser context */ 
-        }
-    }
 }

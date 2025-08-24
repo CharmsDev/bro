@@ -17,8 +17,6 @@ export class ProverApiClient {
      * @returns {Promise<*>} Response from prover API
      */
     async sendToProver(payload) {
-        console.log('🚀 Sending payload to prover API...');
-
         try {
             const response = await fetch(this.apiUrl, {
                 method: 'POST',
@@ -30,12 +28,6 @@ export class ProverApiClient {
 
             const contentType = response.headers.get('content-type') || 'unknown';
             const rawText = await response.text();
-            console.log('📥 Prover response meta:', {
-                status: response.status,
-                ok: response.ok,
-                contentType,
-                bodyLength: rawText.length
-            });
 
             if (!response.ok) {
                 console.error('❌ Prover API error response:', rawText);
@@ -53,7 +45,6 @@ export class ProverApiClient {
             // Validate response format
             PayloadValidator.validateProverResponse(data);
 
-            console.log('✅ Prover API request successful');
             return data;
 
         } catch (error) {

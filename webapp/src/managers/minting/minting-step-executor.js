@@ -1,18 +1,18 @@
 // Individual step execution for minting process
+import { signSpellTransaction } from '../../services/bitcoin/signSpellTx.js';
+
 export class MintingStepExecutor {
     constructor(services, uiManager) {
         this.confirmationMonitor = services.confirmationMonitor;
         this.txProofService = services.txProofService;
         this.proverApiService = services.proverApiService;
         this.transactionSigner = services.transactionSigner;
-        this.broadcastService = services.broadcastService;
         this.uiManager = uiManager;
     }
 
     // Step 1: Wait for mining transaction confirmation
     async executeStep1_waitForConfirmation(miningResult) {
         this.uiManager.updateStepStatus(0, 'active');
-        console.log('📡 Waiting for confirmation...');
 
         try {
             const confirmationResult = await this.confirmationMonitor.waitForConfirmation(
@@ -21,7 +21,6 @@ export class MintingStepExecutor {
             );
 
             this.uiManager.updateStepStatus(0, 'completed');
-            console.log('✅ Transaction confirmed');
             return confirmationResult;
         } catch (error) {
             this.uiManager.updateStepStatus(0, 'error');
@@ -32,7 +31,6 @@ export class MintingStepExecutor {
     // Step 2: Generate transaction proof
     async executeStep2_generateProof(miningResult, confirmationData) {
         this.uiManager.updateStepStatus(1, 'active');
-        console.log('🔍 Generating proof...');
 
         try {
             const proofData = await this.txProofService.getTxProof(
@@ -42,7 +40,6 @@ export class MintingStepExecutor {
 
             this.txProofService.validateProof(proofData);
             this.uiManager.updateStepStatus(1, 'completed');
-            console.log('✅ Proof generated');
             return proofData;
         } catch (error) {
             this.uiManager.updateStepStatus(1, 'error');
@@ -53,7 +50,6 @@ export class MintingStepExecutor {
     // Step 3: Compose prover payload
     async executeStep3_composePayload(miningResult, proofData, wallet) {
         this.uiManager.updateStepStatus(2, 'active');
-        console.log('🔧 Composing payload...');
 
         try {
             const miningData = {
@@ -73,7 +69,6 @@ export class MintingStepExecutor {
             );
 
             this.uiManager.updateStepStatus(2, 'completed');
-            console.log('✅ Payload composed');
             return payload;
         } catch (error) {
             this.uiManager.updateStepStatus(2, 'error');
@@ -84,17 +79,18 @@ export class MintingStepExecutor {
     // Step 4: Send request to prover API
     async executeStep4_proverApiRequest(payload) {
         this.uiManager.updateStepStatus(3, 'active');
-        console.log('🚀 Sending to prover API...');
-        
+
         try {
             const startTime = Date.now();
+
+            // Real API call to prover
             const proverResponse = await this.proverApiService.sendToProver(payload);
+
             const duration = Date.now() - startTime;
-            
-            console.log(`⏱️ Prover response: ${(duration/1000).toFixed(1)}s`);
+
             this.proverApiService.validateProverResponse(proverResponse);
             this.uiManager.updateStepStatus(3, 'completed');
-            console.log('✅ Prover API successful');
+
             return proverResponse;
         } catch (error) {
             this.uiManager.updateStepStatus(3, 'error');
@@ -105,17 +101,52 @@ export class MintingStepExecutor {
     // Step 5: Sign transactions
     async executeStep5_signTransactions(proverResponse, wallet) {
         this.uiManager.updateStepStatus(4, 'active');
-        console.log('🔐 Signing transactions...');
 
         try {
-            const signedTransactions = await this.transactionSigner.signProverTransactions(
-                proverResponse,
-                wallet
+            const { signCommitTransaction } = await import('../../services/bitcoin/signCommitTx.js');
+
+            const commitTxHex = proverResponse[0];
+            const spellTxHex = proverResponse[1];
+
+            // Sign commit transaction
+            const commitResult = await signCommitTransaction(commitTxHex);
+
+            // Sign spell transaction using the signed commit transaction
+            const spellResult = await signSpellTransaction(
+                spellTxHex,
+                commitResult.signedHex,
+                (message) => { }
             );
 
-            this.transactionSigner.validateSignedTransactions(signedTransactions);
+            const signedTransactions = [
+                {
+                    type: 'commit',
+                    signedHex: commitResult.signedHex,
+                    txid: commitResult.txid
+                },
+                {
+                    type: 'spell',
+                    signedHex: spellResult.signedHex,
+                    txid: spellResult.txid
+                }
+            ];
+
+            // Save signed transactions to localStorage for persistence
+            const signedTxData = {
+                commit: {
+                    signedHex: commitResult.signedHex,
+                    txid: commitResult.txid
+                },
+                spell: {
+                    signedHex: spellResult.signedHex,
+                    txid: spellResult.txid
+                },
+                status: 'signed',
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('bro_signed_transactions', JSON.stringify(signedTxData));
+
             this.uiManager.updateStepStatus(4, 'completed');
-            console.log(`✅ ${signedTransactions.length} transactions signed`);
             return signedTransactions;
         } catch (error) {
             this.uiManager.updateStepStatus(4, 'error');
@@ -126,28 +157,30 @@ export class MintingStepExecutor {
     // Step 6: Broadcast transactions
     async executeStep6_broadcastTransactions(signedTransactions) {
         this.uiManager.updateStepStatus(5, 'active');
-        console.log('📡 Broadcasting transactions...');
 
         try {
-            const broadcastResults = [];
+            const { broadcastPackage } = await import('../../services/bitcoin/broadcastTx.js');
 
-            for (let i = 0; i < signedTransactions.length; i++) {
-                const signedTx = signedTransactions[i];
-                const result = await this.broadcastService.broadcastTransaction(signedTx.signedHex);
+            const commitTx = signedTransactions.find(tx => tx.type === 'commit');
+            const spellTx = signedTransactions.find(tx => tx.type === 'spell');
 
-                broadcastResults.push({
-                    index: i,
-                    txid: signedTx.txid,
-                    broadcastTxid: result.txid,
-                    success: result.success
-                });
+            const result = await broadcastPackage(
+                commitTx,
+                spellTx,
+                (message) => { /* Silent broadcast progress */ }
+            );
 
-                console.log(`✅ TX ${i + 1}: ${result.txid}`);
-            }
+            // Save broadcast results to localStorage for persistence
+            const broadcastData = {
+                commitTxid: result.commitData.txid,
+                spellTxid: result.spellData.txid,
+                status: 'broadcast',
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('bro_broadcast_data', JSON.stringify(broadcastData));
 
             this.uiManager.updateStepStatus(5, 'completed');
-            console.log(`✅ ${broadcastResults.length} transactions broadcasted`);
-            return broadcastResults;
+            return result;
         } catch (error) {
             this.uiManager.updateStepStatus(5, 'error');
             throw new Error(`Transaction broadcasting failed: ${error.message}`);
