@@ -133,7 +133,19 @@ export class WalletUIController {
      * Update funding status message
      */
     updateFundingStatus(message) {
+        console.log(`[WalletUI] 📱 Updating funding status: ${message}`);
         this.dom.setText('fundingStatus', message);
+        
+        // Force DOM update to ensure the message is visible
+        const statusElement = this.dom.get('fundingStatus');
+        if (statusElement) {
+            statusElement.textContent = message;
+            // Force a repaint
+            statusElement.offsetHeight;
+            console.log(`[WalletUI] ✅ Status element updated:`, statusElement.textContent);
+        } else {
+            console.warn(`[WalletUI] ⚠️ fundingStatus element not found in DOM`);
+        }
     }
 
     /**

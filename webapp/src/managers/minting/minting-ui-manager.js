@@ -144,7 +144,7 @@ export class MintingUIManager {
                 <div class="broadcast-details">
                     <div class="broadcast-item">
                         <span class="broadcast-label">Status:</span>
-                        <span class="status-value">BRO tokens minteados y broadcasted</span>
+                        <span class="status-value">BRO tokens minted and broadcast</span>
                     </div>
                     <div class="broadcast-item">
                         <span class="broadcast-label">Transaction ID:</span>
@@ -360,7 +360,7 @@ export class MintingUIManager {
                 <div class="broadcast-details">
                     <div class="broadcast-item">
                         <span class="broadcast-label">Status:</span>
-                        <span class="status-value">BRO tokens minteados y broadcasted</span>
+                        <span class="status-value">BRO tokens minted and broadcast</span>
                     </div>
                     <div class="broadcast-item">
                         <span class="broadcast-label">Commit Transaction ID:</span>
