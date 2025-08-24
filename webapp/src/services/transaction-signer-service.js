@@ -51,22 +51,17 @@ class ScureBitcoinTransactionSigner {
     // Sign PSBT using @scure/btc-signer
     async signPSBT(psbtHex, utxo, mnemonic, path = "m/86'/0'/0'") {
         try {
-            console.log('[ScureSigner] Starting PSBT signing...');
-            console.log('[ScureSigner] Using derivation path:', path);
 
             // Parse PSBT
             const psbt = btc.Transaction.fromPSBT(hex.decode(psbtHex), {
                 network: this.currentNetwork
             });
 
-            console.log('[ScureSigner] PSBT parsed successfully');
 
             // Derive keys - ensure we have a valid path
             const derivationPath = path || "m/86'/0'/0'";
             const { privateKey, p2tr } = await this.deriveTapKeys(mnemonic, derivationPath);
 
-            console.log('[ScureSigner] Keys derived successfully');
-            console.log('[ScureSigner] Address:', p2tr.address);
 
             // Update input with witnessUtxo if needed
             if (psbt.inputsLength > 0) {
@@ -82,17 +77,14 @@ class ScureBitcoinTransactionSigner {
                         }
                     });
 
-                    console.log('[ScureSigner] Updated witnessUtxo');
                 }
             }
 
             // Sign the transaction
             psbt.sign(privateKey);
-            console.log('[ScureSigner] Transaction signed');
 
             // Finalize
             psbt.finalize();
-            console.log('[ScureSigner] Transaction finalized');
 
             // Extract final transaction
             const finalTx = psbt.extract();
@@ -102,8 +94,6 @@ class ScureBitcoinTransactionSigner {
                 allowUnknownOutputs: true // Allow OP_RETURN and other unknown output types
             }).id;
 
-            console.log('[ScureSigner] ✅ Transaction successfully signed and finalized');
-            console.log('[ScureSigner] TXID:', txId);
 
             return {
                 success: true,
@@ -124,13 +114,11 @@ class ScureBitcoinTransactionSigner {
 
     // Sign prover transactions (multiple transactions from prover API response)
     async signProverTransactions(transactionHexArray, wallet) {
-        console.log(`🔐 Signing ${transactionHexArray.length} prover transactions...`);
 
         const signedTransactions = [];
 
         for (let i = 0; i < transactionHexArray.length; i++) {
             const txHex = transactionHexArray[i];
-            console.log(`🔐 Signing transaction ${i + 1}/${transactionHexArray.length}`);
 
             try {
                 // Convert raw transaction hex to PSBT format for signing
@@ -150,7 +138,6 @@ class ScureBitcoinTransactionSigner {
                     txid: signedResult.txid
                 });
 
-                console.log(`✅ Transaction ${i + 1} signed: ${signedResult.txid}`);
 
             } catch (error) {
                 console.error(`❌ Error signing transaction ${i + 1}:`, error);
@@ -158,14 +145,12 @@ class ScureBitcoinTransactionSigner {
             }
         }
 
-        console.log(`✅ All ${signedTransactions.length} transactions signed successfully`);
         return signedTransactions;
     }
 
     // Convert raw transaction hex to PSBT format
     async convertTxToPSBT(txHex, wallet) {
         try {
-            console.log('[ScureSigner] Converting transaction to PSBT format...');
 
             // Parse the raw transaction
             const txBytes = hex.decode(txHex);
@@ -203,7 +188,6 @@ class ScureBitcoinTransactionSigner {
             const psbtBytes = psbt.toPSBT();
             const psbtHex = hex.encode(psbtBytes);
 
-            console.log('[ScureSigner] ✅ Transaction converted to PSBT');
             return psbtHex;
 
         } catch (error) {
@@ -214,7 +198,6 @@ class ScureBitcoinTransactionSigner {
 
     // Sign a single raw transaction hex
     async signRawTransaction(txHex, wallet, inputUtxos = []) {
-        console.log('[ScureSigner] Signing raw transaction...');
 
         try {
             // For prover transactions, we need to handle them differently
@@ -226,7 +209,6 @@ class ScureBitcoinTransactionSigner {
                 allowUnknownOutputs: true
             });
 
-            console.log('[ScureSigner] Transaction parsed, TXID:', tx.id);
 
             // Derive wallet keys
             const { privateKey, p2tr } = await this.deriveTapKeys(wallet.seedPhrase || wallet.mnemonic);
@@ -275,7 +257,6 @@ class ScureBitcoinTransactionSigner {
                 allowUnknownOutputs: true
             }).id;
 
-            console.log('[ScureSigner] ✅ Raw transaction signed:', finalTxId);
 
             return {
                 success: true,
@@ -292,7 +273,6 @@ class ScureBitcoinTransactionSigner {
 
     // Validate signed transactions
     validateSignedTransactions(signedTransactions) {
-        console.log('🔍 Validating signed transactions...');
 
         for (let i = 0; i < signedTransactions.length; i++) {
             const tx = signedTransactions[i];
@@ -313,7 +293,6 @@ class ScureBitcoinTransactionSigner {
             }
         }
 
-        console.log('✅ All signed transactions validated');
         return true;
     }
 }

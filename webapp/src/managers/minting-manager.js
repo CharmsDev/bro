@@ -60,7 +60,7 @@ export class MintingManager {
             this.prepareProcessData();
 
             // Initialize UI
-            this.uiManager.initializeUI();
+            this.uiManager.initializeForFreshStart();
 
             // Execute each step sequentially
             await this.executeAllSteps();

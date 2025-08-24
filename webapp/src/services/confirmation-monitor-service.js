@@ -1,6 +1,8 @@
+import QuickNodeClient from './bitcoin/quicknode-client.js';
+
 export class ConfirmationMonitorService {
     constructor() {
-        this.mempoolApiUrl = 'https://mempool.space/testnet4/api';
+        this.client = new QuickNodeClient();
         this.pollingInterval = 30000; // 30 seconds
         this.maxRetries = 999999; // Unlimited retries
         this.requestTimeout = 15000; // 15 seconds timeout
@@ -18,10 +20,11 @@ export class ConfirmationMonitorService {
 
         while (retries < this.maxRetries && !this.cancelled) {
             try {
+                const t0 = Date.now();
                 const txData = await this._fetchTxDataWithRetry(txid);
 
-                if (txData.status && txData.status.confirmed) {
-                    return this._handleConfirmedTransaction(txData, onProgress);
+                if (txData.confirmations && txData.confirmations >= 1) {
+                    return await this._handleConfirmedTransaction(txData, onProgress);
                 }
 
                 // Transaction still pending - reset error counter on success
@@ -51,10 +54,22 @@ export class ConfirmationMonitorService {
     }
 
     // Helper method to handle confirmed transactions
-    _handleConfirmedTransaction(txData, onProgress) {
-        const blockHash = txData.status.block_hash;
-        const blockHeight = txData.status.block_height;
-        const confirmations = txData.status.confirmations || 1;
+    async _handleConfirmedTransaction(txData, onProgress) {
+        const blockHash = txData.blockhash;
+        const confirmations = txData.confirmations || 1;
+        let blockHeight = txData.height || null;
+
+        // Bitcoin Core getrawtransaction (verbose) does not include height; fetch header if missing
+        if (!blockHeight && blockHash) {
+            try {
+                const header = await this.client.getBlockHeader(blockHash, true);
+                if (header && typeof header.height === 'number') {
+                    blockHeight = header.height;
+                }
+            } catch (e) {
+                // Keep blockHeight as null if header fetch fails; downstream validator will surface a clear error
+            }
+        }
 
         if (onProgress) {
             onProgress({
@@ -195,17 +210,10 @@ export class ConfirmationMonitorService {
         const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
 
         try {
-            const response = await fetch(`${this.mempoolApiUrl}/tx/${txid}`, {
-                signal: controller.signal
-            });
-
+            // QuickNode: getrawtransaction verbose true
+            const json = await this.client.getRawTransaction(txid, true);
             clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                return await this._handleApiError(response, txid);
-            }
-
-            return await response.json();
+            return json;
         } catch (error) {
             clearTimeout(timeoutId);
 
@@ -213,37 +221,32 @@ export class ConfirmationMonitorService {
                 throw new Error(`Request timeout after ${this.requestTimeout / 1000}s`);
             }
 
+            // If underlying fetch failed, we don't have a Response to inspect; rethrow
+            console.error('[Confirm] getrawtransaction error:', error.message);
             throw error;
         }
     }
 
     // Handle API errors with fallback strategies
-    async _handleApiError(response, txid) {
-        if (response.status === 404) {
-            // Transaction not found - search in recent blocks
-            try {
-                const recentBlocks = await this.getRecentBlocks(10);
-                for (const block of recentBlocks) {
-                    const blockTxs = await this.getBlockTransactions(block.id);
-                    if (blockTxs.includes(txid)) {
-                        return {
-                            status: {
-                                confirmed: true,
-                                block_hash: block.id,
-                                block_height: block.height,
-                                confirmations: await this.calculateConfirmations(block.height)
-                            }
-                        };
-                    }
+    async _handleApiError(_response, txid) {
+        // For RPC we don't have HTTP response objects here; fallback search in recent blocks
+        try {
+            const recentBlocks = await this.getRecentBlocks(10);
+            for (const block of recentBlocks) {
+                const blockTxs = await this.getBlockTransactions(block.hash);
+                if (blockTxs.includes(txid)) {
+                    const confirmations = await this.calculateConfirmations(block.height);
+                    return {
+                        blockhash: block.hash,
+                        confirmations,
+                        height: block.height
+                    };
                 }
-            } catch (blockSearchError) {
-                console.error('Error searching recent blocks:', blockSearchError);
             }
-
-            throw new Error(`Transaction not found in mempool or recent blocks. Check if transaction ID is correct.`);
+        } catch (blockSearchError) {
+            console.error('Error searching recent blocks:', blockSearchError);
         }
-
-        throw new Error(`Failed to fetch transaction data: ${response.status} ${response.statusText}`);
+        throw new Error(`Transaction not found in recent blocks or mempool.`);
     }
 
     // Public method to manually retry after errors
@@ -259,12 +262,14 @@ export class ConfirmationMonitorService {
     // Get recent blocks for searching
     async getRecentBlocks(count = 10) {
         try {
-            const response = await fetch(`${this.mempoolApiUrl}/blocks`);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch blocks: ${response.status}`);
+            const tip = await this.getCurrentBlockHeight();
+            const heights = Array.from({ length: count }, (_, i) => tip - i).filter(h => h >= 0);
+            const blocks = [];
+            for (const h of heights) {
+                const hash = await this.client.getBlockHash(h);
+                blocks.push({ hash, height: h });
             }
-            const blocks = await response.json();
-            return blocks.slice(0, count);
+            return blocks;
         } catch (error) {
             console.error('Error fetching recent blocks:', error);
             return [];
@@ -274,11 +279,9 @@ export class ConfirmationMonitorService {
     // Get transactions in a specific block
     async getBlockTransactions(blockHash) {
         try {
-            const response = await fetch(`${this.mempoolApiUrl}/block/${blockHash}/txids`);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch block transactions: ${response.status}`);
-            }
-            return await response.json();
+            // verbosity 1 returns tx array of txids
+            const blk = await this.client.getBlock(blockHash, 1);
+            return blk.tx || [];
         } catch (error) {
             console.error(`Error fetching transactions for block ${blockHash}:`, error);
             return [];
@@ -317,11 +320,8 @@ export class ConfirmationMonitorService {
     // Get current block height
     async getCurrentBlockHeight() {
         try {
-            const response = await fetch(`${this.mempoolApiUrl}/blocks/tip/height`);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch block height: ${response.status}`);
-            }
-            return await response.text();
+            const h = await this.client.getBlockCount();
+            return h;
         } catch (error) {
             console.error('Error fetching current block height:', error);
             throw error;

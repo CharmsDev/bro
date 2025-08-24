@@ -102,8 +102,6 @@ export class WalletUIController {
         // Hide monitoring display
         this.dom.hide('fundingMonitoring');
 
-        console.log('✅ UTXO found in Step 1:', utxo);
-        console.log('🚀 Step 2 (Mining) should now be enabled');
     }
 
     /**

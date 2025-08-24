@@ -17,6 +17,17 @@ export class WalletFundingMonitor {
             return;
         }
 
+        // Do not start monitoring if the flow is already completed or we already have tx/broadcast data
+        const steps = this.appState.STEPS;
+        const isCompletedFlow = this.appState.isStepCompleted(steps.BROADCAST)
+            || this.appState.isStepCompleted(steps.CLAIM_TOKENS)
+            || this.appState.isStepCompleted(steps.VISIT_WALLET)
+            || !!this.appState.transaction
+            || !!this.appState.broadcastResult;
+        if (isCompletedFlow) {
+            return;
+        }
+
         // Check if we already have a UTXO
         if (this.appState.utxo) {
             this.uiController.showUtxoFound(this.appState.utxo);

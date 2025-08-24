@@ -17,11 +17,8 @@ export class WalletInitializer {
         try {
             const existingWallet = this.wallet.getStoredWallet();
             if (existingWallet) {
-                console.log('✅ Wallet loaded');
-                console.log('🔄 Wallet needs upgrade to multi-address format. Regenerating...');
                 await this.upgradeWallet(existingWallet);
             } else {
-                console.log('No existing wallet found');
             }
         } catch (error) {
             console.error('Error checking existing wallet, clearing localStorage:', error);
@@ -38,7 +35,6 @@ export class WalletInitializer {
             await this.wallet.storeWallet(existingWallet.seedPhrase);
             const upgradedWallet = this.wallet.getStoredWallet();
 
-            console.log('✅ Wallet upgraded successfully with 3 addresses');
             this.appState.completeWalletCreation(upgradedWallet);
         } catch (error) {
             console.error('❌ Error upgrading wallet:', error);

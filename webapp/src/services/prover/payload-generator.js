@@ -103,16 +103,68 @@ export class PayloadGenerator {
      */
     async _generatePayloadCore(miningData, proofData, walletData, template) {
         // Prefer reward passed from minting flow; fallback to calculateRewardInfo if not present
-        let reward = (typeof miningData?.reward === 'number') ? miningData.reward : 0;
-        if (!reward && window.calculateRewardInfo) {
+        let reward = (typeof miningData?.reward === 'number' && isFinite(miningData.reward)) ? miningData.reward : 0;
+
+        // Fallback 1: AppState.miningReward (already uses calculateRewardInfo under the hood)
+        if (!reward) {
             try {
-                const miningResultStr = localStorage.getItem('miningResult');
-                const miningResult = miningResultStr ? JSON.parse(miningResultStr) : null;
-                if (miningResult?.bestNonce && miningResult?.bestHash) {
-                    reward = Number(window.calculateRewardInfo(miningResult.bestNonce, miningResult.bestHash).rawAmount) || 0;
+                const appReward = window.appController?.appState?.miningReward;
+                if (typeof appReward === 'number' && appReward > 0) {
+                    reward = appReward;
+                    console.log('[PayloadGenerator] Using reward from AppState.miningReward:', reward);
                 }
             } catch (_) { /* ignore */ }
         }
+
+        // Fallback 2: Use calculateRewardInfo with miningResult (prefer AppState, then localStorage)
+        if (!reward && window.calculateRewardInfo) {
+            try {
+                const stateResult = window.appController?.appState?.miningResult || null;
+                const miningResultStr = stateResult ? null : localStorage.getItem('miningResult');
+                const miningResult = stateResult || (miningResultStr ? JSON.parse(miningResultStr) : null);
+                if (miningResult?.bestNonce && miningResult?.bestHash) {
+                    const info = window.calculateRewardInfo(miningResult.bestNonce, miningResult.bestHash);
+                    reward = Number(info?.rawAmount) || 0;
+                    console.log('[PayloadGenerator] Calculated reward via calculateRewardInfo:', reward, '(source:', stateResult ? 'AppState.miningResult' : 'localStorage.miningResult', ')');
+                }
+            } catch (_) { /* ignore */ }
+        }
+
+        // Fallback 3: Try BitcoinMiner.loadMiningResult() (mirrors AppState fallback)
+        if (!reward && window.calculateRewardInfo && window.BitcoinMiner) {
+            try {
+                const miner = new window.BitcoinMiner();
+                const result = miner.loadMiningResult();
+                if (result?.bestNonce && result?.bestHash) {
+                    const info = window.calculateRewardInfo(result.bestNonce, result.bestHash);
+                    reward = Number(info?.rawAmount) || 0;
+                    console.log('[PayloadGenerator] Calculated reward via BitcoinMiner.loadMiningResult():', reward);
+                }
+            } catch (_) { /* ignore */ }
+        }
+
+        // Fallback 4: Try miningProgress if result not finalized yet
+        if (!reward && window.calculateRewardInfo) {
+            try {
+                const progressStr = localStorage.getItem('miningProgress');
+                const progress = progressStr ? JSON.parse(progressStr) : null;
+                if (progress?.bestNonce && progress?.bestHash) {
+                    const info = window.calculateRewardInfo(progress.bestNonce, progress.bestHash);
+                    reward = Number(info?.rawAmount) || 0;
+                    console.log('[PayloadGenerator] Calculated reward via localStorage.miningProgress:', reward);
+                }
+            } catch (_) { /* ignore */ }
+        }
+
+        // Diagnostic log of reward sources
+        try {
+            console.log('[PayloadGenerator] Reward trace:', {
+                passedReward: miningData?.reward,
+                appStateReward: window.appController?.appState?.miningReward,
+                hasCalculator: !!window.calculateRewardInfo,
+                finalReward: reward
+            });
+        } catch (_) { /* ignore */ }
 
         // Build a canonical mining object
         let mining = {
@@ -130,6 +182,8 @@ export class PayloadGenerator {
         // Generate app_id and compute mined amount for $01 replacement
         const appId = await PayloadUtils.generateAppId(mining);
         const minedAmount = Number(reward) || 0;
+
+        try { console.log('[PayloadGenerator] minedAmount to inject:', minedAmount); } catch (_) { /* ignore */ }
 
         // Deep clone template to avoid mutations
         const payload = JSON.parse(JSON.stringify(template));
@@ -173,6 +227,12 @@ export class PayloadGenerator {
         payload.spell.outs[0].address = resolvedAddress || walletData.address;
 
         payload.spell.outs[0].charms["$01"] = minedAmount;
+        try {
+            console.log('[PayloadGenerator] Injected into payload:', {
+                address: payload.spell.outs[0].address,
+                amount: payload.spell.outs[0].charms["$01"]
+            });
+        } catch (_) { /* ignore */ }
     }
 
     /**

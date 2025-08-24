@@ -38,6 +38,17 @@ export class WalletManager {
     showWalletInfo(walletData) {
         this.uiController.showWalletInfo(walletData);
 
+        // Skip monitoring entirely if the flow is already completed or we already have tx/broadcast data
+        const steps = this.appState.STEPS;
+        const isCompletedFlow = this.appState.isStepCompleted(steps.BROADCAST)
+            || this.appState.isStepCompleted(steps.CLAIM_TOKENS)
+            || this.appState.isStepCompleted(steps.VISIT_WALLET)
+            || !!this.appState.transaction
+            || !!this.appState.broadcastResult;
+        if (isCompletedFlow) {
+            return;
+        }
+
         // Start UTXO monitoring after showing wallet
         setTimeout(() => {
             this.startFundingMonitoring();

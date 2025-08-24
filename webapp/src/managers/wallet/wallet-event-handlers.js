@@ -79,12 +79,23 @@ export class WalletEventHandlers {
         if (showSeedBtn) {
             showSeedBtn.addEventListener('click', () => {
                 const currentWallet = this.appState.wallet;
-                if (currentWallet) {
+                if (!currentWallet) return;
+
+                const seedDisplayEl = this.dom.get('seedPhraseDisplay');
+                const isVisible = seedDisplayEl && seedDisplayEl.style.display !== 'none';
+
+                if (!isVisible) {
+                    // Show seed phrase
                     this.dom.setText('seedPhraseText', currentWallet.seedPhrase);
                     this.dom.show('seedPhraseDisplay');
-                    showSeedBtn.style.display = 'none';
+                    // Keep the copy toggle button hidden; we already have a dedicated copy button next to it
                     const copySeedBtn = this.dom.get('copySeedBtn');
-                    if (copySeedBtn) copySeedBtn.style.display = 'inline-block';
+                    if (copySeedBtn) copySeedBtn.style.display = 'none';
+                    showSeedBtn.textContent = 'Hide Seed Phrase';
+                } else {
+                    // Hide seed phrase
+                    this.dom.hide('seedPhraseDisplay');
+                    showSeedBtn.textContent = 'Show Seed Phrase';
                 }
             });
         }
@@ -191,7 +202,10 @@ export class WalletEventHandlers {
         this.dom.hide('seedPhraseDisplay');
         const showSeedBtn = this.dom.get('showSeedBtn');
         const copySeedBtn = this.dom.get('copySeedBtn');
-        if (showSeedBtn) showSeedBtn.style.display = 'inline-block';
+        if (showSeedBtn) {
+            showSeedBtn.style.display = 'inline-block';
+            showSeedBtn.textContent = 'Show Seed Phrase';
+        }
         if (copySeedBtn) copySeedBtn.style.display = 'none';
 
         // Clear displayed data

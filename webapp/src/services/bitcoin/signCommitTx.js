@@ -129,7 +129,6 @@ function findAddressIndexForUTXO(utxoScript) {
     }
 
     // Fallback: use index 0 (primary address) if no match found
-    console.warn('UTXO script not found in wallet addresses, using index 0');
     return 0;
 }
 

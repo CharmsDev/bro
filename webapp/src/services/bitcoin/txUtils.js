@@ -103,7 +103,6 @@ export async function getUtxoValue(txid, vout) {
             params: [txid, true] // true for verbose output (decoded transaction)
         };
 
-        console.log(`🔍 Calling QuickNode API...`);
         const response = await fetch(quickNodeUrl, {
             method: 'POST',
             headers: {

@@ -1,6 +1,15 @@
+ import { environmentConfig } from '../config/environment.js';
+import QuickNodeClient from './bitcoin/quicknode-client.js';
+import MempoolClient from './bitcoin/mempool-client.js';
+
 export class BitcoinAPIService {
     constructor() {
-        this.baseUrl = 'https://mempool.space/testnet4/api';
+        // QuickNode RPC client for Bitcoin Core methods
+        this.client = new QuickNodeClient();
+        // Mempool REST client for address/UTXO discovery
+        this.mempool = new MempoolClient();
+        // Fallback explorer API (read-only) for address endpoints when RPC is restricted
+        this.mempoolBase = environmentConfig.getMempoolApiBase();
         this.basePollingInterval = 20000;
         this.minPollingInterval = 15000;
         this.maxPollingInterval = 180000;
@@ -11,36 +20,27 @@ export class BitcoinAPIService {
 
     async getAddressInfo(address) {
         try {
-            const response = await fetch(`${this.baseUrl}/address/${address}`);
-            if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
-            }
-            return await response.json();
+            const t1 = Date.now();
+            const info = await this.mempool.getAddressInfo(address);
+            return info;
         } catch (error) {
-            console.error('Error fetching address info:', error);
+            console.error('Error fetching address info (mempool):', error);
             throw error;
         }
     }
 
     async getAddressUtxos(address) {
         try {
-            const url = `${this.baseUrl}/address/${address}/utxo?t=${Date.now()}`;
-            const response = await fetch(url);
-
-            if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const t1 = Date.now();
+            const data = await this.mempool.getAddressUtxos(address);
             return Array.isArray(data) ? data : [];
         } catch (error) {
-            console.error('Error fetching UTXOs:', error);
+            console.error('Error fetching UTXOs (mempool):', error);
             throw error;
         }
     }
 
     async monitorAddress(address, onUtxoFound, onStatusUpdate, onError) {
-        console.log(`Starting continuous monitoring for address: ${address}`);
 
         let pollingCount = 0;
         let currentInterval = this.basePollingInterval;
@@ -77,7 +77,6 @@ export class BitcoinAPIService {
                         currentInterval * this.recoveryMultiplier,
                         this.minPollingInterval
                     );
-                    console.log(`Optimizing interval to ${currentInterval}ms after ${consecutiveSuccesses} successes`);
                 }
 
                 if (utxos && utxos.length > 0) {
@@ -94,7 +93,6 @@ export class BitcoinAPIService {
                             confirmations: utxo.status?.confirmed ? utxo.status.block_height : 0
                         };
 
-                        console.log('🎉 UTXO found! Stopping monitoring:', formattedUtxo);
                         isMonitoring = false;
                         if (onUtxoFound) {
                             onUtxoFound(formattedUtxo);
@@ -123,13 +121,11 @@ export class BitcoinAPIService {
                         currentInterval * this.backoffMultiplier,
                         this.maxPollingInterval
                     );
-                    console.log(`⚠️ Rate limit hit! Backing off to ${currentInterval}ms (${Math.round(currentInterval / 1000)}s)`);
                 } else if (consecutiveErrors >= this.maxConsecutiveErrors) {
                     currentInterval = Math.min(
                         currentInterval * 1.5,
                         this.maxPollingInterval
                     );
-                    console.log(`⚠️ ${consecutiveErrors} consecutive errors, backing off to ${currentInterval}ms`);
                 }
 
                 const isFatalError = !isRateLimit && !isNetworkError && consecutiveErrors > 10;
@@ -166,12 +162,10 @@ export class BitcoinAPIService {
             }
         };
 
-        console.log(`🚀 Starting continuous monitoring with ${this.basePollingInterval}ms base interval`);
         poll();
 
         return () => {
             isMonitoring = false;
-            console.log('🛑 Monitoring stopped by user');
         };
     }
 }

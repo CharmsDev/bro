@@ -20,18 +20,15 @@ export class WalletManager {
         try {
             const existingWallet = this.wallet.getStoredWallet();
             if (existingWallet) {
-                console.log('Loaded existing wallet:', existingWallet);
 
                 // Check if wallet has new multi-address format
                 if (!existingWallet.addresses) {
-                    console.log('🔄 Wallet needs upgrade to multi-address format. Regenerating...');
 
                     try {
                         // Regenerate wallet with existing seed phrase to get 3 addresses
                         await this.wallet.storeWallet(existingWallet.seedPhrase);
                         const upgradedWallet = this.wallet.getStoredWallet();
 
-                        console.log('✅ Wallet upgraded successfully with 3 addresses');
                         this.appState.completeWalletCreation(upgradedWallet);
                     } catch (error) {
                         console.error('❌ Error upgrading wallet:', error);
@@ -39,11 +36,9 @@ export class WalletManager {
                         this.appState.completeWalletCreation(existingWallet);
                     }
                 } else {
-                    console.log('✅ Wallet already has multi-address format');
                     this.appState.completeWalletCreation(existingWallet);
                 }
             } else {
-                console.log('No existing wallet found');
             }
         } catch (error) {
             console.error('Error checking existing wallet, clearing localStorage:', error);
@@ -90,13 +85,9 @@ export class WalletManager {
 
     setupLoadDemoWalletButton() {
         const loadDemoWalletBtn = this.dom.get('loadDemoWalletBtn');
-        console.log('Setting up demo wallet button:', !!loadDemoWalletBtn);
 
         if (loadDemoWalletBtn) {
             loadDemoWalletBtn.addEventListener('click', async () => {
-                console.log('Demo wallet button clicked');
-                console.log('Wallet instance available:', !!this.wallet);
-                console.log('AppState available:', !!this.appState);
 
                 if (!this.wallet) {
                     console.error('❌ Wallet functionality not available');
@@ -118,10 +109,8 @@ export class WalletManager {
 
                     // BIP39 compliant demo seed phrase
                     const demoSeedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-                    console.log('Generating address for demo seed phrase...');
 
                     const address = await this.wallet.generateTestnet4Address(demoSeedPhrase, 0);
-                    console.log('Generated demo address:', address);
 
                     await this.wallet.storeWallet(demoSeedPhrase, address);
                     const walletData = { seedPhrase: demoSeedPhrase, address };
@@ -132,8 +121,6 @@ export class WalletManager {
                         console.error('AppState not available');
                     }
 
-                    console.log('✅ Demo wallet loaded successfully');
-                    console.log('Address:', address);
                 } catch (error) {
                     console.error('Error loading demo wallet:', error);
                     console.error('❌ Error loading demo wallet. Please try again.');
@@ -223,7 +210,6 @@ export class WalletManager {
                     // Reset UI to initial state
                     this.resetToInitialState();
 
-                    console.log('✅ All data cleared - page reset to initial state');
                 }
             });
         }
@@ -345,7 +331,5 @@ export class WalletManager {
         // Hide monitoring display
         this.dom.hide('fundingMonitoring');
 
-        console.log('✅ UTXO found in Step 1:', utxo);
-        console.log('🚀 Step 2 (Mining) should now be enabled');
     }
 }

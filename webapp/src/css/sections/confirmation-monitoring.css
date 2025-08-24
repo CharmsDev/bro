@@ -15,8 +15,9 @@
     backdrop-filter: blur(20px);
 }
 
+/* Step 5 h3 styling moved to boxes.css as .step-title and .step-title-5 */
 .step5-progress-container h3 {
-    color: var(--accent-blue);
+    /* Styling handled by step-title and step-title-5 classes */
     margin-bottom: 20px;
     font-size: 1.5rem;
     font-weight: 600;
@@ -146,8 +147,13 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .countdown {
@@ -166,17 +172,6 @@
 
 .explorer-line {
     margin-top: 8px;
-}
-
-.explorer-link {
-    color: #2196f3;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.explorer-link:hover {
-    text-decoration: underline;
 }
 
 /* Success Container */
@@ -261,7 +256,8 @@
     margin: 8px 0;
 }
 
-.retry-button, .cancel-button {
+.retry-button,
+.cancel-button {
     padding: 8px 16px;
     border: none;
     border-radius: 6px;
@@ -298,7 +294,8 @@
 }
 
 /* Success and Error Messages */
-.success-message, .error-message {
+.success-message,
+.error-message {
     margin-top: 20px;
     padding: 20px;
     border-radius: 8px;
@@ -342,17 +339,18 @@
         padding: 16px;
         margin: 16px 0;
     }
-    
+
     .step-item {
         padding: 12px;
         gap: 12px;
     }
-    
+
     .recovery-options {
         flex-direction: column;
     }
-    
-    .retry-button, .cancel-button {
+
+    .retry-button,
+    .cancel-button {
         width: 100%;
     }
 }

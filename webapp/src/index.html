@@ -41,13 +41,13 @@
 
                 <!-- Step 1: Wallet Creation Section -->
                 <section class="wallet-section active">
-                    <h3>Step 1: Create Your Charms Wallet</h3>
+                    <h3 class="step-title step-title-1">Step 1: Create Your Charms Wallet</h3>
                     <p class="wallet-description">Create a new Bitcoin wallet or load an existing one to start minting
                         BRO
                         tokens.</p>
 
                     <div class="wallet-controls">
-                        <button id="createWalletBtn" class="wallet-btn">
+                        <button id="createWalletBtn" class="btn-base btn-primary">
                             <span>Create New Wallet</span>
                         </button>
                     </div>
@@ -56,11 +56,11 @@
                     <div id="seedPhraseBox" class="wallet-box seed-phrase-box" style="display: none;">
                         <h4>Your Seed Phrase</h4>
                         <div class="seedphrase-controls">
-                            <button id="showSeedBtn" class="seed-btn">Show Seed Phrase</button>
-                            <button id="copySeedBtn" class="seed-btn" style="display: none;">Copy Seed
+                            <button id="showSeedBtn" class="btn-base btn-purple btn-md">Show Seed Phrase</button>
+                            <button id="copySeedBtn" class="btn-base btn-purple btn-md" style="display: none;">Copy Seed
                                 Phrase</button>
-                            <button id="copyDirectSeedBtn" class="seed-btn">Copy Seed Phrase</button>
-                            <button id="resetWalletBtn" class="seed-btn" style="background: #dc2626;">🗑️ Reset
+                            <button id="copyDirectSeedBtn" class="btn-base btn-purple btn-md">Copy Seed Phrase</button>
+                            <button id="resetWalletBtn" class="btn-base btn-danger btn-md">🗑️ Reset
                                 Wallet</button>
                         </div>
                         <div id="seedPhraseDisplay" class="seedphrase-value" style="display: none;">
@@ -76,7 +76,7 @@
                         <h4>Your Testnet4 Address</h4>
                         <div class="address-container">
                             <div id="walletAddress" class="address-value">Loading...</div>
-                            <button id="copyAddressBtn" class="copy-btn" title="Copy address">
+                            <button id="copyAddressBtn" class="btn-base btn-primary btn-copy" title="Copy address">
                                 <span>📋</span>
                             </button>
                         </div>
@@ -134,15 +134,15 @@
 
                 <!-- Step 2: Mining Section -->
                 <section class="mining-section">
-                    <h3>Step 2: Infinite Proof of Work Mining</h3>
+                    <h3 class="step-title step-title-2">Step 2: Infinite Proof of Work Mining</h3>
                     <p class="mining-description">Find the hash with maximum leading zero bits! Mining runs infinitely
                         until you stop and claim your best result.</p>
 
                     <div class="mining-controls">
-                        <button id="startMining" class="mining-btn">
+                        <button id="startMining" class="btn-base btn-secondary">
                             <span>Start Mining</span>
                         </button>
-                        <button id="stopMining" class="mining-btn stop-btn" style="display: none;">
+                        <button id="stopMining" class="btn-base btn-danger" style="display: none;">
                             <span>Stop Mining & Claim Tokens</span>
                         </button>
                     </div>
@@ -181,6 +181,14 @@
                             </div>
                         </div>
 
+                        <div class="mining-animation">
+                            <div class="mining-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+
                         <div id="rewardDisplay" class="reward-display">
                             <h4>💰 Token Reward Calculation</h4>
                             <div class="reward-info">
@@ -194,21 +202,8 @@
                                     <span class="reward-token">$BRO</span>
                                 </div>
                             </div>
-                            <div class="reward-formula" style="margin-top: 10px; font-size: 12px; color: #666;">
+                            <div class="reward-formula" style="margin-top: 10px; font-size: 16px; color: #e2e8f0;">
                                 <strong>Formula:</strong> <span id="rewardFormula">100M * clz² / 2^h</span>
-                            </div>
-                        </div>
-
-                        <div class="mining-progress">
-                            <div class="progress-bar">
-                                <div id="progressFill" class="progress-fill"></div>
-                            </div>
-                            <div class="mining-animation">
-                                <div class="mining-dots">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                </div>
                             </div>
                         </div>
 
@@ -222,12 +217,12 @@
 
                 <!-- Step 3: Transaction Creation Section -->
                 <section class="transaction-section">
-                    <h3>Step 3: Create Bitcoin Transaction</h3>
+                    <h3 class="step-title step-title-3">Step 3: Create Bitcoin Transaction</h3>
                     <p class="transaction-description">Create a Bitcoin transaction with OP_RETURN data containing the
                         mining hash and nonce. This transaction will spend the UTXO from your monitored address.</p>
 
                     <div class="transaction-controls">
-                        <button id="createTransaction" class="transaction-btn" disabled>
+                        <button id="createTransaction" class="btn-base btn-purple" disabled>
                             <span>Create Transaction</span>
                         </button>
                     </div>
@@ -259,12 +254,12 @@
 
                 <!-- Step 4: Broadcast Transaction Section -->
                 <section class="broadcast-section">
-                    <h3>Step 4: Broadcast Transaction</h3>
+                    <h3 class="step-title step-title-4">Step 4: Broadcast Transaction</h3>
                     <p class="broadcast-description">Broadcast the mining transaction to the Bitcoin network. A
                         necessary step to use it in the BRO Mint.</p>
 
                     <div class="broadcast-controls">
-                        <button id="broadcastTransaction" class="broadcast-btn" disabled>
+                        <button id="broadcastTransaction" class="btn-base btn-success" disabled>
                             <span>Broadcast to Network</span>
                         </button>
                     </div>
@@ -291,12 +286,12 @@
 
                 <!-- Step 5: Claim Tokens Section -->
                 <section class="claim-section">
-                    <h3>Step 5: Claim Your BRO Tokens</h3>
+                    <h3 class="step-title step-title-5">Step 5: Claim Your BRO Tokens</h3>
                     <p class="claim-description">Your transaction has been broadcasted! Now you can claim your BRO
                         tokens through the minting process.</p>
 
                     <div class="claim-controls">
-                        <button id="claimTokensBtn" class="claim-btn disabled">
+                        <button id="claimTokensBtn" class="btn-base btn-secondary disabled">
                             <span>Start BRO Token Minting</span>
                         </button>
                     </div>
@@ -304,12 +299,12 @@
 
                 <!-- Step 6: Visit Wallet Section -->
                 <section class="wallet-visit-section">
-                    <h3>Step 6: Visit Your Charms Wallet</h3>
+                    <h3 class="step-title step-title-6">Step 6: Visit Your Charms Wallet</h3>
                     <p class="wallet-visit-description">Access your wallet to view your BRO tokens and manage your
                         funds.</p>
 
                     <div class="wallet-visit-controls">
-                        <button id="visitWalletBtn" class="wallet-visit-btn disabled">
+                        <button id="visitWalletBtn" class="btn-base btn-primary disabled">
                             <span>Go to My Wallet</span>
                         </button>
                     </div>
@@ -330,10 +325,17 @@
                             <span class="info-item-label">Supply</span>
                             <span class="info-item-value">42,690,000,000</span>
                         </div>
-                        <div class="info-item">
+                        <!-- Full-width explainer -->
+                        <div class="info-item info-item--full">
                             <span class="info-item-label">Issuance</span>
-                            <span class="info-item-value">Faucet-based, 2100 $BRO per use every 6 hours per
-                                wallet.</span>
+                            <p class="info-item-explainer">
+                                BRO tokens are minted through a 6-step process that combines Proof of Work mining with Bitcoin transactions.
+                                First, you mine to find the best hash with maximum leading zero bits using the formula: 100M * clz² / 2^h.
+                                Then you create and broadcast a Bitcoin transaction containing your mining proof as OP_RETURN data.
+                                Finally, you claim your BRO tokens through the Charms protocol by signing commit and spell transactions.
+                                This process requires real Bitcoin for transaction fees and will only work on mainnet for final token issuance.
+                                The current testnet4 implementation is for testing and demonstration purposes only.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -343,21 +345,15 @@
                 <h3>FAQ</h3>
                 <div class="faq-item">
                     <button class="question">How many tokens can I mint?</button>
-                    <div class="answer">You can claim 2100 $BRO from the faucet. You can use the faucet again with the
-                        same wallet after a 6-hour cooldown period.</div>
+                    <div class="answer">The number of BRO tokens you receive depends on your mining performance. The reward is calculated using the formula: 100M * clz² / 2^h, where clz is the count of leading zero bits in your best hash and h is the current halving epoch. Better mining results yield more tokens.</div>
                 </div>
                 <div class="faq-item">
-                    <button class="question">What do I need to mint a token?</button>
-                    <div class="answer">Absolutely nothing! Just click the "Claim my tokens" button. We will create a
-                        new Charms wallet for you instantly and send your $BRO tokens there, completely free of charge.
-                    </div>
+                    <button class="question">What do I need to mint tokens?</button>
+                    <div class="answer">You need a Bitcoin wallet with sufficient funds for transaction fees, and you must complete the 6-step minting process: create wallet, mine for proof-of-work, create Bitcoin transaction, broadcast it, claim tokens through Charms protocol, and access your wallet. Real Bitcoin is required for mainnet minting.</div>
                 </div>
                 <div class="faq-item">
                     <button class="question">How does this process work?</button>
-                    <div class="answer">When you click "Claim my tokens," you'll be redirected to the Charms Wallet. A
-                        new, secure wallet will be generated for you, and your tokens will be sent there automatically.
-                        If you've visited before, we'll use cookies to open your existing wallet and deposit the new
-                        tokens.</div>
+                    <div class="answer">The process combines Bitcoin mining with the Charms protocol. You mine to find a hash with maximum leading zero bits, embed this proof in a Bitcoin transaction, broadcast it to the network, then use Charms protocol to claim your BRO tokens. The current testnet4 version is for testing - final tokens require mainnet Bitcoin.</div>
                 </div>
                 <div class="faq-item">
                     <button class="question">What is Charms?</button>

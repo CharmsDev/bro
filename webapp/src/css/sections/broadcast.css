@@ -6,7 +6,7 @@
 
 /* Broadcast Section */
 .broadcast-section {
-    max-width: 800px;
+    max-width: 820px;
     margin: 3rem auto;
     padding: 2.5rem;
     background: linear-gradient(to bottom right, #1e293b, #0f172a);
@@ -24,15 +24,7 @@
     box-shadow: 0 8px 32px var(--success-border);
 }
 
-.broadcast-section h3 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    background: linear-gradient(to right, var(--success-color), #34d399);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
+/* Broadcast section h3 styling moved to boxes.css as .step-title and .step-title-4 */
 
 .broadcast-description {
     font-size: 1.1rem;
@@ -86,6 +78,37 @@
     text-align: right;
 }
 
+/* Improve wrapping for very long values */
+.broadcast-value {
+    overflow-wrap: anywhere;
+}
+
+/* Stack label above value for Status (first item) */
+.broadcast-details .broadcast-item:first-child,
+.broadcast-info .broadcast-item:first-child {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.broadcast-details .broadcast-item:first-child .status-value,
+.broadcast-info .broadcast-item:first-child .status-value {
+    text-align: left;
+    width: 100%;
+}
+
+/* Stack label above value for Transaction ID (second item) */
+.broadcast-details .broadcast-item:nth-child(2),
+.broadcast-info .broadcast-item:nth-child(2) {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.broadcast-details .broadcast-item:nth-child(2) .broadcast-value,
+.broadcast-info .broadcast-item:nth-child(2) .broadcast-value {
+    text-align: left;
+    width: 100%;
+}
+
 /* Broadcast Status */
 .broadcast-status {
     background: var(--success-bg);
@@ -122,7 +145,7 @@
 
 /* Claim Section */
 .claim-section {
-    max-width: 800px;
+    max-width: 820px;
     margin: 3rem auto;
     padding: 2.5rem;
     background: linear-gradient(to bottom right, #1e293b, #0f172a);
@@ -140,15 +163,7 @@
     box-shadow: 0 8px 32px rgba(245, 158, 11, 0.1);
 }
 
-.claim-section h3 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    background: linear-gradient(to right, var(--accent-orange), #f59e0b);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
+/* Claim section h3 styling moved to boxes.css as .step-title and .step-title-6 */
 
 /* Section States */
 .broadcast-section.completed,
@@ -199,17 +214,18 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+
     .broadcast-section,
     .claim-section {
         margin: 2rem auto;
         padding: 2rem;
     }
-    
+
     .broadcast-item {
         flex-direction: column;
         text-align: center;
     }
-    
+
     .broadcast-value {
         text-align: center;
     }

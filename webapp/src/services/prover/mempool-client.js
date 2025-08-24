@@ -17,7 +17,6 @@ export class MempoolClient {
      */
     async fetchTxHex(txid) {
         const url = `${this.baseUrl}/tx/${txid}/hex`;
-        console.log('🔎 Fetching raw tx hex:', url);
         
         const res = await fetch(url);
         if (!res.ok) {
@@ -39,7 +38,6 @@ export class MempoolClient {
      */
     async fetchTxJson(txid) {
         const url = `${this.baseUrl}/tx/${txid}`;
-        console.log('🔎 Fetching tx JSON:', url);
         
         const res = await fetch(url);
         if (!res.ok) {

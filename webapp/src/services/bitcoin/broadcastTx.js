@@ -1,4 +1,5 @@
 import { environmentConfig } from '../../config/environment.js';
+import QuickNodeClient from './quicknode-client.js';
 
 /**
  * Broadcasts a single Bitcoin transaction to the network
@@ -18,6 +19,21 @@ export async function broadcastTransaction(txHex) {
         if (!quicknodeUrl || !apiKey) {
             throw new Error(`QuickNode API credentials not configured for ${environmentConfig.getNetwork()}`);
         }
+
+        // Pre-flight: try to decode txid if possible and check if it is already known
+        const client = new QuickNodeClient();
+        let preflightTxId = null;
+        try {
+            // Best-effort: some callers pass PSBT hex accidentally; this will fail silently
+            const bytes = typeof txHex === 'string' ? txHex.trim() : '';
+            if (/^[0-9a-fA-F]+$/.test(bytes)) {
+                // Query mempool to see if it already exists (ignore errors)
+                // We can't compute txid without parsing; just attempt getrawtransaction afterwards
+                // No-op here, but keep structure for future enhancements
+            }
+        } catch (_) { /* ignore */ }
+
+        // Attempt a lightweight existence check: send getrawtransaction after broadcast if needed
 
         // Use QuickNode sendrawtransaction method
         const response = await fetch(quicknodeUrl, {
@@ -44,24 +60,44 @@ export async function broadcastTransaction(txHex) {
                 errorDetails = ' | Could not read response body';
             }
 
-
+            console.error('[Broadcast] HTTP error on sendrawtransaction:', response.status, errorText);
             throw new Error(`Broadcast failed (${response.status}): ${errorText || response.statusText}${errorDetails}`);
         }
 
         const result = await response.json();
 
         if (result.error) {
-            throw new Error(`Broadcast failed: ${result.error.message}`);
+            const msg = result.error?.message || 'Unknown RPC error';
+            console.error('[Broadcast] RPC error:', msg);
+            // Common error mapping for easier debugging
+            const known = [
+                'non-mandatory-script-verify-flag',
+                'mandatory-script-verify-flag',
+                'insufficient fee',
+                'txn-mempool-conflict',
+                'already in block chain',
+                'missing-inputs',
+                'non-BIP68-final'
+            ].find(k => msg.toLowerCase().includes(k));
+            if (known) console.error('[Broadcast] Matched known error:', known);
+            throw new Error(`Broadcast failed: ${msg}`);
         }
 
         // QuickNode returns the txid in result field
         const txid = result.result;
+
+        // Post-flight: confirm visibility via getrawtransaction (best-effort)
+        try {
+            const txInfo = await client.getRawTransaction(txid, true);
+        } catch (e) {
+        }
 
         return {
             txid: txid,
             success: true
         };
     } catch (error) {
+        console.error('[Broadcast] ❌ BroadcastTransaction error:', error.message);
         throw error;
     }
 }
@@ -90,6 +126,9 @@ export async function broadcastPackage(signedCommitTx, signedSpellTx, logCallbac
 
         logCallback('Starting transaction broadcast process...');
         logCallback('Broadcasting both transactions as package...');
+        logCallback(`Endpoint: ${quicknodeUrl}`);
+        logCallback(`Commit hex length: ${signedCommitTx.signedHex?.length || 0}`);
+        logCallback(`Spell hex length: ${signedSpellTx.signedHex?.length || 0}`);
 
         // Broadcast both transactions as a package using submitpackage
         const packageResponse = await fetch(quicknodeUrl, {
@@ -109,13 +148,22 @@ export async function broadcastPackage(signedCommitTx, signedSpellTx, logCallbac
         });
 
         if (!packageResponse.ok) {
+            let body = '';
+            try { body = await packageResponse.text(); } catch(_) {}
+            logCallback(`submitpackage HTTP error: ${packageResponse.status} ${body.slice(0,200)}`);
             throw new Error(`Package broadcast failed: ${packageResponse.status}`);
         }
 
         const packageResult = await packageResponse.json();
 
         if (packageResult.error) {
-            throw new Error(`Package broadcast error: ${packageResult.error.message}`);
+            const msg = packageResult.error?.message || 'Unknown RPC error';
+            logCallback(`submitpackage RPC error: ${msg}`);
+            // If submitpackage is unsupported, advise fallback
+            if (msg.toLowerCase().includes('method not found') || msg.toLowerCase().includes('not supported')) {
+                logCallback('submitpackage not supported on provider. Consider sequential sendrawtransaction with dependency order.');
+            }
+            throw new Error(`Package broadcast error: ${msg}`);
         }
 
         // Extract transaction IDs from package result
@@ -170,29 +218,18 @@ export async function getTransactionStatus(txid) {
             throw new Error('Transaction ID is required');
         }
 
+        const client = new QuickNodeClient();
+        // getrawtransaction with verbose true returns confirmations/blockhash when known
+        const result = await client.getRawTransaction(txid, true);
 
-        const response = await fetch(environmentConfig.getTransactionStatusUrl(txid));
-
-        if (!response.ok) {
-            if (response.status === 404) {
-                return {
-                    confirmed: false,
-                    status: 'pending',
-                    message: 'Transaction not found. It may be pending or not broadcast.'
-                };
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
+        const confirmed = !!(result.confirmations && result.confirmations >= 1);
         return {
-            confirmed: result.status?.confirmed || false,
-            confirmations: result.status?.confirmations || 0,
-            blockHeight: result.status?.block_height,
-            blockHash: result.status?.block_hash,
-            status: result.status?.confirmed ? 'confirmed' : 'pending',
-            fee: result.fee,
+            confirmed,
+            confirmations: result.confirmations || 0,
+            blockHeight: result.height || null,
+            blockHash: result.blockhash || null,
+            status: confirmed ? 'confirmed' : 'pending',
+            fee: result.fee, // may be undefined; QuickNode may not return fee here
             raw: result
         };
     } catch (error) {

@@ -252,8 +252,6 @@ export class WalletService {
             
             localStorage.setItem('charmsWallet', JSON.stringify(walletData));
             
-            console.log('✅ Wallet data stored in localStorage');
-            console.log('📍 Primary address:', addresses[0].address);
             
             return walletData;
             
