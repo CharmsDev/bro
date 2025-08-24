@@ -73,6 +73,7 @@ class EnvironmentConfig {
     }
 
     // Get mempool.space API base URL (network-aware)
+    // Used only for UI explorer links - all API operations use QuickNode
     getMempoolApiBase() {
         return this.isTestnet()
             ? 'https://mempool.space/testnet4/api'

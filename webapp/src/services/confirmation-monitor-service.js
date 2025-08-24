@@ -160,7 +160,7 @@ export class ConfirmationMonitorService {
     // Check if error is recoverable
     _isRecoverableError(error) {
         const nonRecoverablePatterns = [
-            'Transaction not found in mempool or recent blocks',
+            'Transaction not found in API or recent blocks',
             'Invalid transaction ID'
         ];
 
@@ -244,9 +244,9 @@ export class ConfirmationMonitorService {
                 }
             }
         } catch (blockSearchError) {
-            console.error('Error searching recent blocks:', blockSearchError);
+            // Block search failed
         }
-        throw new Error(`Transaction not found in recent blocks or mempool.`);
+        throw new Error(`Transaction not found in recent blocks or API.`);
     }
 
     // Public method to manually retry after errors
@@ -254,7 +254,7 @@ export class ConfirmationMonitorService {
         this.consecutiveErrors = 0;
     }
 
-    // Get transaction data from mempool API (legacy method for backward compatibility)
+    // Get transaction data from API (legacy method for backward compatibility)
     async getTxData(txid) {
         return await this._fetchTxDataWithTimeout(txid);
     }
@@ -294,12 +294,11 @@ export class ConfirmationMonitorService {
             const currentHeight = await this.getCurrentBlockHeight();
             return parseInt(currentHeight) - blockHeight + 1;
         } catch (error) {
-            console.error('Error calculating confirmations:', error);
             return 1; // Default to 1 confirmation
         }
     }
 
-    // Check if transaction exists in mempool
+    // Check if transaction exists in API
     async checkTxExists(txid) {
         try {
             const txData = await this.getTxData(txid);

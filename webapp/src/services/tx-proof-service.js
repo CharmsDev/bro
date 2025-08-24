@@ -52,7 +52,7 @@ export class TxProofService {
     }
 
     /**
-     * Fetch merkleblock proof directly from mempool.space API
+     * Fetch merkleblock proof directly from QuickNode RPC
      * @param {string} txid - Transaction ID
      * @returns {Promise<string>} Proof hex string
      */
@@ -61,7 +61,7 @@ export class TxProofService {
     }
 
     /**
-     * Fetch transaction data from mempool API
+     * Fetch transaction data from QuickNode RPC
      */
     async fetchTxData(txid) {
         // verbose true to get JSON with blockhash/confirmations

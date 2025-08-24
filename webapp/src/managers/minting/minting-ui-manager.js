@@ -198,7 +198,7 @@ export class MintingUIManager {
         const progressElement = stepElement.querySelector('.step-progress');
         if (!progressElement) return;
 
-        const explorerUrl = `https://mempool.space/testnet4/tx/${txid}`;
+        const explorerUrl = `https://mempool.space/testnet4/tx/${txid}`; // Keep mempool.space for UI explorer links
 
         if (progress.status === 'pending') {
             progressElement.style.display = 'block';

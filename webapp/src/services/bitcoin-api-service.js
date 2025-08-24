@@ -1,15 +1,10 @@
  import { environmentConfig } from '../config/environment.js';
 import QuickNodeClient from './bitcoin/quicknode-client.js';
-import MempoolClient from './bitcoin/mempool-client.js';
 
 export class BitcoinAPIService {
     constructor() {
-        // QuickNode RPC client for Bitcoin Core methods
+        // QuickNode RPC client with Blockbook add-on for complete Bitcoin operations
         this.client = new QuickNodeClient();
-        // Mempool REST client for address/UTXO discovery
-        this.mempool = new MempoolClient();
-        // Fallback explorer API (read-only) for address endpoints when RPC is restricted
-        this.mempoolBase = environmentConfig.getMempoolApiBase();
         this.basePollingInterval = 20000;
         this.minPollingInterval = 15000;
         this.maxPollingInterval = 180000;
@@ -20,22 +15,18 @@ export class BitcoinAPIService {
 
     async getAddressInfo(address) {
         try {
-            const t1 = Date.now();
-            const info = await this.mempool.getAddressInfo(address);
+            const info = await this.client.getAddressInfo(address);
             return info;
         } catch (error) {
-            console.error('Error fetching address info (mempool):', error);
             throw error;
         }
     }
 
     async getAddressUtxos(address) {
         try {
-            const t1 = Date.now();
-            const data = await this.mempool.getAddressUtxos(address);
+            const data = await this.client.getAddressUtxos(address);
             return Array.isArray(data) ? data : [];
         } catch (error) {
-            console.error('Error fetching UTXOs (mempool):', error);
             throw error;
         }
     }
@@ -80,17 +71,17 @@ export class BitcoinAPIService {
                 }
 
                 if (utxos && utxos.length > 0) {
-                    const validUtxos = utxos.filter(utxo => utxo.value >= 10000);
+                    const validUtxos = utxos.filter(utxo => parseInt(utxo.value) >= 10000);
 
                     if (validUtxos.length > 0) {
                         const utxo = validUtxos[0];
                         const formattedUtxo = {
                             txid: utxo.txid,
                             vout: utxo.vout,
-                            amount: utxo.value,
+                            amount: parseInt(utxo.value),
                             scriptPubKey: '',
                             address: address,
-                            confirmations: utxo.status?.confirmed ? utxo.status.block_height : 0
+                            confirmations: utxo.confirmations || 0
                         };
 
                         isMonitoring = false;
@@ -104,7 +95,6 @@ export class BitcoinAPIService {
                 setTimeout(poll, currentInterval);
 
             } catch (error) {
-                console.error('Polling error:', error);
                 consecutiveErrors++;
                 consecutiveSuccesses = 0;
 
@@ -153,7 +143,6 @@ export class BitcoinAPIService {
 
                     setTimeout(poll, currentInterval);
                 } else {
-                    console.error('💀 Fatal error, stopping monitoring:', error);
                     isMonitoring = false;
                     if (onError) {
                         onError(error);

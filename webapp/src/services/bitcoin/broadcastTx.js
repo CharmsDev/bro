@@ -238,7 +238,7 @@ export async function getTransactionStatus(txid) {
 }
 
 /**
- * Get a mempool.space explorer URL for the transaction
+ * Get a mempool.space explorer URL for the transaction (UI only)
  * @param {string} txid - The transaction ID
  * @returns {string} Explorer URL
  */

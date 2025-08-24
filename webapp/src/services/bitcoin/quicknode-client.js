@@ -48,4 +48,20 @@ export default class QuickNodeClient {
     // Use raw descriptor: addr(address)
     return this.rpc('scantxoutset', ['start', [{ desc: `addr(${address})`, range: null }]]);
   }
+
+  // Blockbook add-on methods for address operations
+  // Get UTXOs for a specific address
+  getAddressUtxos(address, options = { confirmed: true }) {
+    return this.rpc('bb_getUTXOs', [address, options]);
+  }
+
+  // Get address information (balance, transactions, etc.)
+  getAddressInfo(address, options = { page: 1, size: 1000, fromHeight: 0, details: 'txids' }) {
+    return this.rpc('bb_getAddress', [address, options]);
+  }
+
+  // Get XPUB information
+  getXPUB(xpub, options = { page: 1, size: 1000, fromHeight: 0, details: 'txids' }) {
+    return this.rpc('bb_getXPUB', [xpub, options]);
+  }
 }

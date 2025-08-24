@@ -6,7 +6,6 @@
 export const PROVER_CONFIG = {
     // API endpoints
     API_URL: 'https://charms-prover-test.fly.dev/spells/prove',
-    MEMPOOL_BASE_URL: 'https://mempool.space/testnet4/api',
 
 
 

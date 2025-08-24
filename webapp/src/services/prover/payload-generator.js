@@ -4,7 +4,7 @@
  */
 
 import { PROVER_CONFIG } from './config.js';
-import { MempoolClient } from './mempool-client.js';
+import QuickNodeClient from '../bitcoin/quicknode-client.js';
 import { PayloadUtils } from './payload-utils.js';
 import { TemplateLoader } from './template-loader.js';
 import { PayloadValidator } from './payload-validator.js';
@@ -12,7 +12,7 @@ import { PayloadValidator } from './payload-validator.js';
 
 export class PayloadGenerator {
     constructor() {
-        this.mempoolClient = new MempoolClient();
+        this.quickNodeClient = new QuickNodeClient();
         this.templateLoader = new TemplateLoader();
     }
 
@@ -111,7 +111,7 @@ export class PayloadGenerator {
                 const appReward = window.appController?.appState?.miningReward;
                 if (typeof appReward === 'number' && appReward > 0) {
                     reward = appReward;
-                    console.log('[PayloadGenerator] Using reward from AppState.miningReward:', reward);
+                    // Using reward from AppState.miningReward
                 }
             } catch (_) { /* ignore */ }
         }
@@ -125,7 +125,7 @@ export class PayloadGenerator {
                 if (miningResult?.bestNonce && miningResult?.bestHash) {
                     const info = window.calculateRewardInfo(miningResult.bestNonce, miningResult.bestHash);
                     reward = Number(info?.rawAmount) || 0;
-                    console.log('[PayloadGenerator] Calculated reward via calculateRewardInfo:', reward, '(source:', stateResult ? 'AppState.miningResult' : 'localStorage.miningResult', ')');
+                    // Calculated reward via calculateRewardInfo
                 }
             } catch (_) { /* ignore */ }
         }
@@ -138,7 +138,7 @@ export class PayloadGenerator {
                 if (result?.bestNonce && result?.bestHash) {
                     const info = window.calculateRewardInfo(result.bestNonce, result.bestHash);
                     reward = Number(info?.rawAmount) || 0;
-                    console.log('[PayloadGenerator] Calculated reward via BitcoinMiner.loadMiningResult():', reward);
+                    // Calculated reward via BitcoinMiner.loadMiningResult()
                 }
             } catch (_) { /* ignore */ }
         }
@@ -151,20 +151,12 @@ export class PayloadGenerator {
                 if (progress?.bestNonce && progress?.bestHash) {
                     const info = window.calculateRewardInfo(progress.bestNonce, progress.bestHash);
                     reward = Number(info?.rawAmount) || 0;
-                    console.log('[PayloadGenerator] Calculated reward via localStorage.miningProgress:', reward);
+                    // Calculated reward via localStorage.miningProgress
                 }
             } catch (_) { /* ignore */ }
         }
 
-        // Diagnostic log of reward sources
-        try {
-            console.log('[PayloadGenerator] Reward trace:', {
-                passedReward: miningData?.reward,
-                appStateReward: window.appController?.appState?.miningReward,
-                hasCalculator: !!window.calculateRewardInfo,
-                finalReward: reward
-            });
-        } catch (_) { /* ignore */ }
+        // Reward calculation complete
 
         // Build a canonical mining object
         let mining = {
@@ -183,7 +175,7 @@ export class PayloadGenerator {
         const appId = await PayloadUtils.generateAppId(mining);
         const minedAmount = Number(reward) || 0;
 
-        try { console.log('[PayloadGenerator] minedAmount to inject:', minedAmount); } catch (_) { /* ignore */ }
+        // Mined amount calculated
 
         // Deep clone template to avoid mutations
         const payload = JSON.parse(JSON.stringify(template));
@@ -201,13 +193,13 @@ export class PayloadGenerator {
     }
 
     /**
-     * Fill missing transaction hex from mempool API
+     * Fill missing transaction hex from QuickNode API
      * @private
      */
     async _fillMissingTxHex(mining) {
         if (!mining.txHex && mining.txid) {
             try {
-                mining.txHex = await this.mempoolClient.fetchTxHex(mining.txid);
+                mining.txHex = await this.quickNodeClient.getRawTransaction(mining.txid, false);
             } catch (e) {
                 // Silently fail if the transaction hex cannot be fetched
             }
@@ -227,12 +219,7 @@ export class PayloadGenerator {
         payload.spell.outs[0].address = resolvedAddress || walletData.address;
 
         payload.spell.outs[0].charms["$01"] = minedAmount;
-        try {
-            console.log('[PayloadGenerator] Injected into payload:', {
-                address: payload.spell.outs[0].address,
-                amount: payload.spell.outs[0].charms["$01"]
-            });
-        } catch (_) { /* ignore */ }
+        // Payload amount injection complete
     }
 
     /**
@@ -254,7 +241,7 @@ export class PayloadGenerator {
         // This transaction is being proven and serves as a reference for the prover.
         let miningTxHex = null;
         try {
-            miningTxHex = mining.txHex || await this.mempoolClient.fetchTxHex(mining.txid);
+            miningTxHex = mining.txHex || await this.quickNodeClient.getRawTransaction(mining.txid, false);
         } catch (e) {
             // Silently fail if the transaction hex is unavailable
         }
@@ -304,7 +291,7 @@ export class PayloadGenerator {
     async _setFundingUtxoValue(payload, mining, fundingVout) {
         try {
             // Use the mining transaction to get the value from vout 2
-            const miningTx = await this.mempoolClient.fetchTxJson(mining.txid);
+            const miningTx = await this.quickNodeClient.getRawTransaction(mining.txid, true);
             const vout = miningTx.vout?.[2]; // Always use vout 2 for funding
 
             if (vout && typeof vout.value === 'number') {
