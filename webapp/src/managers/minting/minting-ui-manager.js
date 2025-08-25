@@ -33,18 +33,7 @@ export class MintingUIManager {
 
         this._createStep5Container();
 
-        // Immediately hide steps and title - we're showing completed state
-        const stepsContainer = document.querySelector('#step5-progress .steps-container');
-        if (stepsContainer) {
-            stepsContainer.style.display = 'none';
-        }
-
-        const header = document.querySelector('#step5-progress h3');
-        if (header) {
-            header.style.display = 'none';
-        }
-
-        // Show the broadcast completion status
+        // Check for existing broadcast data and restore completion status
         this.checkAndRestoreBroadcastStatus();
     }
 
@@ -60,8 +49,15 @@ export class MintingUIManager {
         step5Container.id = 'step5-progress';
         step5Container.className = 'step5-progress-container';
 
+        // Hide the original static h3 title to avoid duplication
+        const originalTitle = document.querySelector('.claim-section h3.step-title-5');
+        if (originalTitle) {
+            originalTitle.style.display = 'none';
+        }
+
         const title = document.createElement('h3');
         title.textContent = 'BRO Token Minting Process';
+        title.className = 'step-title step-title-5';
         step5Container.appendChild(title);
 
         const stepsContainer = document.createElement('div');
@@ -106,11 +102,48 @@ export class MintingUIManager {
             try {
                 const data = JSON.parse(broadcastData);
 
-                // Show completion status with transaction details
-                this.showBroadcastCompletionStatus(data);
+                // Only show completion status if we have a valid transaction ID
+                const spellTxid = data.spellTxid || data?.spellData?.txid;
+                if (spellTxid && typeof spellTxid === 'string' && spellTxid !== 'undefined' && spellTxid.length === 64) {
+                    // Show completion status with transaction details
+                    this.showBroadcastCompletionStatus(data);
+                } else {
+                    // Invalid or missing txid - show the steps UI instead
+                    console.log('[Step5] Invalid txid found, showing steps UI instead of completion status');
+                    this.showStepsUIAfterReload();
+                }
             } catch (error) {
-                // Silently handle parsing errors
+                // Parsing error - show steps UI
+                console.log('[Step5] Error parsing broadcast data, showing steps UI');
+                this.showStepsUIAfterReload();
             }
+        } else {
+            // No stored data - show steps UI
+            this.showStepsUIAfterReload();
+        }
+    }
+
+    // Show the steps UI when reloading without valid completion data
+    showStepsUIAfterReload() {
+        const step5Container = document.getElementById('step5-progress');
+        if (!step5Container) return;
+
+        // Show the steps container
+        const stepsContainer = step5Container.querySelector('.steps-container');
+        if (stepsContainer) {
+            stepsContainer.style.display = 'block';
+        }
+
+        // Show the title
+        const header = step5Container.querySelector('h3');
+        if (header) {
+            header.style.display = 'block';
+        }
+
+        // Remove any existing success message
+        const existing = step5Container.querySelector('.step5-success-message');
+        if (existing) {
+            existing.remove();
         }
     }
 

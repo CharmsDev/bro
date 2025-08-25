@@ -295,7 +295,8 @@ export class PayloadGenerator {
             const vout = miningTx.vout?.[2]; // Always use vout 2 for funding
 
             if (vout && typeof vout.value === 'number') {
-                payload.funding_utxo_value = vout.value;
+                // Convert from Bitcoin decimal format to satoshis
+                payload.funding_utxo_value = Math.round(vout.value * 100000000);
             }
         } catch (e) {
             // Silently fail if the transaction JSON cannot be fetched
@@ -304,6 +305,7 @@ export class PayloadGenerator {
         // Fallback to `changeAmount` if the funding value could not be derived
         if (!(typeof payload.funding_utxo_value === 'number' && payload.funding_utxo_value > 0)) {
             if (typeof mining.changeAmount === 'number' && mining.changeAmount > 0) {
+                // changeAmount from bitcoinjs-lib is already in satoshis, no conversion needed
                 payload.funding_utxo_value = mining.changeAmount;
             } else {
                 delete payload.funding_utxo_value;

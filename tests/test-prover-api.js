@@ -7,7 +7,7 @@ import fetch from 'node-fetch';
 const API_URL = 'https://charms-prover-test.fly.dev/spells/prove';
 
 // Path to the payload file
-const PAYLOAD_FILE = '/Users/ricartjuncadella/Documents/Prj/bitcoinos/charms-bro/tests/payloads/payload-2025-08-21T17-03-35-388Z.json';
+const PAYLOAD_FILE = '/Users/ricartjuncadella/Documents/Prj/bitcoinos/charms-bro/tests/payloads/request.json';
 
 async function testProverAPI() {
     console.log('=== TESTING PROVER API ===');
