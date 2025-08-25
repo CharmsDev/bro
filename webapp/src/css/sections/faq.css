@@ -1,7 +1,7 @@
 /* ===================================
-   FAQ SECTION
+   FAQ SECTION - NEW IMPLEMENTATION
    ===================================
-   Frequently Asked Questions styles
+   Clean FAQ styles without visual artifacts
    ================================== */
 
 /* FAQ Section */
@@ -24,29 +24,26 @@
     background-clip: text;
 }
 
-/* FAQ Items */
-.faq-item {
+/* New FAQ Card Implementation */
+.faq-card {
     margin-bottom: 1.5rem;
-    background: linear-gradient(to bottom right, #1e293b, #0f172a);
-    border: 1px solid #334155;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-md);
-    backdrop-filter: blur(20px);
-    overflow: hidden;
-    transition: all var(--transition-normal);
+    transition: border-color 0.3s ease, transform 0.3s ease;
 }
 
-.faq-item:hover {
+.faq-card:hover {
     border-color: var(--accent-blue);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(2, 132, 199, 0.1);
+    transform: translateY(-1px);
 }
 
-.faq-item:last-child {
+.faq-card:last-child {
     margin-bottom: 0;
 }
 
-/* FAQ Questions */
-.question {
+/* FAQ Header (Question) */
+.faq-header {
     width: 100%;
     padding: 1.5rem 2rem;
     background: transparent;
@@ -59,30 +56,29 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all var(--transition-normal);
+    transition: color 0.3s ease;
     font-family: var(--primary-font);
 }
 
-.question:hover {
+.faq-header:hover {
     color: var(--accent-orange);
 }
 
-.question::after {
-    content: '+';
+.faq-toggle {
     font-size: 1.5rem;
     font-weight: 300;
-    transition: transform var(--transition-normal);
     color: var(--accent-orange);
     flex-shrink: 0;
     margin-left: 1rem;
+    transition: transform 0.3s ease;
 }
 
-.question.active::after {
+.faq-header.expanded .faq-toggle {
     transform: rotate(45deg);
 }
 
-/* FAQ Answers */
-.answer {
+/* FAQ Content (Answer) */
+.faq-content {
     display: none;
     padding: 0 2rem 1.5rem;
     color: var(--text-secondary);
@@ -90,34 +86,33 @@
     font-size: 1rem;
 }
 
-.answer.show {
+.faq-content.visible {
     display: block;
-    animation: fadeIn 0.3s ease-out;
 }
 
-.answer p {
+.faq-content p {
     margin-bottom: 1rem;
 }
 
-.answer p:last-child {
+.faq-content p:last-child {
     margin-bottom: 0;
 }
 
 /* FAQ Links */
-.faq-link {
+.faq-content a {
     color: var(--accent-blue);
     text-decoration: none;
     font-weight: 500;
     transition: var(--transition-normal);
 }
 
-.faq-link:hover {
+.faq-content a:hover {
     text-decoration: underline;
     color: var(--accent-orange);
 }
 
 /* FAQ Code Snippets */
-.faq code {
+.faq-content code {
     background: rgba(0, 0, 0, 0.4);
     padding: 0.25rem 0.5rem;
     border-radius: var(--border-radius-sm);
@@ -127,22 +122,22 @@
 }
 
 /* FAQ Lists */
-.faq ul,
-.faq ol {
+.faq-content ul,
+.faq-content ol {
     margin: 1rem 0;
     padding-left: 1.5rem;
 }
 
-.faq li {
+.faq-content li {
     margin-bottom: 0.5rem;
     color: var(--text-secondary);
 }
 
-.faq ul li {
+.faq-content ul li {
     list-style-type: disc;
 }
 
-.faq ol li {
+.faq-content ol li {
     list-style-type: decimal;
 }
 
@@ -151,27 +146,34 @@
     .faq {
         padding: 4rem 0;
     }
-    
+
     .faq h3 {
         font-size: 2rem;
         margin-bottom: 2rem;
     }
-    
-    .question,
-    .answer {
+
+    .faq-header,
+    .faq-content {
         padding-left: 1.5rem;
         padding-right: 1.5rem;
     }
-    
-    .question {
+
+    .faq-header {
         font-size: 1rem;
     }
-    
-    .question::after {
+
+    .faq-toggle {
         font-size: 1.25rem;
     }
-    
-    .answer {
+
+    .faq-content {
         font-size: 0.9rem;
     }
+}
+
+/* Legacy classes - keep for backward compatibility but hide */
+.faq-item,
+.question,
+.answer {
+    display: none !important;
 }

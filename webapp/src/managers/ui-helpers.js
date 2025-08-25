@@ -8,21 +8,26 @@ export class UIHelpers {
     }
 
     setupFAQFunctionality() {
-        const questions = document.querySelectorAll('.question');
-        questions.forEach(question => {
-            question.addEventListener('click', () => {
-                const answer = question.nextElementSibling;
-                const isActive = question.classList.contains('active');
+        const faqHeaders = document.querySelectorAll('.faq-header');
+        faqHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                const toggle = header.querySelector('.faq-toggle');
+                const isExpanded = header.classList.contains('expanded');
 
-                // Close all other answers
-                questions.forEach(q => {
-                    q.classList.remove('active');
-                    q.nextElementSibling.style.display = 'none';
+                // Close all other FAQs
+                faqHeaders.forEach(h => {
+                    h.classList.remove('expanded');
+                    const c = h.nextElementSibling;
+                    const t = h.querySelector('.faq-toggle');
+                    if (c) c.classList.remove('visible');
+                    if (t) t.textContent = '+';
                 });
 
-                if (!isActive) {
-                    question.classList.add('active');
-                    answer.style.display = 'block';
+                if (!isExpanded) {
+                    header.classList.add('expanded');
+                    if (content) content.classList.add('visible');
+                    if (toggle) toggle.textContent = '×';
                 }
             });
         });

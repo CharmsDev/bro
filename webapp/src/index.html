@@ -329,11 +329,16 @@
                         <div class="info-item info-item--full">
                             <span class="info-item-label">Issuance</span>
                             <p class="info-item-explainer">
-                                BRO tokens are minted through a 6-step process that combines Proof of Work mining with Bitcoin transactions.
-                                First, you mine to find the best hash with maximum leading zero bits using the formula: 100M * clz² / 2^h.
-                                Then you create and broadcast a Bitcoin transaction containing your mining proof as OP_RETURN data.
-                                Finally, you claim your BRO tokens through the Charms protocol by signing commit and spell transactions.
-                                This process requires real Bitcoin for transaction fees and will only work on mainnet for final token issuance.
+                                BRO tokens are minted through a 6-step process that combines Proof of Work mining with
+                                Bitcoin transactions.
+                                First, you mine to find the best hash with maximum leading zero bits using the formula:
+                                100M * clz² / 2^h.
+                                Then you create and broadcast a Bitcoin transaction containing your mining proof as
+                                OP_RETURN data.
+                                Finally, you claim your BRO tokens through the Charms protocol by signing commit and
+                                spell transactions.
+                                This process requires real Bitcoin for transaction fees and will only work on mainnet
+                                for final token issuance.
                                 The current testnet4 implementation is for testing and demonstration purposes only.
                             </p>
                         </div>
@@ -343,25 +348,46 @@
 
             <section class="faq">
                 <h3>FAQ</h3>
-                <div class="faq-item">
-                    <button class="question">How many tokens can I mint?</button>
-                    <div class="answer">The number of BRO tokens you receive depends on your mining performance. The reward is calculated using the formula: 100M * clz² / 2^h, where clz is the count of leading zero bits in your best hash and h is the current halving epoch. Better mining results yield more tokens.</div>
+                <div class="faq-card">
+                    <button class="faq-header">
+                        How many tokens can I mint?
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-content">The number of BRO tokens you receive depends on your mining performance.
+                        The reward is calculated using the formula: 100M * clz² / 2^h, where clz is the count of leading
+                        zero bits in your best hash and h is the current halving epoch. Better mining results yield more
+                        tokens.</div>
                 </div>
-                <div class="faq-item">
-                    <button class="question">What do I need to mint tokens?</button>
-                    <div class="answer">You need a Bitcoin wallet with sufficient funds for transaction fees, and you must complete the 6-step minting process: create wallet, mine for proof-of-work, create Bitcoin transaction, broadcast it, claim tokens through Charms protocol, and access your wallet. Real Bitcoin is required for mainnet minting.</div>
+                <div class="faq-card">
+                    <button class="faq-header">
+                        What do I need to mint tokens?
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-content">You need a Bitcoin wallet with sufficient funds for transaction fees, and
+                        you must complete the 6-step minting process: create wallet, mine for proof-of-work, create
+                        Bitcoin transaction, broadcast it, claim tokens through Charms protocol, and access your wallet.
+                        Real Bitcoin is required for mainnet minting.</div>
                 </div>
-                <div class="faq-item">
-                    <button class="question">How does this process work?</button>
-                    <div class="answer">The process combines Bitcoin mining with the Charms protocol. You mine to find a hash with maximum leading zero bits, embed this proof in a Bitcoin transaction, broadcast it to the network, then use Charms protocol to claim your BRO tokens. The current testnet4 version is for testing - final tokens require mainnet Bitcoin.</div>
+                <div class="faq-card">
+                    <button class="faq-header">
+                        How does this process work?
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-content">The process combines Bitcoin mining with the Charms protocol. You mine to
+                        find a hash with maximum leading zero bits, embed this proof in a Bitcoin transaction, broadcast
+                        it to the network, then use Charms protocol to claim your BRO tokens. The current testnet4
+                        version is for testing - final tokens require mainnet Bitcoin.</div>
                 </div>
-                <div class="faq-item">
-                    <button class="question">What is Charms?</button>
-                    <div class="answer">Charms is a protocol that lets you enchant Bitcoin with your own spells,
+                <div class="faq-card">
+                    <button class="faq-header">
+                        What is Charms?
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-content">Charms is a protocol that lets you enchant Bitcoin with your own spells,
                         enabling you to build tokens, NFTs, and other decentralized applications. For more information,
-                        visit the <a href="https://charms.dev/" target="_blank" class="faq-link">Charms.dev</a> website
-                        or read the <a href="https://charms.dev/Charms-whitepaper.pdf" target="_blank"
-                            class="faq-link">whitepaper here</a>.</div>
+                        visit the <a href="https://charms.dev/" target="_blank">Charms.dev</a> website
+                        or read the <a href="https://charms.dev/Charms-whitepaper.pdf" target="_blank">whitepaper
+                            here</a>.</div>
                 </div>
             </section>
         </main>

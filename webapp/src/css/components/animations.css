@@ -73,48 +73,58 @@
 }
 
 .gradient-wave:nth-child(4) {
-    background: linear-gradient(90deg, transparent 0%, var(--accent-blue) 50%, transparent 100%);
-    top: 50%;
-    left: -100%;
-    width: 300%;
-    height: 2px;
-    animation: line-sweep 40s infinite;
-}
-
-.gradient-wave:nth-child(5) {
-    background: linear-gradient(30deg, transparent 0%, var(--accent-orange) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 40%, var(--accent-blue) 50%, transparent 60%);
     top: 20%;
     left: -100%;
     width: 300%;
+    height: 2px;
+    /* animation: line-sweep 40s infinite; */
+    display: none;
+    /* Disable line sweep animation */
+}
+
+.gradient-wave:nth-child(5) {
+    background: linear-gradient(90deg, transparent 30%, var(--accent-orange) 50%, transparent 70%);
+    top: 60%;
+    left: -100%;
+    width: 300%;
     height: 1px;
-    animation: line-sweep-2 35s infinite;
+    /* animation: line-sweep-2 35s infinite; */
+    display: none;
+    /* Disable line sweep animation */
 }
 
 .gradient-wave:nth-child(6) {
-    background: linear-gradient(-30deg, transparent 0%, var(--accent-purple) 50%, transparent 100%);
-    top: 70%;
-    left: -100%;
-    width: 300%;
-    height: 1px;
-    animation: line-sweep-3 45s infinite;
-}
-
-.gradient-wave:nth-child(7) {
-    background: linear-gradient(60deg, transparent 0%, var(--accent-blue) 50%, transparent 100%);
-    top: 30%;
-    left: -100%;
-    width: 300%;
-    height: 1px;
-    animation: line-sweep-4 50s infinite;
-}
-
-.gradient-wave:nth-child(8) {
-    background: linear-gradient(-60deg, transparent 0%, var(--accent-orange) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 40%, var(--accent-purple) 50%, transparent 60%);
     top: 80%;
     left: -100%;
     width: 300%;
     height: 1px;
-    animation: line-sweep-5 38s infinite;
+    /* animation: line-sweep-3 45s infinite; */
+    display: none;
+    /* Disable line sweep animation */
+}
+
+.gradient-wave:nth-child(7) {
+    background: linear-gradient(90deg, transparent 35%, var(--accent-blue) 50%, transparent 65%);
+    top: 40%;
+    left: -100%;
+    width: 300%;
+    height: 1px;
+    /* animation: line-sweep-4 50s infinite; */
+    display: none;
+    /* Disable line sweep animation */
+}
+
+.gradient-wave:nth-child(8) {
+    background: linear-gradient(90deg, transparent 45%, var(--accent-orange) 50%, transparent 55%);
+    top: 90%;
+    left: -100%;
+    width: 300%;
+    height: 1px;
+    /* animation: line-sweep-5 38s infinite; */
+    display: none;
+    /* Disable line sweep animation */
 }
 
 /* Wave Animations */
