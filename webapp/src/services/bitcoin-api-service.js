@@ -1,4 +1,4 @@
- import { environmentConfig } from '../config/environment.js';
+import { environmentConfig } from '../config/environment.js';
 import QuickNodeClient from './bitcoin/quicknode-client.js';
 
 export class BitcoinAPIService {
@@ -24,15 +24,11 @@ export class BitcoinAPIService {
 
     async getAddressUtxos(address) {
         try {
-            console.log(`[BitcoinAPI] 🔍 Fetching UTXOs for address: ${address}`);
             // Fetch unconfirmed (mempool) UTXOs first, then confirmed, and merge
             const [unconfirmed, confirmed] = await Promise.all([
                 this.client.getAddressUtxos(address, { confirmed: false }),
                 this.client.getAddressUtxos(address, { confirmed: true }),
             ]);
-
-            console.log(`[BitcoinAPI] 📊 Raw UTXO data (unconfirmed):`, unconfirmed);
-            console.log(`[BitcoinAPI] 📊 Raw UTXO data (confirmed):`, confirmed);
 
             const listA = Array.isArray(unconfirmed) ? unconfirmed : [];
             const listB = Array.isArray(confirmed) ? confirmed : [];
@@ -46,20 +42,12 @@ export class BitcoinAPIService {
             let result = Array.from(map.values());
 
             const totalValue = result.reduce((sum, u) => sum + parseInt(u.value || 0), 0);
-            console.log(`[BitcoinAPI] ✅ Merged UTXOs:`, {
-                count: result.length,
-                totalValue,
-                utxos: result,
-                validUtxos: result.filter(utxo => parseInt(utxo.value) >= 10000).length
-            });
 
             // Fallback: if nothing found, try to detect pending funds by scanning recent txs
             if (result.length === 0) {
-                console.log(`[BitcoinAPI] 🕵️ Fallback: scanning recent transactions for pending outputs to ${address}`);
                 try {
                     const info = await this.client.getAddressInfo(address, { page: 1, size: 25, fromHeight: 0, details: 'txids' });
                     const txids = Array.isArray(info?.txids) ? info.txids.slice(0, 10) : [];
-                    console.log(`[BitcoinAPI] 🧾 Address txids (top ${txids.length}):`, txids);
 
                     const foundPending = [];
                     for (const txid of txids) {
@@ -77,7 +65,6 @@ export class BitcoinAPIService {
                                         value: Math.round((v.value || 0) * 1e8), // value likely in BTC if from Core
                                         confirmations,
                                     };
-                                    console.log(`[BitcoinAPI] 🔎 Candidate output to our address:`, utxo);
                                     if (confirmations === 0) {
                                         foundPending.push(utxo);
                                     }
@@ -96,9 +83,6 @@ export class BitcoinAPIService {
                             value: u.value.toString(),
                             confirmations: u.confirmations,
                         }));
-                        console.log(`[BitcoinAPI] ✅ Fallback found pending UTXOs:`, result);
-                    } else {
-                        console.log(`[BitcoinAPI] ❌ Fallback found no pending outputs to ${address}`);
                     }
                 } catch (e) {
                     console.warn(`[BitcoinAPI] ⚠️ Fallback scanning failed:`, e.message);
@@ -122,7 +106,6 @@ export class BitcoinAPIService {
 
         const poll = async () => {
             if (!isMonitoring) {
-                console.log(`[BitcoinAPI] ⏹️ Monitoring stopped for ${address}`);
                 return;
             }
 
@@ -142,15 +125,6 @@ export class BitcoinAPIService {
 
                 const utxos = await this.getAddressUtxos(address);
                 const requestTime = Date.now() - startTime;
-                
-                console.log(`[BitcoinAPI] 🔄 Monitor Check #${pollingCount}:`, {
-                    address,
-                    utxosFound: utxos ? utxos.length : 0,
-                    requestTime: `${requestTime}ms`,
-                    currentInterval: `${Math.round(currentInterval / 1000)}s`,
-                    consecutiveErrors,
-                    consecutiveSuccesses
-                });
 
                 consecutiveErrors = 0;
                 consecutiveSuccesses++;
@@ -164,9 +138,7 @@ export class BitcoinAPIService {
                 }
 
                 if (utxos && utxos.length > 0) {
-                    console.log(`[BitcoinAPI] 💰 Found ${utxos.length} UTXOs, filtering for minimum 10,000 sats`);
                     const validUtxos = utxos.filter(utxo => parseInt(utxo.value) >= 10000);
-                    console.log(`[BitcoinAPI] ✅ Valid UTXOs (>=10k sats):`, validUtxos);
 
                     if (validUtxos.length > 0) {
                         const utxo = validUtxos[0];
@@ -178,18 +150,13 @@ export class BitcoinAPIService {
                             address: address,
                             confirmations: utxo.confirmations || 0
                         };
-                        
-                        console.log(`[BitcoinAPI] 🎉 UTXO FOUND! Stopping monitoring:`, formattedUtxo);
+
                         isMonitoring = false;
                         if (onUtxoFound) {
                             onUtxoFound(formattedUtxo);
                         }
                         return;
-                    } else {
-                        console.log(`[BitcoinAPI] ⚠️ Found ${utxos.length} UTXOs but none >= 10,000 sats:`, utxos.map(u => ({ txid: u.txid, value: u.value })));
                     }
-                } else {
-                    console.log(`[BitcoinAPI] 📭 No UTXOs found for address ${address}`);
                 }
 
                 setTimeout(poll, currentInterval);
@@ -251,11 +218,9 @@ export class BitcoinAPIService {
             }
         };
 
-        console.log(`[BitcoinAPI] 🚀 Starting address monitoring for: ${address}`);
         poll();
 
         return () => {
-            console.log(`[BitcoinAPI] 🛑 Stopping monitoring for: ${address}`);
             isMonitoring = false;
         };
     }

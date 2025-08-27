@@ -39,7 +39,6 @@ export class MintingUIManager {
 
     // DEPRECATED: Keep for backward compatibility, but redirect to fresh start
     initializeUI() {
-        console.warn('initializeUI() is deprecated. Use initializeForFreshStart() or initializeForPageRefresh()');
         this.initializeForFreshStart();
     }
 
@@ -109,12 +108,10 @@ export class MintingUIManager {
                     this.showBroadcastCompletionStatus(data);
                 } else {
                     // Invalid or missing txid - show the steps UI instead
-                    console.log('[Step5] Invalid txid found, showing steps UI instead of completion status');
                     this.showStepsUIAfterReload();
                 }
             } catch (error) {
                 // Parsing error - show steps UI
-                console.log('[Step5] Error parsing broadcast data, showing steps UI');
                 this.showStepsUIAfterReload();
             }
         } else {
