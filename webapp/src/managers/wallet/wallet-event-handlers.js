@@ -8,6 +8,11 @@ export class WalletEventHandlers {
         this.dom = dom;
         this.miningManager = miningManager;
         this.transactionManager = transactionManager;
+        
+        // Store reference to this instance globally for UI controller access
+        if (typeof window !== 'undefined') {
+            window.walletEventHandlers = this;
+        }
     }
 
     /**
@@ -15,6 +20,9 @@ export class WalletEventHandlers {
      */
     setupEventListeners() {
         this.setupCreateWalletButton();
+        this.setupImportWalletButton();
+        this.setupImportConfirmButton();
+        this.setupImportCancelButton();
         this.setupCopyAddressButton();
         this.setupShowSeedButton();
         this.setupCopySeedButton();
@@ -45,6 +53,92 @@ export class WalletEventHandlers {
                     console.error('❌ Error creating wallet. Please try again.');
                 }
             });
+        }
+    }
+
+    /**
+     * Import wallet button handler
+     */
+    setupImportWalletButton() {
+        const importWalletBtn = this.dom.get('importWalletBtn');
+        if (importWalletBtn) {
+            importWalletBtn.addEventListener('click', () => {
+                // Get UI controller from wallet manager
+                const walletManager = window.walletManager;
+                if (walletManager && walletManager.uiController) {
+                    walletManager.uiController.showImportForm();
+                }
+            });
+        }
+    }
+
+    /**
+     * Import confirm button handler
+     */
+    setupImportConfirmButton() {
+        const importConfirmBtn = this.dom.get('importConfirmBtn');
+        if (importConfirmBtn) {
+            importConfirmBtn.addEventListener('click', async () => {
+                await this.handleImportWallet();
+            });
+        }
+    }
+
+    /**
+     * Import cancel button handler
+     */
+    setupImportCancelButton() {
+        const importCancelBtn = this.dom.get('importCancelBtn');
+        if (importCancelBtn) {
+            importCancelBtn.addEventListener('click', () => {
+                // Get UI controller from wallet manager
+                const walletManager = window.walletManager;
+                if (walletManager && walletManager.uiController) {
+                    walletManager.uiController.hideImportForm();
+                }
+            });
+        }
+    }
+
+    /**
+     * Handle wallet import process
+     */
+    async handleImportWallet() {
+        if (!this.wallet) {
+            return;
+        }
+
+        const walletManager = window.walletManager;
+        if (!walletManager || !walletManager.uiController) {
+            return;
+        }
+
+        const uiController = walletManager.uiController;
+        const seedPhrase = uiController.getImportSeedPhrase();
+
+        // Validate seed phrase
+        const validation = uiController.validateSeedPhrase(seedPhrase);
+        if (!validation.valid) {
+            uiController.showImportError(validation.error);
+            return;
+        }
+
+        try {
+            // Generate address from seed phrase
+            const normalizedSeedPhrase = validation.words.join(' ');
+            const address = await this.wallet.generateTestnet4Address(normalizedSeedPhrase, 0);
+
+            // Store wallet
+            await this.wallet.storeWallet(normalizedSeedPhrase, address);
+            const walletData = { seedPhrase: normalizedSeedPhrase, address };
+
+            // Complete wallet creation and show imported wallet info
+            this.appState.completeWalletCreation(walletData);
+            uiController.showImportedWalletInfo(walletData);
+
+        } catch (error) {
+            console.error('❌ Error importing wallet:', error);
+            uiController.showImportError('Failed to import wallet. Please check your seed phrase and try again.');
         }
     }
 
@@ -193,6 +287,7 @@ export class WalletEventHandlers {
         // Hide wallet boxes
         this.dom.hide('seedPhraseBox');
         this.dom.hide('addressMonitoringBox');
+        this.dom.hide('importWalletForm');
 
         // Hide funding monitoring
         this.dom.hide('fundingMonitoring');
@@ -215,6 +310,19 @@ export class WalletEventHandlers {
         this.dom.setText('foundUtxoVout', '-');
         this.dom.setText('foundUtxoAmount', '-');
         this.dom.setText('fundingStatus', 'Waiting for funds...');
+
+        // Clear import form
+        const seedInput = this.dom.get('seedPhraseInput');
+        if (seedInput) {
+            seedInput.value = '';
+            seedInput.classList.remove('error');
+        }
+        
+        // Clear any error messages
+        const errorMsg = document.querySelector('.import-error-message');
+        if (errorMsg) {
+            errorMsg.remove();
+        }
 
         // Show address note again
         const addressNote = document.querySelector('.address-note');

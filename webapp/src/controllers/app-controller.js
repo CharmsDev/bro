@@ -130,7 +130,8 @@ export class AppController {
         });
 
         this.appState.on('utxoFound', (utxo) => {
-
+            // Update mining button text when UTXO is found (funds received)
+            this.modules.miningManager.updateButtonText();
         });
 
         this.appState.on('transactionCreated', (transaction) => {
