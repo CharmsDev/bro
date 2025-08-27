@@ -8,21 +8,24 @@ export class MintingUIManager {
 
     // FRESH START: Initialize UI when user clicks Step 5 button (coming from Step 4)
     initializeForFreshStart() {
-        // Avoid duplicate containers
-        if (document.getElementById('step5-progress')) return;
-
         this._createStep5Container();
 
-        // Show the steps container - we're starting fresh
+        // Hide the steps container initially - only show when minting starts
         const stepsContainer = document.querySelector('#step5-progress .steps-container');
         if (stepsContainer) {
-            stepsContainer.style.display = 'block';
+            stepsContainer.style.display = 'none';
         }
 
-        // Show the title - we're starting fresh
+        // Hide the title initially - only show when minting starts
         const header = document.querySelector('#step5-progress h3');
         if (header) {
-            header.style.display = 'block';
+            header.style.display = 'none';
+        }
+        
+        // Hide the entire step5-progress container initially
+        const step5Progress = document.getElementById('step5-progress');
+        if (step5Progress) {
+            step5Progress.style.display = 'none';
         }
     }
 
@@ -48,10 +51,10 @@ export class MintingUIManager {
         step5Container.id = 'step5-progress';
         step5Container.className = 'step5-progress-container';
 
-        // Hide the original static h3 title to avoid duplication
+        // Keep the original static h3 title visible (don't hide it)
         const originalTitle = document.querySelector('.claim-section h3.step-title-5');
         if (originalTitle) {
-            originalTitle.style.display = 'none';
+            originalTitle.style.display = 'block'; // Ensure it's always visible
         }
 
         const title = document.createElement('h3');

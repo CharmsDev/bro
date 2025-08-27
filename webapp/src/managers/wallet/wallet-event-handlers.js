@@ -307,6 +307,18 @@ export class WalletEventHandlers {
         this.dom.setText('walletAddress', 'Loading...');
         this.dom.setText('seedPhraseText', 'Loading...');
         this.dom.setText('foundUtxoTxid', '-');
+        
+        // Hide Step 4 broadcast display
+        const broadcastDisplay = document.getElementById('broadcastDisplay');
+        if (broadcastDisplay) {
+            broadcastDisplay.style.display = 'none';
+        }
+        
+        // Hide Step 5 minting process container
+        const step5Progress = document.getElementById('step5-progress');
+        if (step5Progress) {
+            step5Progress.style.display = 'none';
+        }
         this.dom.setText('foundUtxoVout', '-');
         this.dom.setText('foundUtxoAmount', '-');
         this.dom.setText('fundingStatus', 'Waiting for funds...');
