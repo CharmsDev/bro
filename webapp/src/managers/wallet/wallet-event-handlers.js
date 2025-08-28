@@ -43,7 +43,7 @@ export class WalletEventHandlers {
 
                 try {
                     const seedPhrase = this.wallet.generateSeedPhrase();
-                    const address = await this.wallet.generateTestnet4Address(seedPhrase, 0);
+                    const address = await this.wallet.generateAddress(seedPhrase, 0);
 
                     await this.wallet.storeWallet(seedPhrase, address);
                     const walletData = { seedPhrase, address };
@@ -126,7 +126,7 @@ export class WalletEventHandlers {
         try {
             // Generate address from seed phrase
             const normalizedSeedPhrase = validation.words.join(' ');
-            const address = await this.wallet.generateTestnet4Address(normalizedSeedPhrase, 0);
+            const address = await this.wallet.generateAddress(normalizedSeedPhrase, 0);
 
             // Store wallet
             await this.wallet.storeWallet(normalizedSeedPhrase, address);
