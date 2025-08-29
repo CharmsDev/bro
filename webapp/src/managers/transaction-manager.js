@@ -5,6 +5,7 @@ export class TransactionManager {
         this.appState = appState;
         this.txBuilder = txBuilder;
         this.walletVisitManager = walletVisitManager;
+        this.transactionSigner = new ScureBitcoinTransactionSigner();
     }
 
     initialize() {
@@ -112,26 +113,20 @@ export class TransactionManager {
                         this.appState.wallet.seedPhrase
                     );
 
-                    const psbtHex = unsignedTx.serialize();
-
-                    // Initialize @scure/btc-signer
-                    const signer = new ScureBitcoinTransactionSigner();
-
+                    // Delegate signing to Transaction Signer Service
                     const utxoWithScript = {
                         ...this.appState.utxo,
                         address: this.appState.wallet.address
                     };
 
-                    const signResult = await signer.signPSBT(
-                        psbtHex,
-                        utxoWithScript,
-                        this.appState.wallet.seedPhrase,
-                        "m/86'/0'/0'"
+                    const signResult = await this.transactionSigner.signMiningTransaction(
+                        unsignedTx,
+                        utxoWithScript
                     );
 
                     const txid = signResult.txid;
                     const rawTx = signResult.signedTxHex;
-                    const size = signResult.signedTx.virtualSize();
+                    const size = signResult.size;
 
                     // OP_RETURN only contains the nonce (as stored in the actual transaction)
                     const nonceString = miningData.nonce.toString();

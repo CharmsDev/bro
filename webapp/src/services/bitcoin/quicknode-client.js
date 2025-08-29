@@ -11,16 +11,8 @@ export default class QuickNodeClient {
   }
 
   async rpc(method, params = []) {
-    console.log(`[QuickNode] 🔄 RPC Call: ${method}`, {
-      url: this.url,
-      method,
-      params,
-      timestamp: new Date().toISOString()
-    });
-    
     const requestBody = { jsonrpc: '2.0', id: 1, method, params };
-    console.log(`[QuickNode] 📤 Request Body:`, requestBody);
-    
+
     const res = await fetch(this.url, {
       method: 'POST',
       headers: {
@@ -29,24 +21,20 @@ export default class QuickNodeClient {
       },
       body: JSON.stringify(requestBody),
     });
-    
-    console.log(`[QuickNode] 📡 HTTP Response Status: ${res.status} ${res.statusText}`);
-    
+
     if (!res.ok) {
       const text = await res.text().catch(() => '');
       console.error(`[QuickNode] ❌ HTTP Error:`, { status: res.status, statusText: res.statusText, body: text });
-      throw new Error(`RPC HTTP ${res.status}: ${text.slice(0,200)}`);
+      throw new Error(`RPC HTTP ${res.status}: ${text.slice(0, 200)}`);
     }
-    
+
     const json = await res.json();
-    console.log(`[QuickNode] 📥 RPC Response:`, json);
-    
+
     if (json.error) {
       console.error(`[QuickNode] ❌ RPC Error:`, json.error);
       throw new Error(`RPC ${method} error: ${json.error.message}`);
     }
-    
-    console.log(`[QuickNode] ✅ RPC Success - ${method} returned:`, json.result);
+
     return json.result;
   }
 
@@ -74,13 +62,7 @@ export default class QuickNodeClient {
   // Blockbook add-on methods for address operations
   // Get UTXOs for a specific address
   async getAddressUtxos(address, options = { confirmed: true }) {
-    console.log(`[QuickNode] 🔍 Getting UTXOs for address: ${address}`, { options });
     const result = await this.rpc('bb_getUTXOs', [address, options]);
-    console.log(`[QuickNode] 💰 UTXO Result for ${address}:`, {
-      utxoCount: Array.isArray(result) ? result.length : 'not array',
-      result: result,
-      totalValue: Array.isArray(result) ? result.reduce((sum, utxo) => sum + parseInt(utxo.value || 0), 0) : 'N/A'
-    });
     return result;
   }
 

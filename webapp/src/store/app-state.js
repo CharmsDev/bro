@@ -68,11 +68,8 @@ export class AppState {
     }
 
     loadFromStorage() {
-        console.log('🔄 [APP-STATE] Starting loadFromStorage...');
-
         // Load wallet data
         const walletData = localStorage.getItem('bro_wallet_data');
-        console.log('💾 [APP-STATE] Wallet data from localStorage:', walletData);
         if (walletData) {
             const data = JSON.parse(walletData);
             this.wallet = data;
@@ -80,44 +77,30 @@ export class AppState {
 
         // Load UTXO data
         const utxoData = localStorage.getItem('bro_utxo_data');
-        console.log('💾 [APP-STATE] UTXO data from localStorage:', utxoData);
         if (utxoData) {
             this.utxo = JSON.parse(utxoData);
         }
 
         // Load transaction data
         const transactionData = localStorage.getItem('bro_transaction_data');
-        console.log('💾 [APP-STATE] Transaction data from localStorage:', transactionData);
         if (transactionData) {
             this.transaction = JSON.parse(transactionData);
         }
 
         // Load broadcast result
         const broadcastData = localStorage.getItem('bro_broadcast_data');
-        console.log('💾 [APP-STATE] Broadcast data from localStorage:', broadcastData);
         if (broadcastData) {
             this.broadcastResult = JSON.parse(broadcastData);
-            console.log('✅ [APP-STATE] Broadcast result loaded:', JSON.stringify(this.broadcastResult, null, 2));
-        } else {
-            console.log('⚠️ [APP-STATE] No broadcast data found in localStorage');
         }
 
         // Load signed transactions
         const signedTxData = localStorage.getItem('bro_signed_transactions');
-        console.log('💾 [APP-STATE] Signed transactions from localStorage:', signedTxData);
         if (signedTxData) {
             this.signedTransactions = JSON.parse(signedTxData);
         }
 
         // Load mining result for transaction creation validation
         this.loadMiningResult();
-
-        console.log('📊 [APP-STATE] Final state after loading:');
-        console.log('  - wallet:', this.wallet);
-        console.log('  - utxo:', this.utxo);
-        console.log('  - transaction:', this.transaction);
-        console.log('  - broadcastResult:', this.broadcastResult);
-        console.log('  - signedTransactions:', this.signedTransactions);
     }
 
     loadMiningResult() {

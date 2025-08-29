@@ -50,6 +50,23 @@
                         <button id="createWalletBtn" class="btn-base btn-primary">
                             <span>Create New Wallet</span>
                         </button>
+                        <button id="importWalletBtn" class="btn-base btn-secondary">
+                            <span>Import Wallet</span>
+                        </button>
+                    </div>
+
+                    <!-- Import Wallet Form (initially hidden) -->
+                    <div id="importWalletForm" class="wallet-box import-wallet-box" style="display: none;">
+                        <h4>Import Existing Wallet</h4>
+                        <p class="import-description">Enter your 12-word seed phrase to restore your wallet:</p>
+                        <div class="seed-input-container">
+                            <textarea id="seedPhraseInput" class="seed-phrase-input" placeholder="Enter your 12-word seed phrase here..." rows="3"></textarea>
+                        </div>
+                        <div class="import-controls">
+                            <button id="importConfirmBtn" class="btn-base btn-primary btn-md">Import Wallet</button>
+                            <button id="importCancelBtn" class="btn-base btn-secondary btn-md">Cancel</button>
+                        </div>
+                        <p class="import-warning">⚠️ Make sure your seed phrase is correct. An incorrect phrase will create a different wallet.</p>
                     </div>
 
                     <!-- Box 1: Seed Phrase -->

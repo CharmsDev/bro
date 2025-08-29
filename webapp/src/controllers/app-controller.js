@@ -7,6 +7,7 @@ import { WalletVisitManager } from '../managers/wallet-visit-manager.js';
 import { MintingManager } from '../managers/minting-manager.js';
 import { UIHelpers } from '../managers/ui-helpers.js';
 import { broadcastComponent } from '../components/broadcast-component.js';
+import { CountdownTimer } from '../components/countdown-timer.js';
 
 export class AppController {
     constructor() {
@@ -15,9 +16,14 @@ export class AppController {
         this.wallet = null;
         this.txBuilder = null;
         this.miner = null;
+        this.countdownTimer = null;
     }
 
     async initialize() {
+        // Initialize countdown timer first
+        this.countdownTimer = new CountdownTimer();
+        await this.countdownTimer.init();
+
         this.initializeGlobalModules();
 
         this.modules.domElements = new DOMElements();
@@ -130,7 +136,8 @@ export class AppController {
         });
 
         this.appState.on('utxoFound', (utxo) => {
-
+            // Update mining button text when UTXO is found (funds received)
+            this.modules.miningManager.updateButtonText();
         });
 
         this.appState.on('transactionCreated', (transaction) => {

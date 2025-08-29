@@ -7,6 +7,7 @@ export class DOMElements {
         return {
             // Wallet elements
             createWalletBtn: document.getElementById('createWalletBtn'),
+            importWalletBtn: document.getElementById('importWalletBtn'),
             walletControls: document.querySelector('.wallet-controls'),
             seedPhraseBox: document.getElementById('seedPhraseBox'),
             walletAddress: document.getElementById('walletAddress'),
@@ -18,6 +19,12 @@ export class DOMElements {
             seedPhraseText: document.getElementById('seedPhraseText'),
             resetWalletBtn: document.getElementById('resetWalletBtn'),
             addressMonitoringBox: document.getElementById('addressMonitoringBox'),
+
+            // Import wallet elements
+            importWalletForm: document.getElementById('importWalletForm'),
+            seedPhraseInput: document.getElementById('seedPhraseInput'),
+            importConfirmBtn: document.getElementById('importConfirmBtn'),
+            importCancelBtn: document.getElementById('importCancelBtn'),
 
             // Funding monitoring elements
             fundingMonitoring: document.getElementById('fundingMonitoring'),

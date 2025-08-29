@@ -1,6 +1,7 @@
 // transaction-signer-scure.js - Using @scure/btc-signer for robust Taproot support
 import * as btc from '@scure/btc-signer';
 import { hex } from '@scure/base';
+import { WalletService } from './wallet-service.js';
 
 class ScureBitcoinTransactionSigner {
     constructor() {
@@ -8,10 +9,14 @@ class ScureBitcoinTransactionSigner {
         this.network = btc.NETWORK; // mainnet
         this.testnet = btc.TEST_NETWORK; // testnet
         this.currentNetwork = this.testnet; // Use testnet for our app
+        this.walletService = new WalletService();
     }
 
     // Derive Taproot keys using @scure/btc-signer
-    async deriveTapKeys(mnemonic, path = "m/86'/0'/0'") {
+    async deriveTapKeys(mnemonic, path = null) {
+        // Use default mining path if none provided
+        const derivationPath = path || this.getMiningDerivationPath();
+        
         // Import bip39 and bip32 from @scure packages
         const { mnemonicToSeed } = await import('@scure/bip39');
         const { HDKey } = await import('@scure/bip32');
@@ -19,17 +24,21 @@ class ScureBitcoinTransactionSigner {
         const seed = await mnemonicToSeed(mnemonic);
         const hdkey = HDKey.fromMasterSeed(seed);
 
-        // Derive step by step for Taproot: m/86'/0'/0'/0/0
-        // Purpose: 86' (Taproot)
-        const purposeKey = hdkey.deriveChild(86 + 0x80000000); // hardened
-        // Coin type: 0' (Bitcoin testnet uses 1', but we'll use 0' for consistency)
-        const coinKey = purposeKey.deriveChild(0 + 0x80000000); // hardened
-        // Account: 0'
-        const accountKey = coinKey.deriveChild(0 + 0x80000000); // hardened
-        // Change: 0 (receiving addresses)
-        const chainKey = accountKey.deriveChild(0); // not hardened
-        // Address index: 0
-        const addressKey = chainKey.deriveChild(0); // not hardened
+        // Parse the derivation path dynamically instead of hardcoding
+        // Expected format: m/86'/1'/0'/0/0 or m/86'/0'/0'/0/0
+        const pathParts = derivationPath.replace('m/', '').split('/');
+        
+        let currentKey = hdkey;
+        for (let i = 0; i < pathParts.length; i++) {
+            const part = pathParts[i];
+            const isHardened = part.endsWith("'");
+            const index = parseInt(part.replace("'", ""));
+            const derivationIndex = isHardened ? index + 0x80000000 : index;
+            
+            currentKey = currentKey.deriveChild(derivationIndex);
+        }
+        
+        const addressKey = currentKey;
 
         if (!addressKey.privateKey) {
             throw new Error('Failed to derive private key');
@@ -51,37 +60,47 @@ class ScureBitcoinTransactionSigner {
     // Sign PSBT using @scure/btc-signer
     async signPSBT(psbtHex, utxo, mnemonic, path = "m/86'/0'/0'") {
         try {
-
             // Parse PSBT
             const psbt = btc.Transaction.fromPSBT(hex.decode(psbtHex), {
                 network: this.currentNetwork
             });
 
-
             // Derive keys - ensure we have a valid path
             const derivationPath = path || "m/86'/0'/0'";
             const { privateKey, p2tr } = await this.deriveTapKeys(mnemonic, derivationPath);
 
-
-            // Update input with witnessUtxo if needed
+            // Update input with Taproot-specific data
             if (psbt.inputsLength > 0) {
-                const input = psbt.getInput(0);
-                if (!input.witnessUtxo) {
-                    // Use the script from our p2tr payment
-                    const scriptPubKey = p2tr.script;
-
-                    psbt.updateInput(0, {
-                        witnessUtxo: {
-                            script: scriptPubKey,
-                            amount: BigInt(utxo.amount)
-                        }
-                    });
-
+                // Get the x-only public key - need to find the correct property
+                let xOnlyPubkey;
+                if (p2tr.pubkey) {
+                    xOnlyPubkey = Buffer.from(p2tr.pubkey);
+                } else if (p2tr.internalPubkey) {
+                    xOnlyPubkey = Buffer.from(p2tr.internalPubkey);
+                } else {
+                    // Extract from the derived keys
+                    const { publicKey } = await this.deriveTapKeys(mnemonic, derivationPath);
+                    xOnlyPubkey = publicKey.length === 33 ? publicKey.slice(1) : publicKey;
                 }
+                
+                const updateData = {
+                    witnessUtxo: {
+                        script: p2tr.script,
+                        amount: BigInt(utxo.amount)
+                    },
+                    tapInternalKey: xOnlyPubkey // x-only internal pubkey for key-path spending
+                };
+                
+                psbt.updateInput(0, updateData);
             }
 
-            // Sign the transaction
-            psbt.sign(privateKey);
+            // For @scure, we need to sign each input individually
+            try {
+                psbt.signIdx(privateKey, 0); // Sign input at index 0
+            } catch (signError) {
+                // Fallback: try the general sign method
+                psbt.sign(privateKey);
+            }
 
             // Finalize
             psbt.finalize();
@@ -110,6 +129,73 @@ class ScureBitcoinTransactionSigner {
             console.error('[ScureSigner] Error signing PSBT:', error);
             throw new Error(`Failed to sign PSBT: ${error.message}`);
         }
+    }
+
+    // Sign mining transaction (Step 3/4) - Main entry point for Transaction Manager
+    async signMiningTransaction(unsignedTx, utxo) {
+        try {
+            // Get seed phrase from WalletService
+            const seedPhrase = this.walletService.getSeedPhrase();
+            if (!seedPhrase) {
+                throw new Error('Seed phrase not found in wallet');
+            }
+            
+            // Transaction Signer determines the correct derivation path
+            let derivationPath = this.getMiningDerivationPath();
+            
+            // Test different indices to find matching address
+            const keys0 = await this.walletService.generateTaprootKeysForIndex(seedPhrase, 0);
+            const keys1 = await this.walletService.generateTaprootKeysForIndex(seedPhrase, 1);
+            
+            let matchingIndex = -1;
+            let matchingKeys = null;
+            
+            if (keys0.address === utxo.address) {
+                matchingIndex = 0;
+                matchingKeys = keys0;
+            } else if (keys1.address === utxo.address) {
+                matchingIndex = 1;
+                matchingKeys = keys1;
+            }
+            
+            if (matchingIndex >= 0) {
+                // Use the correct derivation path that matches the UTXO address
+                derivationPath = matchingKeys.derivationPath;
+            } else {
+                throw new Error('No matching address found for UTXO. Address mismatch will cause signature failure.');
+            }
+            
+            const psbtHex = unsignedTx.serialize();
+            
+            const utxoWithScript = {
+                ...utxo,
+                address: utxo.address
+            };
+
+            const signResult = await this.signPSBT(
+                psbtHex,
+                utxoWithScript,
+                seedPhrase,
+                derivationPath
+            );
+
+            return {
+                txid: signResult.txid,
+                signedTxHex: signResult.signedTxHex,
+                size: signResult.signedTx.virtualSize()
+            };
+
+        } catch (error) {
+            throw new Error(`Failed to sign mining transaction: ${error.message}`);
+        }
+    }
+
+    // Determine the correct derivation path for mining transactions
+    getMiningDerivationPath() {
+        // Use WalletService for network-aware derivation path with index 0
+        const basePath = this.walletService.getDerivationPath();
+        // Add index 0 for primary address (same as WalletService generateAddress with index 0)
+        return `${basePath}/0/0`;
     }
 
     // Sign prover transactions (multiple transactions from prover API response)

@@ -8,22 +8,10 @@ export class MintingUIManager {
 
     // FRESH START: Initialize UI when user clicks Step 5 button (coming from Step 4)
     initializeForFreshStart() {
-        // Avoid duplicate containers
-        if (document.getElementById('step5-progress')) return;
-
         this._createStep5Container();
 
-        // Show the steps container - we're starting fresh
-        const stepsContainer = document.querySelector('#step5-progress .steps-container');
-        if (stepsContainer) {
-            stepsContainer.style.display = 'block';
-        }
-
-        // Show the title - we're starting fresh
-        const header = document.querySelector('#step5-progress h3');
-        if (header) {
-            header.style.display = 'block';
-        }
+        // Show the steps container when minting starts (was hidden before)
+        this.showStepsContainer();
     }
 
     // PAGE REFRESH: Initialize UI when page reloads with existing broadcast data
@@ -34,12 +22,12 @@ export class MintingUIManager {
         this._createStep5Container();
 
         // Check for existing broadcast data and restore completion status
+        // Note: Container remains hidden by default unless valid broadcast data exists
         this.checkAndRestoreBroadcastStatus();
     }
 
     // DEPRECATED: Keep for backward compatibility, but redirect to fresh start
     initializeUI() {
-        console.warn('initializeUI() is deprecated. Use initializeForFreshStart() or initializeForPageRefresh()');
         this.initializeForFreshStart();
     }
 
@@ -48,20 +36,25 @@ export class MintingUIManager {
         const step5Container = document.createElement('div');
         step5Container.id = 'step5-progress';
         step5Container.className = 'step5-progress-container';
+        
+        // Hide container by default - only show when Start button is clicked
+        step5Container.style.display = 'none';
 
-        // Hide the original static h3 title to avoid duplication
+        // Keep the original static h3 title visible (don't hide it)
         const originalTitle = document.querySelector('.claim-section h3.step-title-5');
         if (originalTitle) {
-            originalTitle.style.display = 'none';
+            originalTitle.style.display = 'block'; // Ensure it's always visible
         }
 
         const title = document.createElement('h3');
         title.textContent = 'BRO Token Minting Process';
         title.className = 'step-title step-title-5';
+        title.style.display = 'none'; // Hide by default
         step5Container.appendChild(title);
 
         const stepsContainer = document.createElement('div');
         stepsContainer.className = 'steps-container';
+        stepsContainer.style.display = 'none'; // Hide by default
         step5Container.appendChild(stepsContainer);
 
         // Append to claim section
@@ -95,6 +88,25 @@ export class MintingUIManager {
 
     }
 
+    // Show the steps container when Start button is clicked
+    showStepsContainer() {
+        const container = document.getElementById('step5-progress');
+        if (container) {
+            container.style.display = 'block';
+            
+            // Show the title and steps container
+            const title = container.querySelector('.step-title-5');
+            const stepsContainer = container.querySelector('.steps-container');
+            
+            if (title) {
+                title.style.display = 'block';
+            }
+            if (stepsContainer) {
+                stepsContainer.style.display = 'block';
+            }
+        }
+    }
+
     // Check for existing broadcast data and restore completion status
     checkAndRestoreBroadcastStatus() {
         const broadcastData = localStorage.getItem('bro_broadcast_data');
@@ -107,26 +119,23 @@ export class MintingUIManager {
                 if (spellTxid && typeof spellTxid === 'string' && spellTxid !== 'undefined' && spellTxid.length === 64) {
                     // Show completion status with transaction details
                     this.showBroadcastCompletionStatus(data);
-                } else {
-                    // Invalid or missing txid - show the steps UI instead
-                    console.log('[Step5] Invalid txid found, showing steps UI instead of completion status');
-                    this.showStepsUIAfterReload();
                 }
+                // For invalid/missing txid or parsing errors: do nothing
+                // Container remains hidden until user clicks Start button
             } catch (error) {
-                // Parsing error - show steps UI
-                console.log('[Step5] Error parsing broadcast data, showing steps UI');
-                this.showStepsUIAfterReload();
+                // Parsing error - do nothing, container stays hidden
             }
-        } else {
-            // No stored data - show steps UI
-            this.showStepsUIAfterReload();
         }
+        // For no stored data: do nothing, container stays hidden
     }
 
     // Show the steps UI when reloading without valid completion data
     showStepsUIAfterReload() {
         const step5Container = document.getElementById('step5-progress');
         if (!step5Container) return;
+
+        // Show the main container first
+        step5Container.style.display = 'block';
 
         // Show the steps container
         const stepsContainer = step5Container.querySelector('.steps-container');
