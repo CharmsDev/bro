@@ -65,11 +65,8 @@ export class MintingManager {
             // Execute each step sequentially
             await this.executeAllSteps();
 
-            // ===== TEMPORARY: DO NOT MARK AS COMPLETED =====
-            // this.appState.completeStep(5);
-            // this.uiManager.showSuccess(this.broadcastResults);
-            console.log('✅ Signing completed - Step 6 blocked for testing');
-            // ===== END TEMPORARY BLOCK =====
+            this.appState.completeStep(5);
+            this.uiManager.showSuccess(this.broadcastResults);
 
             return true;
 
@@ -119,21 +116,17 @@ export class MintingManager {
         this.signedTransactions = await this.stepExecutor.executeStep5_signTransactions(this.proverResponse, wallet, this.miningResult);
         MintingDataValidator.validateSignedTransactions(this.signedTransactions);
 
-        // ===== TEMPORARY: BLOCK STEP 6 FOR TESTING =====
         console.log('🔥 SIGNED TRANSACTIONS OUTPUT:');
         console.log('📝 Commit Transaction Hex:');
         console.log(this.signedTransactions.find(tx => tx.type === 'commit').signedHex);
         console.log('📝 Bitcoin CLI Test Command:');
         console.log(`bitcoin-cli testmempoolaccept '["${this.signedTransactions.find(tx => tx.type === 'commit').signedHex}","${this.signedTransactions.find(tx => tx.type === 'spell').signedHex}"]'`);
-        console.log('🛑 BLOCKING STEP 6 (Broadcasting) for testing');
-        console.log('🔄 Refresh page to restart minting process');
         
-        // TEMPORARY: Do NOT execute Step 6 (Broadcasting)
-        // this.broadcastResults = await this.stepExecutor.executeStep6_broadcastTransactions(this.signedTransactions);
-        // ===== END TEMPORARY BLOCK =====
+        // Execute Step 6 (Broadcasting)
+        this.broadcastResults = await this.stepExecutor.executeStep6_broadcastTransactions(this.signedTransactions);
 
-        // TEMPORARY: Do NOT mark as completed to prevent state persistence
-        // this.currentStep = this.totalSteps;
+        // Mark as completed
+        this.currentStep = this.totalSteps;
     }
 
     // Cancel the process

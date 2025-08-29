@@ -144,37 +144,28 @@ export class MintingStepExecutor {
             // Show testmempoolaccept command for both transactions
             console.log('bitcoin-cli testmempoolaccept \'["' + commitResult.signedHex + '","' + spellResult.signedHex + '"]\'');
             
-            // TEMPORARY: Do NOT save to localStorage to allow process restart
-            // const signedTxData = {
-            //     commit: {
-            //         signedHex: commitResult.signedHex,
-            //         txid: commitResult.txid
-            //     },
-            //     spell: {
-            //         signedHex: spellResult.signedHex,
-            //         txid: spellResult.txid
-            //     },
-            //     status: 'signed',
-            //     timestamp: new Date().toISOString()
-            // };
-            // localStorage.setItem('bro_signed_transactions', JSON.stringify(signedTxData));
-            // ===== END TEMPORARY DEBUG CODE =====
+            // Save signed transactions to localStorage
+            const signedTxData = {
+                commit: {
+                    signedHex: commitResult.signedHex,
+                    txid: commitResult.txid
+                },
+                spell: {
+                    signedHex: spellResult.signedHex,
+                    txid: spellResult.txid
+                },
+                status: 'signed',
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('bro_signed_transactions', JSON.stringify(signedTxData));
 
             this.uiManager.updateStepStatus(4, 'completed');
-            
-            // ===== TEMPORARY: STOP EXECUTION HERE =====
-            // Don't throw error - just return the signed transactions so the logs in minting-manager can run
             return signedTransactions;
-            // ===== END TEMPORARY STOP =====
         } catch (error) {
             console.error('❌ Step 5 signing error:', error);
             console.error('❌ Error details:', error.message);
             console.error('❌ Stack trace:', error.stack);
             
-            // Check if this is our temporary stop error - if so, don't treat as real error
-            if (error.message.includes('TEMPORARY STOP')) {
-                throw error; // Re-throw temporary stop
-            }
             this.uiManager.updateStepStatus(4, 'error');
             throw new Error(`Transaction signing failed: ${error.message}`);
         }

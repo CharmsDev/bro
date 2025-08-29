@@ -126,9 +126,22 @@ export async function broadcastPackage(signedCommitTx, signedSpellTx, logCallbac
 
         logCallback('Starting transaction broadcast process...');
         logCallback('Broadcasting both transactions as package...');
+        logCallback(`Network: ${network}`);
         logCallback(`Endpoint: ${quicknodeUrl}`);
         logCallback(`Commit hex length: ${signedCommitTx.signedHex?.length || 0}`);
         logCallback(`Spell hex length: ${signedSpellTx.signedHex?.length || 0}`);
+        
+        // Log transaction hex for manual fallback
+        console.log('🔥 TRANSACTION HEX FOR MANUAL BROADCAST:');
+        console.log('📝 Commit Transaction Hex:');
+        console.log(signedCommitTx.signedHex);
+        console.log('📝 Spell Transaction Hex:');
+        console.log(signedSpellTx.signedHex);
+        console.log('📝 Manual Bitcoin CLI Commands:');
+        console.log(`bitcoin-cli sendrawtransaction "${signedCommitTx.signedHex}"`);
+        console.log(`bitcoin-cli sendrawtransaction "${signedSpellTx.signedHex}"`);
+        console.log('📝 Package Test Command:');
+        console.log(`bitcoin-cli testmempoolaccept '["${signedCommitTx.signedHex}","${signedSpellTx.signedHex}"]'`);
 
         // Broadcast both transactions as a package using submitpackage
         const packageResponse = await fetch(quicknodeUrl, {

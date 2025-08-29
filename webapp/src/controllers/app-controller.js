@@ -165,24 +165,6 @@ export class AppController {
         if (claimTokensBtn) {
             claimTokensBtn.addEventListener('click', async () => {
                 try {
-                    // Show Step 5 minting process container when button is clicked
-                    const step5Progress = document.getElementById('step5-progress');
-                    if (step5Progress) {
-                        step5Progress.style.display = 'block';
-                    }
-
-                    // Show the steps container
-                    const stepsContainer = document.querySelector('#step5-progress .steps-container');
-                    if (stepsContainer) {
-                        stepsContainer.style.display = 'block';
-                    }
-
-                    // Show the title
-                    const header = document.querySelector('#step5-progress h3');
-                    if (header) {
-                        header.style.display = 'block';
-                    }
-
                     await this.modules.mintingManager.executeMintingProcess();
                 } catch (error) {
                     console.error('❌ Step 5 minting process failed:', error);
