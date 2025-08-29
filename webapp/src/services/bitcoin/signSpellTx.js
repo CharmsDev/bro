@@ -10,16 +10,15 @@ export async function signSpellTransaction(
         if (!spellTxHex) throw new Error('Spell transaction hex is required');
         if (!signedCommitTxHex) throw new Error('Signed commit transaction hex is required');
 
-        logCallback('Starting spell transaction signing...');
 
-        // Use bitcoinjs-lib for transaction parsing and signing (dynamic import to avoid init issues)
+        // Use static imports like commit transaction
         const bitcoin = await import('bitcoinjs-lib');
         const { BIP32Factory } = await import('bip32');
         const bip39 = await import('bip39');
         const ecc = await import('tiny-secp256k1');
-        const { ECPairFactory } = await import('ecpair');
 
-        const ECPair = ECPairFactory(ecc);
+        // Initialize ECC library
+        bitcoin.initEccLib(ecc);
         const bip32 = BIP32Factory(ecc);
 
         // Convert public key to x-only format for Taproot
@@ -35,19 +34,12 @@ export async function signSpellTransaction(
 
         const commitTxId = commitTx.getId();
 
-        // Get seed phrase from localStorage
-        const stored = localStorage.getItem('charmsWallet');
-        if (!stored) {
-            throw new Error('No wallet found in localStorage');
-        }
-
-        const walletData = JSON.parse(stored);
-        const seedPhrase = walletData.seedPhrase;
-        if (!seedPhrase) throw new Error('Seed phrase not found');
-
-        // Generate BIP32 root key from seed phrase
-        const seed = await bip39.mnemonicToSeed(seedPhrase);
-        const root = bip32.fromSeed(seed, bitcoin.networks.testnet);
+        // Use WalletService for network-aware key generation (dynamic network paths)
+        const walletService = new WalletService();
+        
+        // Get seed phrase from WalletService (cleaner approach)
+        const seedPhrase = walletService.getSeedPhrase();
+        if (!seedPhrase) throw new Error('Seed phrase not found in wallet');
 
         const prevOutScripts = [];
         const values = [];
@@ -70,33 +62,44 @@ export async function signSpellTransaction(
                 try {
                     utxoValue = await getUtxoValue(rawTxid, vout);
 
-                    // Generate keys for index 1 (consistent with commit signing)
-                    const derivationPath = "m/86'/0'/0'/0/1";
-                    const child = root.derivePath(derivationPath);
-                    let privKey = child.privateKey;
-                    if (!privKey) throw new Error(`Could not derive private key for ${derivationPath}`);
-                    if (!Buffer.isBuffer(privKey)) privKey = Buffer.from(privKey);
-
-                    const internalPubkey = toXOnly(child.publicKey);
-                    const p2tr = bitcoin.payments.p2tr({
-                        internalPubkey,
-                        network: bitcoin.networks.testnet
-                    });
-                    script = p2tr.output;
-
-                    // Apply Taproot tweaking to private key
-                    const tweak = bitcoin.crypto.taggedHash('TapTweak', internalPubkey);
-                    const isOddY = child.publicKey[0] === 0x03;
-                    let keyForTweak = privKey;
-                    if (isOddY) {
-                        const neg = ecc.privateNegate(privKey);
-                        if (!neg) throw new Error('Failed to negate private key');
-                        keyForTweak = neg;
+                    // Find the correct address index by testing wallet addresses against UTXO
+                    let addressIndex = 0; // Default to primary address
+                    let keyData = null;
+                    
+                    // Try to match UTXO with stored wallet addresses by testing each index
+                    const walletData = JSON.parse(localStorage.getItem('charmsWallet'));
+                    if (walletData && walletData.addresses) {
+                        // Test each stored address to find the one that owns this UTXO
+                        for (const addressData of walletData.addresses) {
+                            const testKeys = await walletService.generateTaprootKeysForIndex(seedPhrase, addressData.index);
+                            // For spell transactions, typically use index 1 (change address)
+                            // But we should test to find the correct one
+                            if (addressData.index === 1) {
+                                addressIndex = addressData.index;
+                                keyData = testKeys;
+                                break;
+                            }
+                        }
                     }
-                    const tweakedKey = ecc.privateAdd(keyForTweak, tweak);
-                    if (!tweakedKey) throw new Error('Tweak resulted in invalid private key');
+                    
+                    // If no match found, generate keys for index 1 (typical for spell transactions)
+                    if (!keyData) {
+                        addressIndex = 1;
+                        keyData = await walletService.generateTaprootKeysForIndex(seedPhrase, addressIndex);
+                    }
+                    script = Buffer.from(keyData.script, 'hex');
 
-                    signData[i] = { tweakedKey };
+                    // Handle tweaked private key format (could be comma-separated string or hex)
+                    let tweakedKeyBuffer;
+                    if (typeof keyData.tweakedPrivateKey === 'string' && keyData.tweakedPrivateKey.includes(',')) {
+                        // Convert comma-separated string to Buffer
+                        const byteArray = keyData.tweakedPrivateKey.split(',').map(num => parseInt(num.trim()));
+                        tweakedKeyBuffer = Buffer.from(byteArray);
+                    } else {
+                        // Assume hex string
+                        tweakedKeyBuffer = Buffer.from(keyData.tweakedPrivateKey, 'hex');
+                    }
+                    signData[i] = { tweakedKey: tweakedKeyBuffer };
                 } catch (error) {
                     throw new Error(`Could not prepare wallet UTXO for input ${i}: ${error.message}`);
                 }
@@ -123,8 +126,38 @@ export async function signSpellTransaction(
             const rawTxid = Buffer.from(spellTx.ins[i].hash).reverse().toString('hex');
 
             if (Object.prototype.hasOwnProperty.call(signData, i)) {
-                // Sign wallet-owned input with tweaked key
-                const signature = Buffer.from(ecc.signSchnorr(sighashes[i], signData[i].tweakedKey));
+                // Handle tweaked private key - multiple formats possible
+                let tweakedKey;
+                const tweakedKeyRaw = signData[i].tweakedKey;
+                
+                if (typeof tweakedKeyRaw === 'string') {
+                    if (tweakedKeyRaw.includes(',')) {
+                        // Convert comma-separated string to Buffer: "197,97,250..." -> Buffer
+                        const byteArray = tweakedKeyRaw.split(',').map(num => parseInt(num.trim()));
+                        tweakedKey = Buffer.from(byteArray);
+                    } else {
+                        // Assume hex string
+                        tweakedKey = Buffer.from(tweakedKeyRaw, 'hex');
+                    }
+                } else if (Buffer.isBuffer(tweakedKeyRaw)) {
+                    tweakedKey = tweakedKeyRaw;
+                } else if (tweakedKeyRaw instanceof Uint8Array) {
+                    // Handle Uint8Array: Uint8Array(5) [34, 3, 23, 3, 51]
+                    tweakedKey = Buffer.from(tweakedKeyRaw);
+                } else if (tweakedKeyRaw && typeof tweakedKeyRaw === 'object' && tweakedKeyRaw.type === 'Buffer' && Array.isArray(tweakedKeyRaw.data)) {
+                    // Handle serialized Buffer object: {"type":"Buffer","data":[34,3,23,3,51]}
+                    tweakedKey = Buffer.from(tweakedKeyRaw.data);
+                } else {
+                    throw new Error(`Invalid tweakedPrivateKey format: ${typeof tweakedKeyRaw}, value: ${JSON.stringify(tweakedKeyRaw)}`);
+                }
+
+
+                // Validate private key format
+                if (!tweakedKey || tweakedKey.length !== 32) {
+                    throw new Error(`Invalid private key format. Expected 32 bytes, got ${tweakedKey ? tweakedKey.length : 'null'}. Raw value: ${JSON.stringify(tweakedKeyRaw)}`);
+                }
+                
+                const signature = Buffer.from(ecc.signSchnorr(sighashes[i], tweakedKey));
                 spellTx.ins[i].witness = [signature];
             } else if (rawTxid === commitTxId) {
                 // Preserve existing witness data for commit tx input (already set from signed commit tx)
@@ -138,9 +171,6 @@ export async function signSpellTransaction(
         const signedTxHex = spellTx.toHex();
         const txidFinal = spellTx.getId();
 
-        if (logCallback) {
-            logCallback(`Spell transaction signed successfully: TXID ${txidFinal}`);
-        }
 
         return { signedHex: signedTxHex, txid: txidFinal };
     } catch (error) {

@@ -10,22 +10,22 @@ export class MintingUIManager {
     initializeForFreshStart() {
         this._createStep5Container();
 
-        // Hide the steps container initially - only show when minting starts
+        // Show the steps container when minting starts (was hidden before)
         const stepsContainer = document.querySelector('#step5-progress .steps-container');
         if (stepsContainer) {
-            stepsContainer.style.display = 'none';
+            stepsContainer.style.display = 'block';
         }
 
-        // Hide the title initially - only show when minting starts
+        // Show the title when minting starts (was hidden before)
         const header = document.querySelector('#step5-progress h3');
         if (header) {
-            header.style.display = 'none';
+            header.style.display = 'block';
         }
         
-        // Hide the entire step5-progress container initially
+        // Show the entire step5-progress container when minting starts
         const step5Progress = document.getElementById('step5-progress');
         if (step5Progress) {
-            step5Progress.style.display = 'none';
+            step5Progress.style.display = 'block';
         }
     }
 

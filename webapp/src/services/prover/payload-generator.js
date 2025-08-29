@@ -35,8 +35,10 @@ export class PayloadGenerator {
             PayloadValidator.validatePayload(payload);
             // Payload ready
 
+            // ===== COMMENTED OUT: PAYLOAD DOWNLOAD =====
             // Offer the generated payload for download
-            await this._offerPayloadDownload(payload);
+            // await this._offerPayloadDownload(payload);
+            // ===== END COMMENTED OUT SECTION =====
 
             return payload;
         } catch (error) {
