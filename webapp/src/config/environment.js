@@ -40,6 +40,10 @@ class EnvironmentConfig {
             ui: {
                 // Feature flag to disable step/button locks across the UI
                 disableStepLocks: String(import.meta.env.VITE_DISABLE_STEP_LOCKS ?? 'false').toLowerCase() === 'true'
+            },
+            prover: {
+                // Prover API endpoint for Step 5
+                apiUrl: String(import.meta.env.VITE_PROVER_API_URL)
             }
         };
     }
@@ -100,6 +104,11 @@ class EnvironmentConfig {
     // UI feature flags
     getDisableStepLocks() {
         return this.config.ui.disableStepLocks === true;
+    }
+
+    // Prover API URL (Step 5)
+    getProverApiUrl() {
+        return this.config.prover.apiUrl;
     }
 }
 

@@ -3,9 +3,11 @@
  * Centralizes all configuration constants and URLs
  */
 
+import { environmentConfig } from '../../config/environment.js';
+
 export const PROVER_CONFIG = {
     // API endpoints
-    API_URL: 'https://charms-prover-test.fly.dev/spells/prove',
+    API_URL: environmentConfig.getProverApiUrl(),
 
 
 

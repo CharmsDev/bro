@@ -215,6 +215,36 @@ export class WalletService {
         return stored ? JSON.parse(stored) : null;
     }
 
+    // Copy arbitrary text to the user's clipboard (with fallback for non-secure contexts)
+    async copyToClipboard(text) {
+        try {
+            if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                await navigator.clipboard.writeText(text);
+                return true;
+            }
+            throw new Error('Navigator clipboard not available');
+        } catch (_) {
+            // Fallback: use a hidden textarea + execCommand for older/blocked environments
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = String(text ?? '');
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                ta.style.pointerEvents = 'none';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                if (!ok) throw new Error('execCommand copy failed');
+                return true;
+            } catch (err) {
+                console.warn('Clipboard copy failed:', err);
+                throw err;
+            }
+        }
+    }
 }
 
 // Export for global compatibility
