@@ -30,6 +30,9 @@ class EnvironmentConfig {
                 timeoutMs: Number(import.meta.env.VITE_HTTP_TIMEOUT_MS ?? 10000),
                 retries: Number(import.meta.env.VITE_HTTP_RETRIES ?? 2),
                 backoffBaseMs: Number(import.meta.env.VITE_HTTP_BACKOFF_BASE_MS ?? 500),
+                // Optional proxy base (same-origin) to bypass CORS when calling external providers
+                // Example: https://wallet.charms.dev/api/proxy or https://bro.charms.dev
+                proxyBase: String(import.meta.env.VITE_HTTP_PROXY_BASE || '').trim() || null,
                 // cache TTLs for polling endpoints (short to avoid stale UI)
                 cacheTtl: {
                     txMs: Number(import.meta.env.VITE_CACHE_TTL_TX_MS ?? 3000),
@@ -99,6 +102,11 @@ class EnvironmentConfig {
 
     getCacheTtl() {
         return this.config.http.cacheTtl;
+    }
+
+    // Optional proxy base for outbound HTTP requests
+    getProxyBase() {
+        return this.config.http.proxyBase;
     }
 
     // UI feature flags

@@ -1,4 +1,4 @@
-import QuickNodeClient from './bitcoin/quicknode-client.js';
+import { QuickNodeClient } from './providers/quicknode/index.js';
 
 export class ConfirmationMonitorService {
     constructor() {
@@ -120,7 +120,7 @@ export class ConfirmationMonitorService {
             });
         }
 
-        // If too many consecutive errors, offer manual retry option
+        // If too many consecutive errors, reduce backoff but continue
         if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
             if (onProgress) {
                 onProgress({
@@ -128,13 +128,13 @@ export class ConfirmationMonitorService {
                     error: error.message,
                     retries,
                     consecutiveErrors: this.consecutiveErrors,
-                    requiresManualRetry: true
+                    requiresManualRetry: false // Changed to false - keep auto-retrying
                 });
             }
 
-            // Wait for potential manual intervention
-            await this.sleep(60000); // Wait 1 minute before continuing
-            this.consecutiveErrors = 0; // Reset counter to allow continuation
+            // Shorter wait and reset counter to continue monitoring
+            await this.sleep(5000); // Wait 5 seconds instead of 1 minute
+            this.consecutiveErrors = Math.floor(this.maxConsecutiveErrors / 2); // Reduce but don't reset completely
         }
 
         return isRecoverableError;

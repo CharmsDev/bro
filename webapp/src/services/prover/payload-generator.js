@@ -4,7 +4,7 @@
  */
 
 import { PROVER_CONFIG } from './config.js';
-import QuickNodeClient from '../bitcoin/quicknode-client.js';
+import { QuickNodeClient } from '../providers/quicknode/index.js';
 import { PayloadUtils } from './payload-utils.js';
 import { TemplateLoader } from './template-loader.js';
 import { PayloadValidator } from './payload-validator.js';

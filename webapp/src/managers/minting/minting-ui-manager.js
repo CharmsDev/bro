@@ -272,6 +272,21 @@ export class MintingUIManager {
                     <span> Confirmed in block ${progress.blockHeight} with ${progress.confirmations} confirmations</span>
                 </div>
             `;
+        } else if (progress.status === 'retrying') {
+            progressElement.style.display = 'block';
+            progressElement.innerHTML = `
+                <div class="retry-progress">
+                    <div class="progress-line">
+                        <div class="spinner"></div>
+                        <span>Retrying... (attempt ${progress.attempt}/${progress.maxAttempts}, next retry in <span class="countdown" data-seconds="${progress.nextRetryIn}">${progress.nextRetryIn}</span>s)</span>
+                    </div>
+                    <div class="error-line">Error: ${progress.error}</div>
+                    <div class="explorer-line">
+                        <a href="${explorerUrl}" target="_blank" class="explorer-link">View Transaction in Explorer</a>
+                    </div>
+                </div>
+            `;
+            this.startCountdown(progressElement.querySelector('.countdown'), progress.nextRetryIn);
         } else if (progress.status === 'error') {
             progressElement.style.display = 'block';
 

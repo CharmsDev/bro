@@ -1,5 +1,5 @@
 import { environmentConfig } from '../../config/environment.js';
-import QuickNodeClient from './quicknode-client.js';
+import { QuickNodeClient } from '../providers/quicknode/index.js';
 
 /**
  * Broadcasts a single Bitcoin transaction to the network
@@ -35,19 +35,23 @@ export async function broadcastTransaction(txHex) {
 
         // Attempt a lightweight existence check: send getrawtransaction after broadcast if needed
 
-        // Use QuickNode sendrawtransaction method
-        const response = await fetch(quicknodeUrl, {
+        // Use QuickNode sendrawtransaction method (optionally via proxy)
+        const proxyBase = environmentConfig.getProxyBase();
+        const isWalletProxy = !!(proxyBase && /\/api\/quicknode(\b|\/)/.test(proxyBase));
+        const targetUrl = proxyBase ? (isWalletProxy ? proxyBase : `${proxyBase}/=${encodeURIComponent(quicknodeUrl)}`) : quicknodeUrl;
+        const network = environmentConfig.getNetwork() === 'mainnet' ? 'mainnet' : 'testnet4';
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (!isWalletProxy) headers['Authorization'] = `Bearer ${apiKey}`;
+
+        const body = isWalletProxy
+            ? { jsonrpc: '2.0', id: 1, method: 'sendrawtransaction', network, params: [txHex] }
+            : { jsonrpc: '2.0', id: 1, method: 'sendrawtransaction', params: [txHex] };
+
+        const response = await fetch(targetUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 1,
-                method: 'sendrawtransaction',
-                params: [txHex]
-            })
+            headers,
+            body: JSON.stringify(body)
         });
 
         if (!response.ok) {
@@ -143,21 +147,23 @@ export async function broadcastPackage(signedCommitTx, signedSpellTx, logCallbac
         console.log('📝 Package Test Command:');
         console.log(`bitcoin-cli testmempoolaccept '["${signedCommitTx.signedHex}","${signedSpellTx.signedHex}"]'`);
 
-        // Broadcast both transactions as a package using submitpackage
-        const packageResponse = await fetch(quicknodeUrl, {
+        // Broadcast both transactions as a package using submitpackage (optionally via proxy)
+        const proxyBase2 = environmentConfig.getProxyBase();
+        const isWalletProxy2 = !!(proxyBase2 && /\/api\/quicknode(\b|\/)/.test(proxyBase2));
+        const targetUrl2 = proxyBase2 ? (isWalletProxy2 ? proxyBase2 : `${proxyBase2}/=${encodeURIComponent(quicknodeUrl)}`) : quicknodeUrl;
+        const network2 = environmentConfig.getNetwork() === 'mainnet' ? 'mainnet' : 'testnet4';
+
+        const headers2 = { 'Content-Type': 'application/json' };
+        if (!isWalletProxy2) headers2['Authorization'] = `Bearer ${apiKey}`;
+
+        const body2 = isWalletProxy2
+            ? { jsonrpc: '2.0', id: 1, method: 'submitpackage', network: network2, params: [[signedCommitTx.signedHex, signedSpellTx.signedHex]] }
+            : { jsonrpc: '2.0', id: 1, method: 'submitpackage', params: [[signedCommitTx.signedHex, signedSpellTx.signedHex]] };
+
+        const packageResponse = await fetch(targetUrl2, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 1,
-                method: 'submitpackage',
-                params: [
-                    [signedCommitTx.signedHex, signedSpellTx.signedHex]
-                ]
-            })
+            headers: headers2,
+            body: JSON.stringify(body2)
         });
 
         if (!packageResponse.ok) {

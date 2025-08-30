@@ -199,6 +199,8 @@ export class AppState {
     completeFunding(utxo) {
         this.utxo = utxo;
         this.isMonitoring = false;
+        // Persist UTXO so state survives page reloads
+        try { localStorage.setItem('bro_utxo_data', JSON.stringify(utxo)); } catch (_) { }
         this.emit('utxoFound', utxo);
 
         // Emit step change to update button states
@@ -212,6 +214,8 @@ export class AppState {
     completeMonitoring(utxo) {
         this.utxo = utxo;
         this.isMonitoring = false;
+        // Persist UTXO so state survives page reloads
+        try { localStorage.setItem('bro_utxo_data', JSON.stringify(utxo)); } catch (_) { }
         this.emit('utxoFound', utxo);
 
         // Emit step change to update button states

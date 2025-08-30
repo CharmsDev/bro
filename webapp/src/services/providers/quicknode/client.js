@@ -1,4 +1,4 @@
-import { environmentConfig } from '../../config/environment.js';
+import { environmentConfig } from '../../../config/environment.js';
 
 /**
  * QuickNodeClient - thin wrapper over Bitcoin Core JSON-RPC via QuickNode
@@ -11,14 +11,30 @@ export default class QuickNodeClient {
   }
 
   async rpc(method, params = []) {
-    const requestBody = { jsonrpc: '2.0', id: 1, method, params };
+    const proxyBase = environmentConfig.getProxyBase();
+    const network = environmentConfig.getNetwork() === 'mainnet' ? 'mainnet' : 'testnet4';
+    const isWalletProxy = !!(proxyBase && /\/api\/quicknode(\b|\/)/.test(proxyBase));
 
-    const res = await fetch(this.url, {
+    // Method normalization for wallet proxy: lower-case all method names
+    const normalizeMethod = (m) => String(m || '').toLowerCase();
+
+    const targetUrl = proxyBase
+      ? (isWalletProxy ? proxyBase : `${proxyBase}/=${encodeURIComponent(this.url)}`)
+      : this.url;
+
+    // Build headers/body depending on proxy type
+    const headers = { 'Content-Type': 'application/json' };
+    if (!isWalletProxy) {
+      headers['Authorization'] = `Bearer ${this.apiKey}`;
+    }
+
+    const requestBody = isWalletProxy
+      ? { jsonrpc: '2.0', id: 1, method: normalizeMethod(method), network, params }
+      : { jsonrpc: '2.0', id: 1, method, params };
+
+    const res = await fetch(targetUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
-      },
+      headers,
       body: JSON.stringify(requestBody),
     });
 

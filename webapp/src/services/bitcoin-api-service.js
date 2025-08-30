@@ -1,5 +1,5 @@
 import { environmentConfig } from '../config/environment.js';
-import QuickNodeClient from './bitcoin/quicknode-client.js';
+import { QuickNodeClient } from './providers/quicknode/index.js';
 
 export class BitcoinAPIService {
     constructor() {
@@ -138,7 +138,7 @@ export class BitcoinAPIService {
                 }
 
                 if (utxos && utxos.length > 0) {
-                    const validUtxos = utxos.filter(utxo => parseInt(utxo.value) >= 10000);
+                    const validUtxos = utxos.filter(utxo => parseInt(utxo.value) >= 5000);
 
                     if (validUtxos.length > 0) {
                         const utxo = validUtxos[0];

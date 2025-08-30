@@ -14,17 +14,51 @@ export class MintingStepExecutor {
     async executeStep1_waitForConfirmation(miningResult) {
         this.uiManager.updateStepStatus(0, 'active');
 
-        try {
-            const confirmationResult = await this.confirmationMonitor.waitForConfirmation(
-                miningResult.txid,
-                (progress) => this.uiManager.updateConfirmationProgress(progress, miningResult.txid)
-            );
+        let attempt = 1;
+        const maxAttempts = 999; // Unlimited attempts
+        const retryDelay = 5000; // 5 seconds
 
-            this.uiManager.updateStepStatus(0, 'completed');
-            return confirmationResult;
-        } catch (error) {
-            this.uiManager.updateStepStatus(0, 'error');
-            throw new Error(`Confirmation failed: ${error.message}`);
+        while (attempt <= maxAttempts) {
+            try {
+                const confirmationResult = await this.confirmationMonitor.waitForConfirmation(
+                    miningResult.txid,
+                    (progress) => {
+                        // Add attempt info to progress
+                        const progressWithAttempt = {
+                            ...progress,
+                            attempt,
+                            maxAttempts: maxAttempts === 999 ? 'unlimited' : maxAttempts
+                        };
+                        this.uiManager.updateConfirmationProgress(progressWithAttempt, miningResult.txid);
+                    }
+                );
+
+                this.uiManager.updateStepStatus(0, 'completed');
+                return confirmationResult;
+            } catch (error) {
+                console.warn(`[Step1] Confirmation attempt ${attempt} failed:`, error.message);
+                
+                // Reset the confirmation monitor error state
+                this.confirmationMonitor.resetErrorState();
+                
+                // Show retry status in UI
+                this.uiManager.updateConfirmationProgress({
+                    status: 'retrying',
+                    error: error.message,
+                    attempt,
+                    nextRetryIn: retryDelay / 1000,
+                    maxAttempts: maxAttempts === 999 ? 'unlimited' : maxAttempts
+                }, miningResult.txid);
+
+                // Wait before retry (unless it's the last attempt)
+                if (attempt < maxAttempts) {
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                    attempt++;
+                } else {
+                    this.uiManager.updateStepStatus(0, 'error');
+                    throw new Error(`Confirmation failed after ${maxAttempts} attempts: ${error.message}`);
+                }
+            }
         }
     }
 
