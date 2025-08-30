@@ -1,8 +1,8 @@
 // Countdown Timer Component for Launch Date
 export class CountdownTimer {
     constructor() {
-        // September 2nd, 2025 at 8:00 PM UTC (corrected year)
-        this.launchDate = new Date('2025-09-02T20:00:00Z');
+        // September 2nd, 2025 at 4:20 PM UTC
+        this.launchDate = new Date('2025-09-02T16:20:00Z');
         this.timerElement = null;
         this.intervalId = null;
         this.timeOffset = 0; // Offset from server time
