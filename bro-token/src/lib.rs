@@ -78,8 +78,8 @@ fn token_contract_satisfied(token_app: &App, tx: &Transaction, w: &Data) -> anyh
     can_mint_token(token_app, tx, w)
 }
 
-const TARGET_BITS: u32 = 0x1d00ffff; // testnet4
-// const TARGET_BITS: u32 = 0x17031ab6; // mainnet
+// const TARGET_BITS: u32 = 0x1d00ffff; // testnet4
+const TARGET_BITS: u32 = 0x17031ab6; // mainnet
 
 fn can_mint_token(token_app: &App, tx: &Transaction, w: &Data) -> anyhow::Result<()> {
     let w: PrivateInput = w.value()?;

@@ -1,4 +1,4 @@
-app_bins=$(charms app build)
+app_bins=./src/wasm/bro-token.wasm
 
 export app_vk=$(charms app vk ${app_bins})
 export in_utxo_0="4988e8a6ad5eb660d1135075a2674135855b40ddbbabbe6dfa7a7207c241c278:1"

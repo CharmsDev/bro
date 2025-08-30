@@ -4,11 +4,11 @@ const DENOMINATION: u64 = 100_000_000;
 const HALVING_PERIOD_DAYS: u64 = 14;
 const SECONDS_PER_PERIOD: u64 = HALVING_PERIOD_DAYS * 24 * 3600;
 
-// uncomment to launch at Mon Aug 18 00:00:00 UTC 2025.
-// const START_TIME: u32 = 1_755_475_200;
+// Tue Sep  2 04:20:00 UTC 2025.
+const START_TIME: u64 = 1756786800;
 
 // 7/26/2025 20:00:00 UTC
-const START_TIME: u64 = 1_753_560_000;
+// const START_TIME: u64 = 1_753_560_000;
 
 #[wasm_bindgen]
 pub fn mined_amount(block_time: u64, clz: usize) -> u64 {
