@@ -20,6 +20,17 @@ export class MintingStepExecutor {
 
         while (attempt <= maxAttempts) {
             try {
+                // Show initial spinner immediately when starting confirmation monitoring
+                this.uiManager.updateConfirmationProgress({
+                    status: 'pending',
+                    retries: 0,
+                    maxRetries: maxAttempts,
+                    nextCheck: 10, // Initial check in 10 seconds
+                    consecutiveErrors: 0,
+                    attempt,
+                    maxAttempts: maxAttempts === 999 ? 'unlimited' : maxAttempts
+                }, miningResult.txid);
+
                 const confirmationResult = await this.confirmationMonitor.waitForConfirmation(
                     miningResult.txid,
                     (progress) => {

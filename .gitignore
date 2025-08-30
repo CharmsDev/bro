@@ -40,3 +40,4 @@ Contract/
 _rjj/
 wasm/
 .DS_Store
+.env

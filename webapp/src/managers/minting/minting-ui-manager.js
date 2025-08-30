@@ -278,15 +278,14 @@ export class MintingUIManager {
                 <div class="retry-progress">
                     <div class="progress-line">
                         <div class="spinner"></div>
-                        <span>Retrying... (attempt ${progress.attempt}/${progress.maxAttempts}, next retry in <span class="countdown" data-seconds="${progress.nextRetryIn}">${progress.nextRetryIn}</span>s)</span>
+                        <span>In Progress... (checking confirmation)</span>
                     </div>
-                    <div class="error-line">Error: ${progress.error}</div>
                     <div class="explorer-line">
                         <a href="${explorerUrl}" target="_blank" class="explorer-link">View Transaction in Explorer</a>
                     </div>
                 </div>
             `;
-            this.startCountdown(progressElement.querySelector('.countdown'), progress.nextRetryIn);
+            // Don't show countdown or error details during retry - keep it clean
         } else if (progress.status === 'error') {
             progressElement.style.display = 'block';
 
