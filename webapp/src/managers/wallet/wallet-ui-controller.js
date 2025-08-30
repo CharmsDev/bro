@@ -51,6 +51,13 @@ export class WalletUIController {
             this.stepController.resetAllSteps();
         }
 
+        // Clear persisted UTXO display data when resetting wallet
+        try {
+            localStorage.removeItem('bro_utxo_display_data');
+        } catch (error) {
+            console.warn('[WalletUI] Failed to clear UTXO display data:', error);
+        }
+
         this.isImportMode = false;
     }
 
@@ -71,15 +78,48 @@ export class WalletUIController {
     clearDisplayedData() {
         this.dom.setText('walletAddress', 'Loading...');
         this.dom.setText('seedPhraseText', 'Loading...');
-        this.dom.setText('foundUtxoTxid', '-');
-        this.dom.setText('foundUtxoVout', '-');
-        this.dom.setText('foundUtxoAmount', '-');
+        
+        // Only clear UTXO display if no persisted data exists
+        if (!this.restoreUtxoDisplayFromStorage()) {
+            this.dom.setText('foundUtxoTxid', '-');
+            this.dom.setText('foundUtxoVout', '-');
+            this.dom.setText('foundUtxoAmount', '-');
+        }
+        
         this.dom.setText('fundingStatus', 'Waiting for funds...');
         
         // Clear import form
         const seedInput = this.dom.get('seedPhraseInput');
         if (seedInput) {
             seedInput.value = '';
+        }
+    }
+
+    /**
+     * Restore UTXO display data from localStorage if available
+     * @returns {boolean} True if data was restored, false otherwise
+     */
+    restoreUtxoDisplayFromStorage() {
+        try {
+            const storedData = localStorage.getItem('bro_utxo_display_data');
+            if (!storedData) return false;
+
+            const utxoDisplayData = JSON.parse(storedData);
+            if (!utxoDisplayData.txid || utxoDisplayData.vout === undefined || !utxoDisplayData.amount) {
+                return false;
+            }
+
+            // Restore the display
+            this.dom.setText('foundUtxoTxid', utxoDisplayData.txid);
+            this.dom.setText('foundUtxoVout', utxoDisplayData.vout.toString());
+            this.dom.setText('foundUtxoAmount', `${utxoDisplayData.amount.toLocaleString()} sats`);
+            this.dom.show('utxoFoundDisplay');
+            this.hideAddressNote();
+
+            return true;
+        } catch (error) {
+            console.warn('[WalletUI] Failed to restore UTXO display data:', error);
+            return false;
         }
     }
 
@@ -115,6 +155,18 @@ export class WalletUIController {
         // Hide monitoring display
         this.dom.hide('fundingMonitoring');
 
+        // Persist UTXO display data to localStorage so it survives page refresh
+        try {
+            const utxoDisplayData = {
+                txid: utxo.txid,
+                vout: utxo.vout,
+                amount: utxo.amount,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('bro_utxo_display_data', JSON.stringify(utxoDisplayData));
+        } catch (error) {
+            console.warn('[WalletUI] Failed to persist UTXO display data:', error);
+        }
     }
 
     /**

@@ -17,10 +17,12 @@ export class CountdownTimer {
 
     // Fetch accurate time from external API with multiple fallbacks
     async syncTimeWithServer() {
+        // Use HTTPS for production deployment to avoid mixed content errors
+        const isProduction = window.location.protocol === 'https:';
         const timeApis = [
-            'http://worldclockapi.com/api/json/utc/now',
+            isProduction ? 'https://worldclockapi.com/api/json/utc/now' : 'http://worldclockapi.com/api/json/utc/now',
             'https://timeapi.io/api/Time/current/zone?timeZone=UTC',
-            'http://worldtimeapi.org/api/timezone/UTC'
+            isProduction ? 'https://worldtimeapi.org/api/timezone/UTC' : 'http://worldtimeapi.org/api/timezone/UTC'
         ];
 
         for (const apiUrl of timeApis) {
