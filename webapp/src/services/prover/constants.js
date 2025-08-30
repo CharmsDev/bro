@@ -1,6 +1,6 @@
 export const REQUEST_TEMPLATE = {
     "spell": {
-        "version": 6,
+        "version": 7,
         "apps": {
             "$01": "t/ff5737e38a9643b1876beade2b7eb58720d9b32791ba2d6173dba91d83a0ce76/e51cff9ed8bdf38ae811afe66ed83fcd607dc79bd80afd66cec59c99c0cc1a7b"
         },
