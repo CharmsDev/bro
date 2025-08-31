@@ -272,72 +272,19 @@ export class WalletEventHandlers {
             this.transactionManager.reset();
         }
 
-        // Reset UI to show wallet creation buttons
-        this.resetUIToInitialState();
-
-    }
-
-    /**
-     * Reset UI to initial wallet creation state
-     */
-    resetUIToInitialState() {
-        // Show wallet creation buttons
-        this.dom.show('walletControls');
-
-        // Hide wallet boxes
-        this.dom.hide('seedPhraseBox');
-        this.dom.hide('addressMonitoringBox');
-        this.dom.hide('importWalletForm');
-
-        // Hide funding monitoring
-        this.dom.hide('fundingMonitoring');
-        this.dom.hide('utxoFoundDisplay');
-
-        // Reset seed phrase display
-        this.dom.hide('seedPhraseDisplay');
-        const showSeedBtn = this.dom.get('showSeedBtn');
-        const copySeedBtn = this.dom.get('copySeedBtn');
-        if (showSeedBtn) {
-            showSeedBtn.style.display = 'inline-block';
-            showSeedBtn.textContent = 'Show Seed Phrase';
-        }
-        if (copySeedBtn) copySeedBtn.style.display = 'none';
-
-        // Clear displayed data
-        this.dom.setText('walletAddress', 'Loading...');
-        this.dom.setText('seedPhraseText', 'Loading...');
-        this.dom.setText('foundUtxoTxid', '-');
-        
-        // Hide Step 4 broadcast display
-        const broadcastDisplay = document.getElementById('broadcastDisplay');
-        if (broadcastDisplay) {
-            broadcastDisplay.style.display = 'none';
-        }
-        
-        // Hide Step 5 minting process container
-        const step5Progress = document.getElementById('step5-progress');
-        if (step5Progress) {
-            step5Progress.style.display = 'none';
-        }
-        this.dom.setText('foundUtxoVout', '-');
-        this.dom.setText('foundUtxoAmount', '-');
-        this.dom.setText('fundingStatus', 'Waiting for funds...');
-
-        // Clear import form
-        const seedInput = this.dom.get('seedPhraseInput');
-        if (seedInput) {
-            seedInput.value = '';
-            seedInput.classList.remove('error');
-        }
-        
-        // Clear any error messages
-        const errorMsg = document.querySelector('.import-error-message');
-        if (errorMsg) {
-            errorMsg.remove();
+        // Reset UI via the dedicated UI controller to avoid duplicated logic
+        const walletManager = window.walletManager;
+        if (walletManager && walletManager.uiController) {
+            walletManager.uiController.resetToInitialState();
+        } else {
+            // Fallback: minimally hide/show key sections if UI controller is not available
+            this.dom.show('walletControls');
+            this.dom.hide('seedPhraseBox');
+            this.dom.hide('addressMonitoringBox');
+            this.dom.hide('importWalletForm');
+            this.dom.hide('fundingMonitoring');
+            this.dom.hide('utxoFoundDisplay');
         }
 
-        // Show address note again
-        const addressNote = document.querySelector('.address-note');
-        if (addressNote) addressNote.style.display = 'block';
     }
 }

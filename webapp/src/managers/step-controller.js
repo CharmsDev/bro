@@ -99,7 +99,8 @@ export class StepController {
 
                 // Special case for mining button - requires both wallet and UTXO
                 if (buttonId === 'startMining') {
-                    if (this.appState && this.appState.canStartMining()) {
+                    const canMine = !!(this.appState && this.appState.canStartMining && this.appState.canStartMining());
+                    if (canMine) {
                         this.enableButton(button);
                     } else {
                         // Even if locks are disabled, keep functional requirement for mining
@@ -145,6 +146,10 @@ export class StepController {
             if (state.hasUtxo) {
                 this.dom.show('utxoFoundDisplay');
                 this.dom.hide('fundingMonitoring');
+                // Force update mining button state when UTXO exists on reload
+                setTimeout(() => {
+                    this.updateStepState(this.STEPS.MINING, false, false, true);
+                }, 100);
             } else {
                 // Show funding monitoring if wallet exists but no UTXO yet
                 this.dom.show('fundingMonitoring');

@@ -28,7 +28,7 @@
             <div style="margin-bottom: 25px;">
                 <p class="powered-by">Powered by <a href="https://charms.dev" target="_blank">Charms</a></p>
             </div>
-            <h2>The first non-custodial interoperability token.</h2>
+            <h2>The memecoin of the UTXBros.</h2>
         </header>
 
         <main>
@@ -36,19 +36,17 @@
                 <div class="token-container">
                     <img src="assets/images/bro-token.jpg" alt="BRO token image" class="token-img">
                 </div>
-                <p class="description">Your UTXBrother from another mother. Born on Bitcoin testnet, then beamed to the
-                    mainnet universe with pure magic. That's wild, bro.</p>
+                <p class="description">$Bro hails from Bitcoin, but he lives everywhere. Mine it below, then send it to other UTXO chains - no bridges, no wrappers, just magic. That's wild, bro.</p>
 
                 <!-- Step 1: Wallet Creation Section -->
                 <section class="wallet-section active">
-                    <h3 class="step-title step-title-1">Step 1: Create Your Charms Wallet</h3>
-                    <p class="wallet-description">Create a new Bitcoin wallet or load an existing one to start minting
-                        BRO
-                        tokens.</p>
+                    <h3 class="step-title step-title-1">STEP 1: Just Fund It, Bro (~10 min)</h3>
+                    <p class="wallet-description">BTC is the gas you'll need to mine and mint $Bro.<br>
+                        Create a new Bitcoin wallet, and fund it with ~$5 worth of BTC.</p>
 
                     <div class="wallet-controls">
                         <button id="createWalletBtn" class="btn-base btn-primary">
-                            <span>Create New Wallet</span>
+                            <span>Create Wallet</span>
                         </button>
                         <button id="importWalletBtn" class="btn-base btn-secondary">
                             <span>Import Wallet</span>
@@ -74,8 +72,6 @@
                         <h4>Your Seed Phrase</h4>
                         <div class="seedphrase-controls">
                             <button id="showSeedBtn" class="btn-base btn-purple btn-md">Show Seed Phrase</button>
-                            <button id="copySeedBtn" class="btn-base btn-purple btn-md" style="display: none;">Copy Seed
-                                Phrase</button>
                             <button id="copyDirectSeedBtn" class="btn-base btn-purple btn-md">Copy Seed Phrase</button>
                             <button id="resetWalletBtn" class="btn-base btn-danger btn-md">🗑️ Reset
                                 Wallet</button>
@@ -90,15 +86,14 @@
                     <!-- Box 2: Address & UTXO Monitoring (with 20px margin from Box 1) -->
                     <div id="addressMonitoringBox" class="wallet-box address-monitoring-box separated-box"
                         style="display: none;">
-                        <h4>Your Testnet4 Address</h4>
+                        <h4>Your Bitcoin Address</h4>
                         <div class="address-container">
                             <div id="walletAddress" class="address-value">Loading...</div>
                             <button id="copyAddressBtn" class="btn-base btn-primary btn-copy" title="Copy address">
                                 <span>📋</span>
                             </button>
                         </div>
-                        <p class="address-note">Send funds to this address to begin minting BRO tokens (5,000
-                            satoshi minimum)</p>
+                        <p class="address-note">Send funds to this address to begin mining $Bro. (5000 sat minimum).</p>
                         <p class="faucet-info">
                             💧 Get testnet funds: <a href="https://testnet4.dev" target="_blank"
                                 rel="noopener noreferrer">testnet4.dev</a>
@@ -151,9 +146,8 @@
 
                 <!-- Step 2: Mining Section -->
                 <section class="mining-section">
-                    <h3 class="step-title step-title-2">Step 2: Infinite Proof of Work Mining</h3>
-                    <p class="mining-description">Find the hash with maximum leading zero bits! Mining runs infinitely
-                        until you stop and claim your best result.</p>
+                    <h3 class="step-title step-title-2">STEP 2: Just Mine It, Bro (~2 min)</h3>
+                    <p class="mining-description">Find the hash with the maximum leading zero bits. Mining runs infinitely until you stop and claim your best result. Get to work, bro.</p>
 
                     <div class="mining-controls">
                         <button id="startMining" class="btn-base btn-secondary">
@@ -225,7 +219,7 @@
                         </div>
 
                         <div id="successMessage" class="mining-success-box" style="display: none;">
-                            <h4>🎉 Mining Stopped - Best Result Claimed!</h4>
+                            <h4>Nice hash, bro. Now let's put it into a Bitcoin transaction to prove that you did the work.</h4>
                             <p>Best hash found with nonce: <span id="finalNonce"></span></p>
                             <p>Best hash: <span id="finalHash"></span></p>
                         </div>
@@ -234,13 +228,13 @@
 
                 <!-- Step 3: Transaction Creation Section -->
                 <section class="transaction-section">
-                    <h3 class="step-title step-title-3">Step 3: Create Bitcoin Transaction</h3>
+                    <h3 class="step-title step-title-3">Step 3: Create your mining Tx, Bro</h3>
                     <p class="transaction-description">Create a Bitcoin transaction with OP_RETURN data containing the
                         mining hash and nonce. This transaction will spend the UTXO from your monitored address.</p>
 
                     <div class="transaction-controls">
                         <button id="createTransaction" class="btn-base btn-purple" disabled>
-                            <span>Create Transaction</span>
+                            <span>Create and Broadcast Transaction</span>
                         </button>
                     </div>
 
@@ -271,7 +265,7 @@
 
                 <!-- Step 4: Broadcast Transaction Section -->
                 <section class="broadcast-section">
-                    <h3 class="step-title step-title-4">Step 4: Broadcast Transaction</h3>
+                    <h3 class="step-title step-title-4">Step 4: Now Broadcast it, Bro</h3>
                     <p class="broadcast-description">Broadcast the mining transaction to the Bitcoin network. A
                         necessary step to use it in the BRO Mint.</p>
 
@@ -303,26 +297,26 @@
 
                 <!-- Step 5: Claim Tokens Section -->
                 <section class="claim-section">
-                    <h3 class="step-title step-title-5">Step 5: Claim Your BRO Tokens</h3>
-                    <p class="claim-description">Your transaction has been broadcasted! Now you can claim your BRO
-                        tokens through the minting process.</p>
+                    <h3 class="step-title step-title-5">STEP 5: Just Mint It, Bro (~X min)</h3>
+                    <p class="claim-description">Gnarly - your transaction has been broadcast. Bitcoin approves.<br>
+                        Now you can mint $Bro. Your minting transaction needs time to confirm on chain (~Xmin), so just sit back, chillax, and let Bitcoin handle.</p>
 
                     <div class="claim-controls">
                         <button id="claimTokensBtn" class="btn-base btn-secondary disabled">
-                            <span>Start BRO Token Minting</span>
+                            <span>Start Minting $Bro</span>
                         </button>
                     </div>
                 </section>
 
                 <!-- Step 6: Visit Wallet Section -->
                 <section class="wallet-visit-section">
-                    <h3 class="step-title step-title-6">Step 6: Visit Your Charms Wallet</h3>
-                    <p class="wallet-visit-description">Access your wallet to view your BRO tokens and manage your
-                        funds.</p>
+                    <h3 class="step-title step-title-6">Step 6 - Enjoy $Bro!</h3>
+                    <p class="wallet-visit-description">Wake up, bro - your $Bro just landed!<br>
+                        Access your wallet to view your BRO tokens and manage your funds.</p>
 
                     <div class="wallet-visit-controls">
                         <button id="visitWalletBtn" class="btn-base btn-primary disabled">
-                            <span>Go to My Wallet</span>
+                            <span>Go To My Wallet</span>
                         </button>
                     </div>
                 </section>
@@ -339,24 +333,14 @@
                             <span class="info-item-value">8</span>
                         </div>
                         <div class="info-item">
-                            <span class="info-item-label">Supply</span>
-                            <span class="info-item-value">42,690,000,000</span>
+                            <span class="info-item-label">Theoretical Max Supply</span>
+                            <span class="info-item-value">69,420,000,000</span>
                         </div>
                         <!-- Full-width explainer -->
                         <div class="info-item info-item--full">
                             <span class="info-item-label">Issuance</span>
                             <p class="info-item-explainer">
-                                BRO tokens are minted through a 6-step process that combines Proof of Work mining with
-                                Bitcoin transactions.
-                                First, you mine to find the best hash with maximum leading zero bits using the formula:
-                                100M * clz² / 2^h.
-                                Then you create and broadcast a Bitcoin transaction containing your mining proof as
-                                OP_RETURN data.
-                                Finally, you claim your BRO tokens through the Charms protocol by signing commit and
-                                spell transactions.
-                                This process requires real Bitcoin for transaction fees and will only work on mainnet
-                                for final token issuance.
-                                The current testnet4 implementation is for testing and demonstration purposes only.
+                                Mining $Bro hails from Bitcoin, but he lives everywhere. Mine it below, then send it to other UTXO chains - no bridges, no wrappers, just magic. That's wild, bro.
                             </p>
                         </div>
                     </div>
@@ -364,47 +348,76 @@
             </section>
 
             <section class="faq">
-                <h3>FAQ</h3>
+                <h3>$Bro FAQ</h3>
                 <div class="faq-card">
                     <button class="faq-header">
-                        How many tokens can I mint?
+                        1. What is $Bro?
                         <span class="faq-toggle">+</span>
                     </button>
-                    <div class="faq-content">The number of BRO tokens you receive depends on your mining performance.
-                        The reward is calculated using the formula: 100M * clz² / 2^h, where clz is the count of leading
-                        zero bits in your best hash and h is the current halving epoch. Better mining results yield more
-                        tokens.</div>
+                    <div class="faq-content">$Bro is the official memecoin of the UTXBros community and the very first charm you can own. It’s a fun token, but also a live demo of the Charms protocol, showing how Bitcoin can power programmable, portable assets across chains.</div>
                 </div>
                 <div class="faq-card">
                     <button class="faq-header">
-                        What do I need to mint tokens?
+                        2. Why do we need $Bro?
                         <span class="faq-toggle">+</span>
                     </button>
-                    <div class="faq-content">You need a Bitcoin wallet with sufficient funds for transaction fees, and
-                        you must complete the 6-step minting process: create wallet, mine for proof-of-work, create
-                        Bitcoin transaction, broadcast it, claim tokens through Charms protocol, and access your wallet.
-                        Real Bitcoin is required for mainnet minting.</div>
+                    <div class="faq-content">Because memes move markets, but also because $Bro is the first token to run on Charms, the protocol that will connect Bitcoin to Cardano (and beyond). $Bro demonstrates the two core superpowers of Charms that no Bitcoin assets have had before: programmable issuance, and native interoperability.<br><br>Owning $Bro means you’re early to the programmable token economy uniting Bitcoin, Cardano, Litecoin, and more.</div>
                 </div>
                 <div class="faq-card">
                     <button class="faq-header">
-                        How does this process work?
+                        3. How do I get $Bro?
                         <span class="faq-toggle">+</span>
                     </button>
-                    <div class="faq-content">The process combines Bitcoin mining with the Charms protocol. You mine to
-                        find a hash with maximum leading zero bits, embed this proof in a Bitcoin transaction, broadcast
-                        it to the network, then use Charms protocol to claim your BRO tokens. The current testnet4
-                        version is for testing - final tokens require mainnet Bitcoin.</div>
+                    <div class="faq-content">You earn $Bro by mining it. The earlier you mine, the bigger your rewards.<br><br>You need a Bitcoin wallet with sufficient funds to pay Bitcoin transaction fees and ZK proving fees. Fund your wallet with at least 5000 sats before beginning to mine.</div>
                 </div>
                 <div class="faq-card">
                     <button class="faq-header">
-                        What is Charms?
+                        4. Why Mining, and how does it work?
                         <span class="faq-toggle">+</span>
                     </button>
-                    <div class="faq-content">Charms is a protocol that lets you enchant Bitcoin with your own spells,
-                        enabling you to build tokens, NFTs, and other decentralized applications. For more information,
-                        visit the <a href="https://charms.dev/" target="_blank">Charms.dev</a> website
-                        or read the <a href="https://charms.dev/Charms-whitepaper.pdf" target="_blank">whitepaper
-                            here</a>.</div>
+                    <div class="faq-content">Mining $Bro keeps things fair and simple. Instead of insiders or whales buying up the supply, anyone can join from day one and grind for rewards. It also mirrors Bitcoin’s ethos—work for your coin, don’t beg for an airdrop.<br><br>The process combines the Bitcoin mining model with the Charms protocol. You mine to find a hash with maximum leading zero bits, embed this proof in a Bitcoin transaction, broadcast it to the network, then use the Charms protocol to claim your $Bro tokens.</div>
+                </div>
+                <div class="faq-card">
+                    <button class="faq-header">
+                        5. Where can I buy $Bro?
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-content">At launch, you can’t buy $Bro on an exchange. You have to mine it first. Later, once people start trading it, $Bro will naturally find its way to marketplaces and DEXs. Early Bros get the best shot at building their bag.</div>
+                </div>
+                <div class="faq-card">
+                    <button class="faq-header">
+                        6. Can I send $Bro to another wallet?
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-content">Yes – but make sure it's a Charms-integrated wallet. At first, that only includes Charms Wallet and other users of it.<br><br>$Bro lives on Bitcoin, so you can send it like any other Bitcoin-native asset. Once Charms goes live on Cardano and Litecoin, you’ll also be able to beam your $Bro across chains.</div>
+                </div>
+                <div class="faq-card">
+                    <button class="faq-header">
+                        7. I don’t mine Bitcoin. Can I still get $Bro?
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-content">Yes—you don’t need an ASIC or mining rig. $Bro has its own lightweight mining process anyone can join with a normal computer or smartphone. Or, you can wait for Bros who mined early to sell it once markets open.</div>
+                </div>
+                <div class="faq-card">
+                    <button class="faq-header">
+                        8. Is $Bro a CNT?
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-content">Not at first. $Bro begins life on Bitcoin as charm. But once Charms launches Cardano support, $Bro can be “beamed” over to any Cardano wallet in (CNT) form.</div>
+                </div>
+                <div class="faq-card">
+                    <button class="faq-header">
+                        9. What is Charms?
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-content">Charms are programmable, portable smart assets that live natively on Bitcoin and other UTXO blockchains. Instead of being stuck on one chain or needing bridges, Charms use zk-proofs and client-side validation to move freely and safely. $Bro is the first Charm, showing off the tech in action.</div>
+                </div>
+                <div class="faq-card">
+                    <button class="faq-header">
+                        10. Can I send $Bro to Cardano or Litecoin?
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-content">At launch, $Bro only lives on Bitcoin. Once Charms is live on Cardano (expected October 2025), you’ll be able to beam $Bro to Cardano. Support for other UTXO chains like Litecoin will come soon afterwards.</div>
                 </div>
             </section>
         </main>

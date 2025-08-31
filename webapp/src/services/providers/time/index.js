@@ -17,7 +17,6 @@ export class TimeProvider {
                 if (!response.ok) continue;
                 
                 const data = await response.json();
-                console.log(`Time synced with ${apiUrl}`);
                 
                 let serverTime;
                 if (data.currentDateTime) {

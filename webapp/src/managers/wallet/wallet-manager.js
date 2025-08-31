@@ -20,7 +20,7 @@ export class WalletManager {
         // Initialize specialized modules
         this.initializer = new WalletInitializer(wallet, appState, domElements);
         this.eventHandlers = new WalletEventHandlers(wallet, appState, domElements, miningManager, transactionManager);
-        this.uiController = new WalletUIController(domElements, stepController);
+        this.uiController = new WalletUIController(domElements, stepController, appState);
         this.fundingMonitor = new WalletFundingMonitor(appState, txBuilder, this.uiController);
         
         // Store reference globally for UI controller access
@@ -42,22 +42,8 @@ export class WalletManager {
      */
     showWalletInfo(walletData) {
         this.uiController.showWalletInfo(walletData);
-
-        // Skip monitoring entirely if the flow is already completed or we already have tx/broadcast data
-        const steps = this.appState.STEPS;
-        const isCompletedFlow = this.appState.isStepCompleted(steps.BROADCAST)
-            || this.appState.isStepCompleted(steps.CLAIM_TOKENS)
-            || this.appState.isStepCompleted(steps.VISIT_WALLET)
-            || !!this.appState.transaction
-            || !!this.appState.broadcastResult;
-        if (isCompletedFlow) {
-            return;
-        }
-
-        // Start UTXO monitoring after showing wallet
-        setTimeout(() => {
-            this.startFundingMonitoring();
-        }, 100);
+        if (this.isFlowCompleted()) return;
+        this.startFundingMonitoringWithDelay();
     }
 
     /**
@@ -65,22 +51,8 @@ export class WalletManager {
      */
     showImportedWalletInfo(walletData) {
         this.uiController.showImportedWalletInfo(walletData);
-
-        // Skip monitoring entirely if the flow is already completed or we already have tx/broadcast data
-        const steps = this.appState.STEPS;
-        const isCompletedFlow = this.appState.isStepCompleted(steps.BROADCAST)
-            || this.appState.isStepCompleted(steps.CLAIM_TOKENS)
-            || this.appState.isStepCompleted(steps.VISIT_WALLET)
-            || !!this.appState.transaction
-            || !!this.appState.broadcastResult;
-        if (isCompletedFlow) {
-            return;
-        }
-
-        // Start UTXO monitoring after showing wallet
-        setTimeout(() => {
-            this.startFundingMonitoring();
-        }, 100);
+        if (this.isFlowCompleted()) return;
+        this.startFundingMonitoringWithDelay();
     }
 
     /**
@@ -88,6 +60,27 @@ export class WalletManager {
      */
     startFundingMonitoring() {
         this.fundingMonitor.startFundingMonitoring();
+    }
+
+    /**
+     * Determine if the flow is already completed or has tx/broadcast data
+     */
+    isFlowCompleted() {
+        const steps = this.appState.STEPS;
+        return this.appState.isStepCompleted(steps.BROADCAST)
+            || this.appState.isStepCompleted(steps.CLAIM_TOKENS)
+            || this.appState.isStepCompleted(steps.VISIT_WALLET)
+            || !!this.appState.transaction
+            || !!this.appState.broadcastResult;
+    }
+
+    /**
+     * Start UTXO monitoring after a short delay to allow UI to render
+     */
+    startFundingMonitoringWithDelay() {
+        setTimeout(() => {
+            this.startFundingMonitoring();
+        }, 100);
     }
 
     /**
