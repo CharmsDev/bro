@@ -1,5 +1,5 @@
 import { environmentConfig } from '../../config/environment.js';
-import { QuickNodeClient } from '../providers/quicknode/index.js';
+import QuickNodeClient from '../providers/quicknode/client.js';
 
 /**
  * Broadcasts a single Bitcoin transaction to the network
@@ -12,83 +12,11 @@ export async function broadcastTransaction(txHex) {
             throw new Error('Transaction hex is required');
         }
 
-        // Get QuickNode credentials
-        const quicknodeUrl = environmentConfig.getQuickNodeUrl();
-        const apiKey = environmentConfig.getQuickNodeApiKey();
-
-        if (!quicknodeUrl || !apiKey) {
-            throw new Error(`QuickNode API credentials not configured for ${environmentConfig.getNetwork()}`);
-        }
-
-        // Pre-flight: try to decode txid if possible and check if it is already known
+        // Initialize QuickNode client (handles all configuration internally)
         const client = new QuickNodeClient();
-        let preflightTxId = null;
-        try {
-            // Best-effort: some callers pass PSBT hex accidentally; this will fail silently
-            const bytes = typeof txHex === 'string' ? txHex.trim() : '';
-            if (/^[0-9a-fA-F]+$/.test(bytes)) {
-                // Query mempool to see if it already exists (ignore errors)
-                // We can't compute txid without parsing; just attempt getrawtransaction afterwards
-                // No-op here, but keep structure for future enhancements
-            }
-        } catch (_) { /* ignore */ }
 
-        // Attempt a lightweight existence check: send getrawtransaction after broadcast if needed
-
-        // Use QuickNode sendrawtransaction method (optionally via proxy)
-        const proxyBase = environmentConfig.getProxyBase();
-        const isWalletProxy = !!(proxyBase && /\/api\/quicknode(\b|\/)/.test(proxyBase));
-        const targetUrl = proxyBase ? (isWalletProxy ? proxyBase : `${proxyBase}/=${encodeURIComponent(quicknodeUrl)}`) : quicknodeUrl;
-        const network = environmentConfig.getNetwork() === 'mainnet' ? 'mainnet' : 'testnet4';
-
-        const headers = { 'Content-Type': 'application/json' };
-        if (!isWalletProxy) headers['Authorization'] = `Bearer ${apiKey}`;
-
-        const body = isWalletProxy
-            ? { jsonrpc: '2.0', id: 1, method: 'sendrawtransaction', network, params: [txHex] }
-            : { jsonrpc: '2.0', id: 1, method: 'sendrawtransaction', params: [txHex] };
-
-        const response = await fetch(targetUrl, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-            let errorText = 'Unknown error';
-            let errorDetails = '';
-            try {
-                errorText = await response.text();
-                errorDetails = ` | Response: ${errorText.substring(0, 200)}`;
-            } catch (e) {
-                errorDetails = ' | Could not read response body';
-            }
-
-            console.error('[Broadcast] HTTP error on sendrawtransaction:', response.status, errorText);
-            throw new Error(`Broadcast failed (${response.status}): ${errorText || response.statusText}${errorDetails}`);
-        }
-
-        const result = await response.json();
-
-        if (result.error) {
-            const msg = result.error?.message || 'Unknown RPC error';
-            console.error('[Broadcast] RPC error:', msg);
-            // Common error mapping for easier debugging
-            const known = [
-                'non-mandatory-script-verify-flag',
-                'mandatory-script-verify-flag',
-                'insufficient fee',
-                'txn-mempool-conflict',
-                'already in block chain',
-                'missing-inputs',
-                'non-BIP68-final'
-            ].find(k => msg.toLowerCase().includes(k));
-            if (known) console.error('[Broadcast] Matched known error:', known);
-            throw new Error(`Broadcast failed: ${msg}`);
-        }
-
-        // QuickNode returns the txid in result field
-        const txid = result.result;
+        // Use proxy-enabled client provider method for broadcast
+        const txid = await client.sendRawTransaction(txHex);
 
         // Post-flight: confirm visibility via getrawtransaction (best-effort)
         try {
@@ -101,7 +29,6 @@ export async function broadcastTransaction(txHex) {
             success: true
         };
     } catch (error) {
-        console.error('[Broadcast] ❌ BroadcastTransaction error:', error.message);
         throw error;
     }
 }
@@ -119,74 +46,15 @@ export async function broadcastPackage(signedCommitTx, signedSpellTx, logCallbac
             throw new Error('Please sign the transactions first');
         }
 
-        // Get QuickNode credentials from centralized config
-        const quicknodeUrl = environmentConfig.getQuickNodeUrl();
-        const apiKey = environmentConfig.getQuickNodeApiKey();
         const network = environmentConfig.getNetwork();
-
-        if (!quicknodeUrl || !apiKey) {
-            throw new Error(`QuickNode API credentials not configured for ${network}`);
-        }
 
         logCallback('Starting transaction broadcast process...');
         logCallback('Broadcasting both transactions as package...');
         logCallback(`Network: ${network}`);
-        logCallback(`Endpoint: ${quicknodeUrl}`);
-        logCallback(`Commit hex length: ${signedCommitTx.signedHex?.length || 0}`);
-        logCallback(`Spell hex length: ${signedSpellTx.signedHex?.length || 0}`);
         
-        // Log transaction hex for manual fallback
-        console.log('🔥 TRANSACTION HEX FOR MANUAL BROADCAST:');
-        console.log('📝 Commit Transaction Hex:');
-        console.log(signedCommitTx.signedHex);
-        console.log('📝 Spell Transaction Hex:');
-        console.log(signedSpellTx.signedHex);
-        console.log('📝 Manual Bitcoin CLI Commands:');
-        console.log(`bitcoin-cli sendrawtransaction "${signedCommitTx.signedHex}"`);
-        console.log(`bitcoin-cli sendrawtransaction "${signedSpellTx.signedHex}"`);
-        console.log('📝 Package Test Command:');
-        console.log(`bitcoin-cli testmempoolaccept '["${signedCommitTx.signedHex}","${signedSpellTx.signedHex}"]'`);
 
-        // Broadcast both transactions as a package using submitpackage (optionally via proxy)
-        const proxyBase2 = environmentConfig.getProxyBase();
-        const isWalletProxy2 = !!(proxyBase2 && /\/api\/quicknode(\b|\/)/.test(proxyBase2));
-        const targetUrl2 = proxyBase2 ? (isWalletProxy2 ? proxyBase2 : `${proxyBase2}/=${encodeURIComponent(quicknodeUrl)}`) : quicknodeUrl;
-        const network2 = environmentConfig.getNetwork() === 'mainnet' ? 'mainnet' : 'testnet4';
-
-        const headers2 = { 'Content-Type': 'application/json' };
-        if (!isWalletProxy2) headers2['Authorization'] = `Bearer ${apiKey}`;
-
-        const body2 = isWalletProxy2
-            ? { jsonrpc: '2.0', id: 1, method: 'submitpackage', network: network2, params: [[signedCommitTx.signedHex, signedSpellTx.signedHex]] }
-            : { jsonrpc: '2.0', id: 1, method: 'submitpackage', params: [[signedCommitTx.signedHex, signedSpellTx.signedHex]] };
-
-        const packageResponse = await fetch(targetUrl2, {
-            method: 'POST',
-            headers: headers2,
-            body: JSON.stringify(body2)
-        });
-
-        if (!packageResponse.ok) {
-            let body = '';
-            try { body = await packageResponse.text(); } catch(_) {}
-            logCallback(`submitpackage HTTP error: ${packageResponse.status} ${body.slice(0,200)}`);
-            throw new Error(`Package broadcast failed: ${packageResponse.status}`);
-        }
-
-        const packageResult = await packageResponse.json();
-
-        if (packageResult.error) {
-            const msg = packageResult.error?.message || 'Unknown RPC error';
-            logCallback(`submitpackage RPC error: ${msg}`);
-            // If submitpackage is unsupported, advise fallback
-            if (msg.toLowerCase().includes('method not found') || msg.toLowerCase().includes('not supported')) {
-                logCallback('submitpackage not supported on provider. Consider sequential sendrawtransaction with dependency order.');
-            }
-            throw new Error(`Package broadcast error: ${msg}`);
-        }
-
-        // Extract transaction IDs from package result
-        const results = packageResult.result;
+        const client = new QuickNodeClient();
+        const results = await client.submitPackage([signedCommitTx.signedHex, signedSpellTx.signedHex]);
 
         // Handle different possible response structures
         let commitTxid, spellTxid;
@@ -239,17 +107,17 @@ export async function getTransactionStatus(txid) {
 
         const client = new QuickNodeClient();
         // getrawtransaction with verbose true returns confirmations/blockhash when known
-        const result = await client.getRawTransaction(txid, true);
+        const txData = await client.getRawTransaction(txid, true);
 
-        const confirmed = !!(result.confirmations && result.confirmations >= 1);
+        const confirmed = !!(txData.confirmations && txData.confirmations >= 1);
         return {
             confirmed,
-            confirmations: result.confirmations || 0,
-            blockHeight: result.height || null,
-            blockHash: result.blockhash || null,
+            confirmations: txData.confirmations || 0,
+            blockHeight: txData.height || null,
+            blockHash: txData.blockhash || null,
             status: confirmed ? 'confirmed' : 'pending',
-            fee: result.fee, // may be undefined; QuickNode may not return fee here
-            raw: result
+            fee: txData.fee, // may be undefined; QuickNode may not return fee here
+            raw: txData
         };
     } catch (error) {
         throw error;

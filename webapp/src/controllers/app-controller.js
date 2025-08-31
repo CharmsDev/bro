@@ -91,6 +91,9 @@ export class AppController {
 
         // Setup Step 5 event listener
         this.setupStep5EventListener();
+        
+        // Setup UTXO display event listener for step controller updates
+        this.setupUtxoDisplayEventListener();
 
         // Restore Step 5 summary and enable Step 6 on reload if we already broadcasted
         try {
@@ -138,6 +141,8 @@ export class AppController {
         this.appState.on('utxoFound', (utxo) => {
             // Update mining button text when UTXO is found (funds received)
             this.modules.miningManager.updateButtonText();
+            // Also force step controller to re-evaluate button states immediately
+            this.modules.stepController.updateAllSteps(this.appState.currentStep, this.appState.completedSteps);
         });
 
         this.appState.on('transactionCreated', (transaction) => {
@@ -173,6 +178,20 @@ export class AppController {
             });
         } else {
         }
+    }
+    
+    setupUtxoDisplayEventListener() {
+        if (!this.appState) return;
+
+        this.appState.on('utxoDisplayed', () => {
+            // Force update step controller to enable mining button
+            setTimeout(() => {
+                this.modules.stepController.updateAllSteps(
+                    this.appState.currentStep, 
+                    this.appState.completedSteps
+                );
+            }, 50);
+        });
     }
 
     logInitializationStatus() {

@@ -199,16 +199,18 @@ export class AppState {
     completeFunding(utxo) {
         this.utxo = utxo;
         this.isMonitoring = false;
+        
+        // Stop any ongoing monitoring
+        this.stopMonitoring();
+        
         // Persist UTXO so state survives page reloads
         try { localStorage.setItem('bro_utxo_data', JSON.stringify(utxo)); } catch (_) { }
+        
+        // Complete Step 1 and advance to Step 2
+        if (!this.isStepCompleted(this.STEPS.WALLET_CREATION)) {
+            this.completeStep(this.STEPS.WALLET_CREATION);
+        }
         this.emit('utxoFound', utxo);
-
-        // Emit step change to update button states
-        this.emit('stepChanged', {
-            step: this.currentStep,
-            enabled: true,
-            completedSteps: this.completedSteps
-        });
     }
 
     completeMonitoring(utxo) {

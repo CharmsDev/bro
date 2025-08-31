@@ -11,49 +11,25 @@ export default class QuickNodeClient {
   }
 
   async rpc(method, params = []) {
-    const proxyBase = environmentConfig.getProxyBase();
     const network = environmentConfig.getNetwork() === 'mainnet' ? 'mainnet' : 'testnet4';
-    const isWalletProxy = !!(proxyBase && /\/api\/quicknode(\b|\/)/.test(proxyBase));
 
-    // Debug logging for proxy configuration
-    console.log('[QuickNode] 🔧 Proxy Configuration Debug:');
-    console.log('  VITE_HTTP_PROXY_BASE:', import.meta.env.VITE_HTTP_PROXY_BASE);
-    console.log('  proxyBase (from config):', proxyBase);
-    console.log('  isWalletProxy:', isWalletProxy);
-    console.log('  QuickNode URL:', this.url);
-    console.log('  Network:', network);
-    console.log('  Method:', method);
+    // Endpoint verification logging - keep only for mainnet/testnet4 verification
+    console.log(`[QuickNode] Network: ${network} | Endpoint: ${this.url.includes('mainnet') ? 'MAINNET' : 'TESTNET4'} | Method: ${method}`);
 
-    // Force proxy usage only - throw error if no proxy configured
-    if (!proxyBase) {
-      console.error('[QuickNode] ❌ No proxy configured!');
-      throw new Error('Proxy configuration required - VITE_HTTP_PROXY_BASE not set');
-    }
+    // Direct QuickNode API call - no proxy
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`
+    };
 
-    // Method normalization for wallet proxy: lower-case all method names
-    const normalizeMethod = (m) => String(m || '').toLowerCase();
+    const requestBody = {
+      jsonrpc: '2.0',
+      id: 1,
+      method,
+      params
+    };
 
-    // Always use proxy - either wallet proxy or generic proxy format
-    const targetUrl = isWalletProxy 
-      ? proxyBase 
-      : `${proxyBase}/=${encodeURIComponent(this.url)}`;
-
-    console.log('[QuickNode] 🎯 Target URL:', targetUrl);
-
-    // Build headers/body depending on proxy type
-    const headers = { 'Content-Type': 'application/json' };
-    if (!isWalletProxy) {
-      headers['Authorization'] = `Bearer ${this.apiKey}`;
-    }
-
-    const requestBody = isWalletProxy
-      ? { jsonrpc: '2.0', id: 1, method: normalizeMethod(method), network, params }
-      : { jsonrpc: '2.0', id: 1, method, params };
-
-    console.log('[QuickNode] 📤 Request Body:', JSON.stringify(requestBody, null, 2));
-    console.log('[QuickNode] 📋 Headers:', headers);
-
-    const res = await fetch(targetUrl, {
+    const res = await fetch(this.url, {
       method: 'POST',
       headers,
       body: JSON.stringify(requestBody),
@@ -61,14 +37,12 @@ export default class QuickNodeClient {
 
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      console.error(`[QuickNode] ❌ HTTP Error:`, { status: res.status, statusText: res.statusText, body: text });
       throw new Error(`RPC HTTP ${res.status}: ${text.slice(0, 200)}`);
     }
 
     const json = await res.json();
 
     if (json.error) {
-      console.error(`[QuickNode] ❌ RPC Error:`, json.error);
       throw new Error(`RPC ${method} error: ${json.error.message}`);
     }
 

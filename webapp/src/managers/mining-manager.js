@@ -81,6 +81,7 @@ export class MiningManager {
         if (!this.appState.canStartMining()) {
             this.stepController.initializeMiningStep();
         }
+        const startBtn = this.dom.get('startMining');
     }
 
     /**
@@ -612,6 +613,20 @@ export class MiningManager {
         } else {
             // No previous state, show default "Start Mining"
             buttonSpan.textContent = 'Start Mining';
+        }
+
+        // Safety net: toggle disabled state based on readiness when no tx exists
+        const canMine = this.appState.canStartMining();
+        if (canMine) {
+            startMining.disabled = false;
+            startMining.classList.remove('disabled');
+            startMining.style.pointerEvents = '';
+            startMining.style.opacity = '';
+        } else {
+            startMining.disabled = true;
+            startMining.classList.add('disabled');
+            startMining.style.pointerEvents = 'none';
+            startMining.style.opacity = '0.5';
         }
     }
 }

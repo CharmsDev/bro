@@ -186,8 +186,6 @@ export class MintingStepExecutor {
                 }
             ];
 
-            // Show testmempoolaccept command for both transactions
-            console.log('bitcoin-cli testmempoolaccept \'["' + commitResult.signedHex + '","' + spellResult.signedHex + '"]\'');
             
             // Save signed transactions to localStorage
             const signedTxData = {

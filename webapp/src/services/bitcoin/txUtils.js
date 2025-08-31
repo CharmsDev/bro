@@ -1,5 +1,6 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { environmentConfig } from '../../config/environment.js';
+import QuickNodeClient from '../providers/quicknode/client.js';
 
 // Decode Bitcoin script to determine type
 export function decodeScript(script) {
@@ -85,56 +86,18 @@ export function getUtxoValueFromTxHex(txHex, vout) {
 // Get UTXO value using QuickNode Bitcoin API - strict mode, no fallbacks
 export async function getUtxoValue(txid, vout) {
     try {
-        // Fetching UTXO from QuickNode
+        const client = new QuickNodeClient();
+        const txData = await client.getRawTransaction(txid, true);
 
-        // Get QuickNode credentials from centralized config
-        const quickNodeUrl = environmentConfig.getQuickNodeUrl();
-        const quickNodeApiKey = environmentConfig.getQuickNodeApiKey();
-
-        if (!quickNodeUrl) {
-            throw new Error('QuickNode URL not configured');
-        }
-
-        // QuickNode Bitcoin RPC call to get transaction data
-        const rpcPayload = {
-            jsonrpc: "2.0",
-            id: 1,
-            method: "getrawtransaction",
-            params: [txid, true] // true for verbose output (decoded transaction)
-        };
-
-        const response = await fetch(quickNodeUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(quickNodeApiKey && { 'Authorization': `Bearer ${quickNodeApiKey}` })
-            },
-            body: JSON.stringify(rpcPayload)
-        });
-
-        if (!response.ok) {
-            throw new Error(`QuickNode API error: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        if (data.error) {
-            throw new Error(`QuickNode RPC error: ${data.error.message}`);
-        }
-
-        if (!data.result || !data.result.vout || !data.result.vout[vout]) {
+        if (!txData || !txData.vout || !txData.vout[vout]) {
             throw new Error(`Output ${vout} not found in transaction ${txid}`);
         }
 
-        // Extract value from QuickNode response (in BTC, convert to satoshis)
-        const valueInBtc = data.result.vout[vout].value;
+        const valueInBtc = txData.vout[vout].value;
         const valueInSatoshis = Math.round(valueInBtc * 100000000);
-
-        // UTXO value retrieved
         return valueInSatoshis;
 
     } catch (error) {
-        console.error(`❌ Failed to fetch UTXO ${txid}:${vout}:`, error.message);
         throw error;
     }
 }

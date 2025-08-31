@@ -24,75 +24,47 @@ export class BitcoinAPIService {
 
     async getAddressUtxos(address) {
         try {
-            // Fetch unconfirmed (mempool) UTXOs first, then confirmed, and merge
-            const [unconfirmed, confirmed] = await Promise.all([
-                this.client.getAddressUtxos(address, { confirmed: false }),
-                this.client.getAddressUtxos(address, { confirmed: true }),
-            ]);
+            const addressInfo = await this.client.getAddressInfo(address);
+            console.log('[BitcoinAPI] getAddressUtxos: fetched addressInfo, txids:', Array.isArray(addressInfo?.txids) ? addressInfo.txids.length : 0);
 
-            const listA = Array.isArray(unconfirmed) ? unconfirmed : [];
-            const listB = Array.isArray(confirmed) ? confirmed : [];
-
-            // Merge by unique (txid,vout)
-            const map = new Map();
-            for (const u of [...listA, ...listB]) {
-                const key = `${u.txid}:${u.vout}`;
-                if (!map.has(key)) map.set(key, u);
+            if (!addressInfo || !addressInfo.txids || addressInfo.txids.length === 0) {
+                return [];
             }
-            let result = Array.from(map.values());
 
-            const totalValue = result.reduce((sum, u) => sum + parseInt(u.value || 0), 0);
-
-            // Fallback: if nothing found, try to detect pending funds by scanning recent txs
-            if (result.length === 0) {
+            const utxos = [];
+            
+            for (const txid of addressInfo.txids) {
                 try {
-                    const info = await this.client.getAddressInfo(address, { page: 1, size: 25, fromHeight: 0, details: 'txids' });
-                    const txids = Array.isArray(info?.txids) ? info.txids.slice(0, 10) : [];
-
-                    const foundPending = [];
-                    for (const txid of txids) {
-                        try {
-                            const tx = await this.client.getRawTransaction(txid, true);
-                            const confirmations = tx?.confirmations || 0;
-                            const vouts = Array.isArray(tx?.vout) ? tx.vout : [];
-                            for (const v of vouts) {
-                                const spk = v.scriptPubKey || {};
-                                const spkAddress = spk.address || (Array.isArray(spk.addresses) ? spk.addresses[0] : undefined);
-                                if (spkAddress === address) {
-                                    const utxo = {
-                                        txid,
-                                        vout: v.n,
-                                        value: Math.round((v.value || 0) * 1e8), // value likely in BTC if from Core
-                                        confirmations,
-                                    };
-                                    if (confirmations === 0) {
-                                        foundPending.push(utxo);
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            console.warn(`[BitcoinAPI] ⚠️ getrawtransaction failed for ${txid}:`, e.message);
+                    const tx = await this.client.getRawTransaction(txid, true);
+                    
+                    let matchesInTx = 0;
+                    tx.vout.forEach((output, index) => {
+                        const spk = output?.scriptPubKey || {};
+                        const hasAddressesArray = Array.isArray(spk.addresses) && spk.addresses.includes(address);
+                        const hasSingleAddress = typeof spk.address === 'string' && spk.address === address; // common for Taproot
+                        if (hasAddressesArray || hasSingleAddress) {
+                            matchesInTx++;
+                            utxos.push({
+                                txid: txid,
+                                vout: index,
+                                value: Math.round(Number(output.value) * 100000000),
+                                confirmed: (tx.confirmations || 0) > 0
+                            });
                         }
+                    });
+                    if (matchesInTx === 0) {
+                        console.log('[BitcoinAPI] getAddressUtxos: no matching outputs in tx', txid);
                     }
-
-                    if (foundPending.length > 0) {
-                        // Convert to API UTXO shape used elsewhere
-                        result = foundPending.map(u => ({
-                            txid: u.txid,
-                            vout: u.vout,
-                            value: u.value.toString(),
-                            confirmations: u.confirmations,
-                        }));
-                    }
-                } catch (e) {
-                    console.warn(`[BitcoinAPI] ⚠️ Fallback scanning failed:`, e.message);
+                } catch (txError) {
+                    // Skip failed transactions
+                    console.warn('[BitcoinAPI] getAddressUtxos: failed to fetch/parse tx', txid);
                 }
             }
-
-            return result;
+            
+            return utxos;
         } catch (error) {
-            console.error(`[BitcoinAPI] ❌ Error fetching UTXOs for ${address}:`, error);
-            throw error;
+            console.error('[BitcoinAPI] getAddressUtxos: error', error?.message || error);
+            return [];
         }
     }
 
@@ -145,18 +117,24 @@ export class BitcoinAPIService {
                         const formattedUtxo = {
                             txid: utxo.txid,
                             vout: utxo.vout,
-                            amount: parseInt(utxo.value),
+                            value: parseInt(utxo.value), // Use 'value' instead of 'amount'
+                            amount: parseInt(utxo.value), // Keep both for compatibility
                             scriptPubKey: '',
                             address: address,
                             confirmations: utxo.confirmations || 0
                         };
 
                         isMonitoring = false;
+                        console.log('✅ [BitcoinAPI] monitorAddress: valid UTXO found and formatted:', formattedUtxo);
                         if (onUtxoFound) {
                             onUtxoFound(formattedUtxo);
                         }
                         return;
                     }
+                    console.log(`[BitcoinAPI] monitorAddress: ${utxos.length} utxos, but 0 valid above threshold`);
+                }
+                if (!utxos || utxos.length === 0) {
+                    console.log('[BitcoinAPI] monitorAddress: no utxos found for address yet');
                 }
 
                 setTimeout(poll, currentInterval);

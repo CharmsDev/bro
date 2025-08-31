@@ -116,11 +116,6 @@ export class MintingManager {
         this.signedTransactions = await this.stepExecutor.executeStep5_signTransactions(this.proverResponse, wallet, this.miningResult);
         MintingDataValidator.validateSignedTransactions(this.signedTransactions);
 
-        console.log('🔥 SIGNED TRANSACTIONS OUTPUT:');
-        console.log('📝 Commit Transaction Hex:');
-        console.log(this.signedTransactions.find(tx => tx.type === 'commit').signedHex);
-        console.log('📝 Bitcoin CLI Test Command:');
-        console.log(`bitcoin-cli testmempoolaccept '["${this.signedTransactions.find(tx => tx.type === 'commit').signedHex}","${this.signedTransactions.find(tx => tx.type === 'spell').signedHex}"]'`);
         
         // Execute Step 6 (Broadcasting)
         this.broadcastResults = await this.stepExecutor.executeStep6_broadcastTransactions(this.signedTransactions);

@@ -51,7 +51,6 @@ export class CountdownTimer {
 
                 const localTime = new Date();
                 this.timeOffset = serverTime.getTime() - localTime.getTime();
-                console.log(`Time synced with ${apiUrl}`);
                 return;
             } catch (error) {
                 console.warn(`Failed to sync with ${apiUrl}:`, error.message);

@@ -2,9 +2,10 @@
  * WalletUIController - Manages wallet UI state and visual elements
  */
 export class WalletUIController {
-    constructor(dom, stepController) {
+    constructor(dom, stepController, appState) {
         this.dom = dom;
         this.stepController = stepController;
+        this.appState = appState;
         this.isImportMode = false;
     }
 
@@ -146,21 +147,29 @@ export class WalletUIController {
         // Hide the "send funds" message
         this.hideAddressNote();
 
-        // Update UTXO display
-        this.dom.setText('foundUtxoTxid', utxo.txid);
-        this.dom.setText('foundUtxoVout', utxo.vout.toString());
-        this.dom.setText('foundUtxoAmount', `${utxo.amount.toLocaleString()} sats`);
-        this.dom.show('utxoFoundDisplay');
-
-        // Hide monitoring display
+        // Hide funding monitoring
         this.dom.hide('fundingMonitoring');
-
+        this.dom.show('utxoFoundDisplay');
+        
+        // Display UTXO details in existing DOM elements (see index.html)
+        try {
+            const amountSats = typeof utxo.amount === 'number' ? utxo.amount : parseInt(utxo.value || 0);
+            this.dom.setText('foundUtxoTxid', utxo.txid);
+            this.dom.setText('foundUtxoVout', String(utxo.vout));
+            this.dom.setText('foundUtxoAmount', `${amountSats.toLocaleString()} sats`);
+        } catch (e) {
+            console.warn('[WalletUI] Failed to update UTXO DOM elements:', e);
+        }
+        
+        // Emit event to update step controller
+        this.appState.emit('utxoDisplayed', utxo);
+        
         // Persist UTXO display data to localStorage so it survives page refresh
         try {
             const utxoDisplayData = {
                 txid: utxo.txid,
                 vout: utxo.vout,
-                amount: utxo.amount,
+                amount: typeof utxo.amount === 'number' ? utxo.amount : parseInt(utxo.value || 0),
                 timestamp: Date.now()
             };
             localStorage.setItem('bro_utxo_display_data', JSON.stringify(utxoDisplayData));
@@ -346,14 +355,17 @@ export class WalletUIController {
         this.dom.show('seedPhraseBox');
         this.dom.show('addressMonitoringBox');
         
-        // For imported wallets, show the seed phrase immediately in the display
+        // For security, hide seed phrase by default even for imported wallets
         this.dom.setText('seedPhraseText', walletData.seedPhrase);
-        this.dom.show('seedPhraseDisplay');
+        this.dom.hide('seedPhraseDisplay');
         
-        // Hide show button, show copy button
+        // Reset buttons to initial state
         const showSeedBtn = this.dom.get('showSeedBtn');
         const copySeedBtn = this.dom.get('copySeedBtn');
-        if (showSeedBtn) showSeedBtn.style.display = 'none';
-        if (copySeedBtn) copySeedBtn.style.display = 'inline-block';
+        if (showSeedBtn) {
+            showSeedBtn.style.display = 'inline-block';
+            showSeedBtn.textContent = 'Show Seed Phrase';
+        }
+        if (copySeedBtn) copySeedBtn.style.display = 'none';
     }
 }

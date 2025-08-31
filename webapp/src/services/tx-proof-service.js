@@ -3,6 +3,7 @@
  * Uses gettxoutproof for Bitcoin Core compatible proofs
  */
 import { QuickNodeClient } from './providers/quicknode/index.js';
+import { environmentConfig } from '../config/environment.js';
 
 export class TxProofService {
     constructor() {
@@ -22,15 +23,17 @@ export class TxProofService {
             let blockHeight = null;
 
             if (!blockHash) {
-                const txData = await this.fetchTxData(txid);
-                // QuickNode/Bitcoin Core: confirmations >= 1 implies confirmed
-                if (!txData.confirmations || txData.confirmations < 1) {
-                    throw new Error('Transaction is not confirmed');
-                }
-                finalBlockHash = txData.blockhash;
-                // Fetch height from block header
-                const header = await this.client.getBlockHeader(finalBlockHash, true);
-                blockHeight = header.height;
+                const txData = await this.client.getRawTransaction(txid, true);
+                const blockHeader = await this.client.getBlockHeader(txData.blockhash);
+                const merkleProof = await this.client.getTxOutProof([txid]);
+
+                return {
+                    txid: txid,
+                    blockhash: txData.blockhash,
+                    blockheight: blockHeader.height,
+                    merkleproof: merkleProof,
+                    confirmations: txData.confirmations || 0
+                };
             }
 
             // Fetch proof directly from RPC
@@ -57,7 +60,7 @@ export class TxProofService {
      * @returns {Promise<string>} Proof hex string
      */
     async fetchMerkleBlockProof(txid, blockHash) {
-        return this.client.getTxOutProof([txid], blockHash);
+        return await this.client.getTxOutProof([txid], blockHash);
     }
 
     /**
@@ -65,7 +68,7 @@ export class TxProofService {
      */
     async fetchTxData(txid) {
         // verbose true to get JSON with blockhash/confirmations
-        return this.client.getRawTransaction(txid, true);
+        return await this.client.getRawTransaction(txid, true);
     }
 
     /**
