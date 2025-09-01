@@ -168,15 +168,33 @@ export class AppController {
     setupStep5EventListener() {
         const claimTokensBtn = document.getElementById('claimTokensBtn');
         if (claimTokensBtn) {
+            const buttonSpan = claimTokensBtn.querySelector('span');
+            const originalButtonText = buttonSpan ? buttonSpan.textContent : 'Start Minting $Bro';
+
             claimTokensBtn.addEventListener('click', async () => {
+                if (claimTokensBtn.disabled) return;
+
                 try {
+                    // Disable button and update text immediately
+                    claimTokensBtn.disabled = true;
+                    claimTokensBtn.classList.add('disabled');
+                    if (buttonSpan) {
+                        buttonSpan.textContent = 'Minting now...';
+                    }
+
                     await this.modules.mintingManager.executeMintingProcess();
                 } catch (error) {
                     console.error('❌ Step 5 minting process failed:', error);
-                    console.error('❌ Failed to start minting process. Please try again.');
+                    // Re-enable the button on failure so the user can retry
+                    claimTokensBtn.disabled = false;
+                    claimTokensBtn.classList.remove('disabled');
+                    if (buttonSpan) {
+                        buttonSpan.textContent = originalButtonText;
+                    }
+                    // Optionally, display a user-friendly error message here
+                    alert('The minting process failed. Please check the console and try again.');
                 }
             });
-        } else {
         }
     }
     
