@@ -272,6 +272,12 @@ export class WalletEventHandlers {
             this.transactionManager.reset();
         }
 
+        // Reset broadcast component
+        const broadcastComponent = window.broadcastComponent;
+        if (broadcastComponent) {
+            broadcastComponent.disableBroadcasting();
+        }
+
         // Reset UI via the dedicated UI controller to avoid duplicated logic
         const walletManager = window.walletManager;
         if (walletManager && walletManager.uiController) {

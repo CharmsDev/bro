@@ -89,10 +89,17 @@ class BroadcastComponent {
      */
     disableBroadcasting() {
         this.currentTransaction = null;
+        this.broadcastResult = null;
 
         if (this.broadcastBtn) {
             this.broadcastBtn.disabled = true;
             this.broadcastBtn.classList.add('disabled');
+            this.broadcastBtn.innerHTML = '<span>Broadcast to Network</span>';
+        }
+
+        // Hide broadcast display
+        if (this.broadcastDisplay) {
+            this.broadcastDisplay.style.display = 'none';
         }
     }
 

@@ -168,8 +168,7 @@ export class MiningManager {
         this.dom.setText('bestNonce', (result.bestNonce || result.nonce).toLocaleString());
         this.dom.setText('bestLeadingZeros', result.bestLeadingZeros || 0);
 
-        this.dom.setText('finalNonce', result.nonce.toLocaleString());
-        this.updateHashDisplay('finalHash', result.hash);
+        // Show success box without redundant nonce/hash lines
         this.dom.show('successMessage');
 
         // Calculate and display token reward for restored state
@@ -547,11 +546,7 @@ export class MiningManager {
             console.error('Error calculating final reward:', error);
         }
 
-        // Show the best result found in success message with reward
-        this.dom.setText('finalNonce', result.bestNonce.toLocaleString());
-        this.updateHashDisplay('finalHash', result.bestHash);
-        this.dom.setText('finalLeadingZeros', result.bestLeadingZeros);
-        this.dom.setText('finalTokenReward', finalRewardAmount);
+        // Show success box without redundant details (nonce/hash/reward)
         this.dom.show('successMessage');
 
         const startMining = this.dom.get('startMining');

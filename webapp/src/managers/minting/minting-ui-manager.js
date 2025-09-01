@@ -1,3 +1,4 @@
+import { environmentConfig } from '../../config/environment.js';
 // UI management for minting process
 export class MintingUIManager {
     constructor(steps) {
@@ -240,7 +241,7 @@ export class MintingUIManager {
         const progressElement = stepElement.querySelector('.step-progress');
         if (!progressElement) return;
 
-        const explorerUrl = `https://mempool.space/testnet4/tx/${txid}`; // Keep mempool.space for UI explorer links
+        const explorerUrl = environmentConfig.getExplorerUrl(txid);
 
         if (progress.status === 'pending') {
             progressElement.style.display = 'block';

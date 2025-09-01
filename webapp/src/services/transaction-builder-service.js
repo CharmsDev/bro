@@ -1,7 +1,9 @@
 // Bitcoin Transaction Builder class for creating transactions with mining data
+import { environmentConfig } from '../config/environment.js';
+
 class BitcoinTxBuilder {
     constructor() {
-        this.network = 'testnet4';
+        this.network = environmentConfig.getNetwork();
         this.apiService = new window.BitcoinAPIService();
     }
 
@@ -15,7 +17,7 @@ class BitcoinTxBuilder {
             const bitcoin = window.bitcoin;
             const bip39 = window.bip39;
             const bip32 = window.bip32;
-            const network = bitcoin.networks.testnet;
+            const network = this.network.includes('testnet') ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
 
             if (!bitcoin || !bip39 || !bip32) {
                 throw new Error('Required Bitcoin libraries not available');
@@ -24,7 +26,9 @@ class BitcoinTxBuilder {
             // Derive the private key for signing
             const seed = await bip39.mnemonicToSeed(seedPhrase);
             const masterNode = bip32.fromSeed(seed, network);
-            const derivationPath = "m/86'/0'/0'";
+            // Testnet4 uses coin type 1', mainnet uses coin type 0'
+            const coinType = this.network.includes('testnet') ? "1'" : "0'";
+            const derivationPath = `m/86'/${coinType}/0'`;
             const accountNode = masterNode.derivePath(derivationPath);
             const chainNode = accountNode.derive(0); // receiving chain
             const addressNode = chainNode.derive(0); // Use index 0 for the main receiving address

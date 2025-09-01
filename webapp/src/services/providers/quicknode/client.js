@@ -14,7 +14,8 @@ export default class QuickNodeClient {
     const network = environmentConfig.getNetwork() === 'mainnet' ? 'mainnet' : 'testnet4';
 
     // Endpoint verification logging - keep only for mainnet/testnet4 verification
-    console.log(`[QuickNode] Network: ${network} | Endpoint: ${this.url.includes('mainnet') ? 'MAINNET' : 'TESTNET4'} | Method: ${method}`);
+    const endpointType = network === 'mainnet' ? 'MAINNET' : 'TESTNET4';
+    console.log(`[QuickNode] Network: ${network} | Endpoint: ${endpointType} | Method: ${method}`);
 
     // Direct QuickNode API call - no proxy
     const headers = {
@@ -85,5 +86,38 @@ export default class QuickNodeClient {
   // Get XPUB information
   getXPUB(xpub, options = { page: 1, size: 1000, fromHeight: 0, details: 'txids' }) {
     return this.rpc('bb_getXPUB', [xpub, options]);
+  }
+
+  /**
+   * Get average fee rate in sat/vB using estimatesmartfee
+   * Converts from BTC/kvB to sat/vB and adds 1-2 sat/vB buffer
+   * @param {number} blocks - Number of blocks for fee estimation (default: 3)
+   * @param {string} mode - Estimation mode: 'CONSERVATIVE' or 'ECONOMICAL' (default: 'CONSERVATIVE')
+   * @param {number} buffer - Additional sat/vB to add (default: 2)
+   * @returns {Promise<number>} Fee rate in sat/vB
+   */
+  async getAverageFeeRate(blocks = 3, mode = 'CONSERVATIVE', buffer = 2) {
+    try {
+      const result = await this.rpc('estimatesmartfee', [blocks, mode]);
+      
+      if (!result || !result.feerate) {
+        throw new Error('No fee rate returned from estimatesmartfee');
+      }
+
+      // Convert BTC/kvB to sat/vB
+      // 1 BTC = 1e8 sats, 1 kvB = 1000 vB
+      // Formula: sat_vB = feerate_BTC_per_kvB * 1e5
+      const satPerVByte = Math.ceil(result.feerate * 1e5) + buffer;
+      
+      console.log(`[QuickNode] Fee estimate: ${result.feerate} BTC/kvB → ${satPerVByte} sat/vB (${blocks} blocks, ${mode}, +${buffer})`);
+      
+      return satPerVByte;
+    } catch (error) {
+      console.error('[QuickNode] Fee rate estimation failed:', error.message);
+      // Fallback to reasonable default (7-8 sat/vB for fast confirmation)
+      const fallbackRate = 8;
+      console.log(`[QuickNode] Using fallback fee rate: ${fallbackRate} sat/vB`);
+      return fallbackRate;
+    }
   }
 }

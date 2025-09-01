@@ -20,9 +20,9 @@ export class AppController {
     }
 
     async initialize() {
-        // Initialize countdown timer first
+        // Initialize countdown timer asynchronously (non-blocking)
         this.countdownTimer = new CountdownTimer();
-        await this.countdownTimer.init();
+        this.countdownTimer.init();
 
         this.initializeGlobalModules();
 
@@ -85,6 +85,16 @@ export class AppController {
 
         // Initialize step system first
         this.modules.stepController.initializeSteps(this.appState);
+
+        // After steps are initialized, ensure mining success UI is restored on reload
+        try {
+            const miningResult = this.appState?.miningResult;
+            const hasTransaction = !!this.appState?.transaction;
+            if (miningResult && !hasTransaction) {
+                // Repopulate the "Nice hash, bro" box with saved result
+                this.modules.miningManager.restoreCompletedMining(miningResult);
+            }
+        } catch (_) { /* noop */ }
 
         // Initialize broadcast component after step system to ensure proper button state
         this.modules.broadcastComponent.initialize(this.appState);

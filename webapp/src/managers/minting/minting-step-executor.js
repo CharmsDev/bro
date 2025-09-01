@@ -186,21 +186,33 @@ export class MintingStepExecutor {
                 }
             ];
 
+            // 🔧 DEBUG: Print signed transaction hex and testmempoolaccept commands
+            console.log('\n=== SIGNED TRANSACTIONS DEBUG ===');
+            console.log('Commit Transaction Hex:');
+            console.log(commitResult.signedHex);
+            console.log('\nSpell Transaction Hex:');
+            console.log(spellResult.signedHex);
+            console.log('\n=== TESTMEMPOOLACCEPT COMMANDS ===');
+            console.log('bitcoin-cli testmempoolaccept \'["' + commitResult.signedHex + '"]\'');
+            console.log('bitcoin-cli testmempoolaccept \'["' + spellResult.signedHex + '"]\'');
+            console.log('\n=== SUBMITPACKAGE COMMAND ===');
+            console.log('bitcoin-cli submitpackage \'["' + commitResult.signedHex + '","' + spellResult.signedHex + '"]\'');
+            console.log('=== END DEBUG ===\n');
             
-            // Save signed transactions to localStorage
-            const signedTxData = {
-                commit: {
-                    signedHex: commitResult.signedHex,
-                    txid: commitResult.txid
-                },
-                spell: {
-                    signedHex: spellResult.signedHex,
-                    txid: spellResult.txid
-                },
-                status: 'signed',
-                timestamp: new Date().toISOString()
-            };
-            localStorage.setItem('bro_signed_transactions', JSON.stringify(signedTxData));
+            // 🚫 DISABLED: Do not save signed transactions to localStorage to allow retries
+            // const signedTxData = {
+            //     commit: {
+            //         signedHex: commitResult.signedHex,
+            //         txid: commitResult.txid
+            //     },
+            //     spell: {
+            //         signedHex: spellResult.signedHex,
+            //         txid: spellResult.txid
+            //     },
+            //     status: 'signed',
+            //     timestamp: new Date().toISOString()
+            // };
+            // localStorage.setItem('bro_signed_transactions', JSON.stringify(signedTxData));
 
             this.uiManager.updateStepStatus(4, 'completed');
             return signedTransactions;
@@ -214,23 +226,22 @@ export class MintingStepExecutor {
         }
     }
 
-    // Step 6: Broadcast transactions
+    // Step 6: Broadcast transactions (DISABLED FOR DEBUGGING)
     async executeStep6_broadcastTransactions(signedTransactions) {
         this.uiManager.updateStepStatus(5, 'active');
 
         try {
+            // ✅ REAL BROADCAST ENABLED
             const { broadcastPackage } = await import('../../services/bitcoin/broadcastTx.js');
-
             const commitTx = signedTransactions.find(tx => tx.type === 'commit');
             const spellTx = signedTransactions.find(tx => tx.type === 'spell');
-
             const result = await broadcastPackage(
                 commitTx,
                 spellTx,
                 (message) => { /* Silent broadcast progress */ }
             );
-
-            // Save broadcast results to localStorage for persistence
+            
+            // Store broadcast data and mark step 5 as completed
             const broadcastData = {
                 commitTxid: result.commitData.txid,
                 spellTxid: result.spellData.txid,
@@ -238,9 +249,12 @@ export class MintingStepExecutor {
                 timestamp: new Date().toISOString()
             };
             localStorage.setItem('bro_broadcast_data', JSON.stringify(broadcastData));
-
+            
+            // Mark step 5 as completed after successful broadcast
             this.uiManager.updateStepStatus(5, 'completed');
+            
             return result;
+            // return result;
         } catch (error) {
             this.uiManager.updateStepStatus(5, 'error');
             throw new Error(`Transaction broadcasting failed: ${error.message}`);

@@ -65,8 +65,9 @@ export class MintingManager {
             // Execute each step sequentially
             await this.executeAllSteps();
 
-            this.appState.completeStep(5);
-            this.uiManager.showSuccess(this.broadcastResults);
+            // 🚫 DISABLED: Do not complete Step 5 to allow retries
+            // this.appState.completeStep(5);
+            // this.uiManager.showSuccess(this.broadcastResults);
 
             return true;
 

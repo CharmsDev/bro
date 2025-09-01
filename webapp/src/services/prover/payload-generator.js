@@ -35,10 +35,8 @@ export class PayloadGenerator {
             PayloadValidator.validatePayload(payload);
             // Payload ready
 
-            // ===== COMMENTED OUT: PAYLOAD DOWNLOAD =====
-            // Offer the generated payload for download
+            // 🚫 COMMENTED OUT: Payload download for debugging
             // await this._offerPayloadDownload(payload);
-            // ===== END COMMENTED OUT SECTION =====
 
             return payload;
         } catch (error) {
@@ -104,8 +102,13 @@ export class PayloadGenerator {
      * @returns {Promise<Object>} Generated payload
      */
     async _generatePayloadCore(miningData, proofData, walletData, template) {
-        // Prefer reward passed from minting flow; fallback to calculateRewardInfo if not present
-        let reward = (typeof miningData?.reward === 'number' && isFinite(miningData.reward)) ? miningData.reward : 0;
+        // TODO: TEMPORARY HARD-CODED REWARD - REMOVE AFTER TESTING SIGNATURES
+        // Hard-coded to 40000000000 satoshis (400 BRO) for testing purposes
+        // Original logic below should be restored after signature testing is complete
+        let reward = 40000000000; // HARD-CODED VALUE - DO NOT COMMIT TO PRODUCTION
+        
+        // ORIGINAL LOGIC (commented out temporarily):
+        // let reward = (typeof miningData?.reward === 'number' && isFinite(miningData.reward)) ? miningData.reward : 0;
 
         // Fallback 1: AppState.miningReward (already uses calculateRewardInfo under the hood)
         if (!reward) {
@@ -177,6 +180,9 @@ export class PayloadGenerator {
         const appId = await PayloadUtils.generateAppId(mining);
         const minedAmount = Number(reward) || 0;
 
+        // DEBUG: Log hard-coded reward value
+        console.log(`[PayloadGenerator] Hard-coded reward: ${reward}, minedAmount: ${minedAmount}`);
+
         // Mined amount calculated
 
         // Deep clone template to avoid mutations
@@ -221,6 +227,10 @@ export class PayloadGenerator {
         payload.spell.outs[0].address = resolvedAddress || walletData.address;
 
         payload.spell.outs[0].charms["$01"] = minedAmount;
+        
+        // DEBUG: Log final payload amount
+        console.log(`[PayloadGenerator] Final payload $01 amount: ${payload.spell.outs[0].charms["$01"]}`);
+        
         // Payload amount injection complete
     }
 

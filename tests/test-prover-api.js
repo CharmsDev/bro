@@ -4,10 +4,10 @@ import { readFileSync } from 'fs';
 import fetch from 'node-fetch';
 
 // API endpoint
-const API_URL = 'https://charms-prover-test.fly.dev/spells/prove';
+const API_URL = 'https://v7.charms.dev/spells/prove';
 
 // Path to the payload file
-const PAYLOAD_FILE = '/Users/ricartjuncadella/Documents/Prj/bitcoinos/charms-bro/tests/payloads/request.json';
+const PAYLOAD_FILE = '/Users/ricartjuncadella/Documents/Prj/bitcoinos/charms-bro/tests/payloads/mainnet.json';
 
 async function testProverAPI() {
     console.log('=== TESTING PROVER API ===');

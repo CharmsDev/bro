@@ -9,10 +9,23 @@ export class CountdownTimer {
     }
 
     // Create and inject the countdown bar at the top of the page
-    async init() {
-        await this.syncTimeWithServer();
-        this.createCountdownBar();
-        this.startCountdown();
+    init() {
+        // TODO-restore countdown: Uncomment to show countdown timer
+        // this.initializeAsync();
+        // this.createCountdownBar();
+        // this.startCountdown();
+    }
+
+    // Asynchronous initialization that doesn't block app startup
+    async initializeAsync() {
+        // TODO-restore countdown: Uncomment to enable time synchronization
+        // try {
+        //     await this.syncTimeWithServer();
+        //     // Update countdown with corrected time
+        //     this.updateCountdown();
+        // } catch (error) {
+        //     console.warn('Countdown timer initialization failed, using local time:', error);
+        // }
     }
 
     // Fetch accurate time from external API with multiple fallbacks
@@ -32,7 +45,10 @@ export class CountdownTimer {
 
         for (const apiUrl of timeApis) {
             try {
-                const response = await fetch(apiUrl);
+                const response = await fetch(apiUrl, {
+                    timeout: 3000,
+                    signal: AbortSignal.timeout(3000)
+                });
                 const data = await response.json();
                 
                 let serverTime;
@@ -184,14 +200,16 @@ export class CountdownTimer {
     }
 
     startCountdown() {
-        this.updateCountdown(); // Initial update
-        this.intervalId = setInterval(() => {
-            this.updateCountdown();
-        }, 1000);
+        // TODO-restore countdown: Uncomment to enable automatic countdown refresh
+        // this.updateCountdown(); // Initial update
+        // this.intervalId = setInterval(() => {
+        //     this.updateCountdown();
+        // }, 1000);
     }
 
     updateCountdown() {
-        const now = this.getCurrentTime();
+        // Use UTC time directly - same for all browsers globally
+        const now = new Date();
         const timeLeft = this.launchDate - now;
 
         if (timeLeft <= 0) {

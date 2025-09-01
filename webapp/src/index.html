@@ -9,6 +9,16 @@
         content="Claim your $BRO token, the first beaming token on Bitcoin. Join the Charms ecosystem and be part of the future of decentralized applications.">
     <link rel="stylesheet" href="css/main.css">
     <link rel="icon" href="assets/images/bro-token.jpg" type="image/jpeg">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TPDZFQH9CV"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-TPDZFQH9CV');
+    </script>
 </head>
 
 <body>
@@ -220,8 +230,6 @@
 
                         <div id="successMessage" class="mining-success-box" style="display: none;">
                             <h4>Nice hash, bro. Now let's put it into a Bitcoin transaction to prove that you did the work.</h4>
-                            <p>Best hash found with nonce: <span id="finalNonce"></span></p>
-                            <p>Best hash: <span id="finalHash"></span></p>
                         </div>
                     </div>
                 </section>
@@ -234,7 +242,7 @@
 
                     <div class="transaction-controls">
                         <button id="createTransaction" class="btn-base btn-purple" disabled>
-                            <span>Create and Broadcast Transaction</span>
+                            <span>Create mining transaction</span>
                         </button>
                     </div>
 

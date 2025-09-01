@@ -3,6 +3,7 @@ class EnvironmentConfig {
     constructor() {
         // Get network from environment variables
         const network = import.meta.env.VITE_BITCOIN_NETWORK;
+        console.log(`[Environment] Constructor - VITE_BITCOIN_NETWORK: ${network}`);
 
         // Select QuickNode credentials based on network
         let quicknodeUrl, quicknodeApiKey;
@@ -50,6 +51,8 @@ class EnvironmentConfig {
 
     // Get the current Bitcoin network
     getNetwork() {
+        console.log(`[Environment] VITE_BITCOIN_NETWORK: ${import.meta.env.VITE_BITCOIN_NETWORK}`);
+        console.log(`[Environment] Configured network: ${this.config.bitcoin.network}`);
         return this.config.bitcoin.network;
     }
 

@@ -30,14 +30,20 @@ webapp/src/dist
 
 # tests
 tests/node_modules
-webapp/src/assets/test/prover-txs.ts
 tests/block-proof
 tests/block-proof/bitcoinjs-test
 tests/commitTx
+tests/wasm/*.wasm
+tests/wasm/*.json
+tests/mining
+tests/payloads
+
+# Other
+bro-token/src/wasm/bro-token.wasm
+webapp/src/assets/test/prover-txs.ts
 
 # RJJ
 Contract/
 _rjj/
-wasm/
 .DS_Store
 .env

@@ -9,7 +9,7 @@
 const DENOMINATION = 100_000_000n; // 1 BRO in satoshis
 const HALVING_PERIOD_DAYS = 14n;
 const SECONDS_PER_PERIOD = HALVING_PERIOD_DAYS * 24n * 3600n; // 14 days in seconds
-const START_TIME = 1_753_560_000n; // 7/26/2025 20:00:00 UTC
+const START_TIME = 1756830000n; // Tue Sep  2 16:20:00 UTC 2025
 
 /**
  * Calculate the number of leading zero bits in a hash

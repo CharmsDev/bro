@@ -5,6 +5,7 @@ import { environmentConfig } from '../config/environment.js';
 export class WalletService {
     constructor() {
         this.network = environmentConfig.getNetwork();
+        console.log(`[WalletService] Network initialized: ${this.network}`);
     }
 
     // Generate a proper BIP39-compliant 12-word seed phrase
@@ -36,6 +37,7 @@ export class WalletService {
 
             // Get the appropriate network based on environment
             const network = this.network.includes('testnet') ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
+            console.log(`[WalletService] generateAddress - Network: ${this.network}, Bitcoin network:`, network);
 
             // Convert seed phrase to seed using BIP39
             const seed = await bip39.mnemonicToSeed(seedPhrase);
@@ -98,6 +100,7 @@ export class WalletService {
 
             // Get the appropriate network based on environment
             const network = this.network.includes('testnet') ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
+            console.log(`[WalletService] generateAddress - Network: ${this.network}, Bitcoin network:`, network);
             
             // Generate BIP32 root key
             const root = bip32.fromSeed(seed, network);
