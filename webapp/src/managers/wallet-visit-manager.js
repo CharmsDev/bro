@@ -215,7 +215,11 @@ export class WalletVisitManager {
         }
 
         // Reset step titles to default state
-        this.stepController.updateAllSteps();
+        // IMPORTANT: provide current step data, otherwise all steps become non-active
+        const state = (this.appState && typeof this.appState.getState === 'function')
+            ? this.appState.getState()
+            : { currentStep: this.appState?.currentStep || 1, completedSteps: this.appState?.completedSteps || [] };
+        this.stepController.updateAllSteps(state.currentStep, state.completedSteps);
 
         // Scroll to Step 1 (wallet section)
         const walletSection = document.querySelector('.wallet-section');

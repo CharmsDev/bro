@@ -174,7 +174,7 @@ export class AppState {
 
         // If we have a wallet but no UTXO, we should be at step 2 with step 1 completed
         if (this.wallet && !this.utxo) {
-            console.log(`[AppState] Wallet found but no UTXO, setting to step 2`);
+            console.log(`[AppState] Wallet found but no UTXO, setting to step 2 (auto-advance path)`);
             this.currentStep = this.STEPS.MINING;
             this.completedSteps = [this.STEPS.WALLET_CREATION];
             this.saveCurrentStep();
@@ -320,6 +320,7 @@ export class AppState {
     }
 
     completeStep(step) {
+        console.log(`[AppState] completeStep called for step ${step}. Current: ${this.currentStep}, Completed:`, this.completedSteps);
         if (!this.completedSteps.includes(step)) {
             this.completedSteps.push(step);
             this.saveCompletedSteps();
@@ -334,9 +335,11 @@ export class AppState {
     }
 
     advanceToNextStep() {
+        const prev = this.currentStep;
         if (this.currentStep < this.STEPS.VISIT_WALLET) {
             this.currentStep++;
             this.saveCurrentStep();
+            console.log(`[AppState] advanceToNextStep: ${prev} -> ${this.currentStep}`);
             this.emit('stepChanged', {
                 step: this.currentStep,
                 enabled: true,
@@ -583,6 +586,7 @@ export class AppState {
     }
 
     partialReset() {
+        console.log('[AppState] partialReset starting...');
         // Clear localStorage except wallet data
         localStorage.removeItem('bro_current_step');
         localStorage.removeItem('bro_completed_steps');
@@ -617,6 +621,7 @@ export class AppState {
             enabled: true,
             completedSteps: this.completedSteps
         });
+        console.log('[AppState] partialReset completed. currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
     }
 
     getState() {
@@ -638,6 +643,7 @@ export class AppState {
     }
 
     setCurrentStep(step) {
+        console.log(`[AppState] setCurrentStep: ${this.currentStep} -> ${step}`);
         this.currentStep = step;
         this.saveCurrentStep();
     }
