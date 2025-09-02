@@ -17,10 +17,12 @@ export class ProverApiClient {
      * @returns {Promise<*>} Response from prover API
      */
     async sendToProver(payload) {
-        const maxRetries = 10;
-        const baseDelay = 3000; // 3 second base delay
-        
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        // Infinite retry with random delay between 2s and 20s for retryable cases
+        const minDelayMs = 2000;
+        const maxDelayMs = 20000;
+        let attempt = 1;
+
+        for (;;) {
             try {
 
                 const response = await fetch(this.apiUrl, {
@@ -41,18 +43,17 @@ export class ProverApiClient {
                     if (response.status === 429) {
                         // Respect Retry-After header if present
                         const retryAfterHeader = response.headers.get('retry-after');
-                        const retryAfterMs = this._parseRetryAfter(retryAfterHeader, baseDelay, attempt);
-                        if (attempt < maxRetries) {
-                            console.warn(`⚠️ Prover API attempt ${attempt} hit rate limit (429). Retry after ${Math.round(retryAfterMs)}ms...`);
-                            await this._delay(retryAfterMs);
-                            continue;
-                        }
+                        const retryAfterMs = this._parseRetryAfter(retryAfterHeader, minDelayMs, attempt);
+                        const delayMs = retryAfterHeader ? retryAfterMs : this._randomDelay(minDelayMs, maxDelayMs);
+                        console.warn(`⚠️ Prover API attempt ${attempt} hit rate limit (429). Retry after ${Math.round(delayMs)}ms...`);
+                        await this._delay(delayMs);
+                        attempt++;
+                        continue;
                     } else if (response.status >= 500 || response.status === 0) {
-                        if (attempt < maxRetries) {
-                            console.warn(`⚠️ Prover API attempt ${attempt} failed (${response.status}), retrying...`);
-                            await this._delay(this._calculateFixedDelay(baseDelay));
-                            continue;
-                        }
+                        console.warn(`⚠️ Prover API attempt ${attempt} failed (${response.status}), retrying...`);
+                        await this._delay(this._randomDelay(minDelayMs, maxDelayMs));
+                        attempt++;
+                        continue;
                     }
                     
                     console.error('❌ Prover API error response:', rawText);
@@ -64,14 +65,10 @@ export class ProverApiClient {
                     data = JSON.parse(rawText);
                 } catch (jsonError) {
                     // JSON parsing errors should be retried as they might be temporary
-                    if (attempt < maxRetries) {
-                        console.warn(`⚠️ Prover API attempt ${attempt} failed (JSON parse error), retrying...`);
-                        await this._delay(this._calculateFixedDelay(baseDelay));
-                        continue;
-                    }
-                    
-                    console.error('❌ Error parsing JSON response (success status):', jsonError.message);
-                    throw new Error(`Invalid JSON success response from prover API: ${rawText}`);
+                    console.warn(`⚠️ Prover API attempt ${attempt} failed (JSON parse error), retrying...`);
+                    await this._delay(this._randomDelay(minDelayMs, maxDelayMs));
+                    attempt++;
+                    continue;
                 }
 
                 // Validate response format
@@ -79,12 +76,10 @@ export class ProverApiClient {
                     PayloadValidator.validateProverResponse(data);
                 } catch (validationError) {
                     // Validation errors should be retried as they might be temporary
-                    if (attempt < maxRetries) {
-                        console.warn(`⚠️ Prover API attempt ${attempt} failed (validation error), retrying...`);
-                        await this._delay(this._calculateFixedDelay(baseDelay));
-                        continue;
-                    }
-                    throw validationError;
+                    console.warn(`⚠️ Prover API attempt ${attempt} failed (validation error), retrying...`);
+                    await this._delay(this._randomDelay(minDelayMs, maxDelayMs));
+                    attempt++;
+                    continue;
                 }
 
                 // Success - log if this was a retry
@@ -96,9 +91,10 @@ export class ProverApiClient {
 
             } catch (error) {
                 // Network errors, timeouts, etc.
-                if (attempt < maxRetries && this._isRetryableError(error)) {
+                if (this._isRetryableError(error)) {
                     console.warn(`⚠️ Prover API attempt ${attempt} failed (${error.message}), retrying...`);
-                    await this._delay(this._calculateFixedDelay(baseDelay));
+                    await this._delay(this._randomDelay(minDelayMs, maxDelayMs));
+                    attempt++;
                     continue;
                 }
                 
@@ -151,6 +147,16 @@ export class ProverApiClient {
     _calculateFixedDelay(baseDelay) {
         const jitter = baseDelay * 0.1 * (Math.random() - 0.5); // ±10%
         return Math.max(0, baseDelay + jitter);
+    }
+
+    /**
+     * Random delay between min and max milliseconds
+     * @param {number} minMs
+     * @param {number} maxMs
+     */
+    _randomDelay(minMs, maxMs) {
+        const span = Math.max(0, maxMs - minMs);
+        return Math.floor(minMs + Math.random() * span);
     }
 
     /**

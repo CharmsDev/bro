@@ -1,9 +1,11 @@
 export class WalletVisitManager {
-    constructor(domElements, stepController, appState, fundingMonitor = null) {
+    constructor(domElements, stepController, appState, fundingMonitor = null, miningManager = null) {
         this.dom = domElements;
         this.stepController = stepController;
         this.appState = appState;
         this.fundingMonitor = fundingMonitor;
+        // Optional reference to MiningManager so we can reset and update mining UI after Mint More
+        this.miningManager = miningManager;
     }
 
     initialize() {
@@ -73,6 +75,16 @@ export class WalletVisitManager {
             
             // Start monitoring for new UTXOs
             this.startAddressMonitoring();
+
+            // Ensure Mining UI is reset to a clean state and button reflects current readiness
+            if (this.miningManager && typeof this.miningManager.reset === 'function') {
+                this.miningManager.reset();
+            }
+            // Update the Start Mining button text/state immediately after reset
+            if (this.miningManager && typeof this.miningManager.updateButtonText === 'function') {
+                // Small delay to allow DOM/state updates from reset to settle
+                setTimeout(() => this.miningManager.updateButtonText(), 0);
+            }
             
             console.log('✅ Partial reset completed. Ready for new minting cycle.');
             

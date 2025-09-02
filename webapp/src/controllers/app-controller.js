@@ -47,12 +47,13 @@ export class AppController {
             null // Will set transactionManager after creation
         );
 
-        // Create wallet visit manager with funding monitor
+        // Create wallet visit manager with funding monitor and mining manager
         this.modules.walletVisitManager = new WalletVisitManager(
             this.modules.domElements,
             this.modules.stepController,
             this.appState,
-            this.modules.walletManager.fundingMonitor
+            this.modules.walletManager.fundingMonitor,
+            this.modules.miningManager
         );
 
         this.modules.transactionManager = new TransactionManager(

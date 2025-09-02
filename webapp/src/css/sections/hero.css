@@ -109,6 +109,13 @@ header h2 {
     gap: 1.5rem;
 }
 
+/* Force three columns on larger screens */
+@media (min-width: 900px) {
+    .token-info-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 /* Make a specific info item span the full width */
 .info-item--full {
     grid-column: 1 / -1;
