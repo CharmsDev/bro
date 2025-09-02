@@ -83,7 +83,8 @@ export class DOMElements {
             claimTokensBtn: document.getElementById('claimTokensBtn'),
 
             // Wallet visit elements
-            visitWalletBtn: document.getElementById('visitWalletBtn')
+            visitWalletBtn: document.getElementById('visitWalletBtn'),
+            mintMoreBtn: document.getElementById('mintMoreBtn')
         };
     }
 

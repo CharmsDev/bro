@@ -2,12 +2,14 @@
 import { signSpellTransaction } from '../../services/bitcoin/signSpellTx.js';
 
 export class MintingStepExecutor {
-    constructor(services, uiManager) {
+    constructor(services, uiManager, appState) {
         this.confirmationMonitor = services.confirmationMonitor;
         this.txProofService = services.txProofService;
         this.proverApiService = services.proverApiService;
+        this.bitcoinApiService = services.bitcoinApiService;
         this.transactionSigner = services.transactionSigner;
         this.uiManager = uiManager;
+        this.appState = appState;
     }
 
     // Step 1: Wait for mining transaction confirmation
@@ -199,20 +201,16 @@ export class MintingStepExecutor {
             console.log('bitcoin-cli submitpackage \'["' + commitResult.signedHex + '","' + spellResult.signedHex + '"]\'');
             console.log('=== END DEBUG ===\n');
             
-            // Save signed transactions to localStorage for status persistence
+            // Save signed transactions to localStorage for persistence
             const signedTxData = {
-                commit: {
-                    signedHex: commitResult.signedHex,
-                    txid: commitResult.txid
-                },
-                spell: {
-                    signedHex: spellResult.signedHex,
-                    txid: spellResult.txid
-                },
+                transactions: signedTransactions,
                 status: 'signed',
                 timestamp: new Date().toISOString()
             };
             localStorage.setItem('bro_signed_transactions', JSON.stringify(signedTxData));
+
+            // CRITICAL: Save signed transactions to AppState for proper state management
+            this.appState.signedTransactions = signedTransactions;
 
             this.uiManager.updateStepStatus(4, 'completed');
             return signedTransactions;

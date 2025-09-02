@@ -36,7 +36,7 @@ export class StepController {
             },
             [this.STEPS.VISIT_WALLET]: {
                 section: '.wallet-visit-section',
-                buttons: ['visitWalletBtn']
+                buttons: ['visitWalletBtn', 'mintMoreBtn']
             }
         };
     }
@@ -58,8 +58,11 @@ export class StepController {
 
     // Update all steps based on current step and completed steps
     updateAllSteps(currentStep, completedSteps) {
+        // Ensure completedSteps is an array to prevent TypeError
+        const safeCompletedSteps = Array.isArray(completedSteps) ? completedSteps : [];
+        
         for (let step = 1; step <= 6; step++) {
-            const isCompleted = completedSteps.includes(step);
+            const isCompleted = safeCompletedSteps.includes(step);
             const isActive = step === currentStep;
             const canAccess = this.disableLocks ? true : step <= currentStep;
 

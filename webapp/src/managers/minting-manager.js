@@ -36,7 +36,7 @@ export class MintingManager {
 
         // Initialize UI and step executor
         this.uiManager = new MintingUIManager(this.steps);
-        this.stepExecutor = new MintingStepExecutor(this.services, this.uiManager);
+        this.stepExecutor = new MintingStepExecutor(this.services, this.uiManager, this.appState);
 
         // Process data storage
         this.miningResult = null;
@@ -117,9 +117,12 @@ export class MintingManager {
         this.signedTransactions = await this.stepExecutor.executeStep5_signTransactions(this.proverResponse, wallet, this.miningResult);
         MintingDataValidator.validateSignedTransactions(this.signedTransactions);
 
-        
         // Execute Step 6 (Broadcasting)
         this.broadcastResults = await this.stepExecutor.executeStep6_broadcastTransactions(this.signedTransactions);
+
+        // CRITICAL: Mark minting broadcast as completed (Step 5 -> Step 6)
+        console.log('[MintingManager] Step 6 broadcast results:', this.broadcastResults);
+        this.appState.completeMintingBroadcast(this.broadcastResults);
 
         // Mark as completed
         this.currentStep = this.totalSteps;

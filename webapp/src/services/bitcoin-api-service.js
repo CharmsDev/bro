@@ -24,44 +24,24 @@ export class BitcoinAPIService {
 
     async getAddressUtxos(address) {
         try {
-            const addressInfo = await this.client.getAddressInfo(address);
-            console.log('[BitcoinAPI] getAddressUtxos: fetched addressInfo, txids:', Array.isArray(addressInfo?.txids) ? addressInfo.txids.length : 0);
+            // Use QuickNode's bb_getUTXOs method which returns only UNSPENT UTXOs
+            const utxos = await this.client.getAddressUtxos(address, { confirmed: false });
+            console.log('[BitcoinAPI] getAddressUtxos: fetched unspent UTXOs:', utxos?.length || 0);
 
-            if (!addressInfo || !addressInfo.txids || addressInfo.txids.length === 0) {
+            if (!utxos || utxos.length === 0) {
                 return [];
             }
 
-            const utxos = [];
+            // Format UTXOs to match expected structure
+            const formattedUtxos = utxos.map(utxo => ({
+                txid: utxo.txid,
+                vout: utxo.vout,
+                value: parseInt(utxo.value), // Already in satoshis
+                confirmed: utxo.confirmations > 0
+            }));
             
-            for (const txid of addressInfo.txids) {
-                try {
-                    const tx = await this.client.getRawTransaction(txid, true);
-                    
-                    let matchesInTx = 0;
-                    tx.vout.forEach((output, index) => {
-                        const spk = output?.scriptPubKey || {};
-                        const hasAddressesArray = Array.isArray(spk.addresses) && spk.addresses.includes(address);
-                        const hasSingleAddress = typeof spk.address === 'string' && spk.address === address; // common for Taproot
-                        if (hasAddressesArray || hasSingleAddress) {
-                            matchesInTx++;
-                            utxos.push({
-                                txid: txid,
-                                vout: index,
-                                value: Math.round(Number(output.value) * 100000000),
-                                confirmed: (tx.confirmations || 0) > 0
-                            });
-                        }
-                    });
-                    if (matchesInTx === 0) {
-                        console.log('[BitcoinAPI] getAddressUtxos: no matching outputs in tx', txid);
-                    }
-                } catch (txError) {
-                    // Skip failed transactions
-                    console.warn('[BitcoinAPI] getAddressUtxos: failed to fetch/parse tx', txid);
-                }
-            }
-            
-            return utxos;
+            console.log('[BitcoinAPI] getAddressUtxos: formatted UTXOs:', formattedUtxos);
+            return formattedUtxos;
         } catch (error) {
             console.error('[BitcoinAPI] getAddressUtxos: error', error?.message || error);
             return [];
@@ -113,19 +93,23 @@ export class BitcoinAPIService {
                     const validUtxos = utxos.filter(utxo => parseInt(utxo.value) >= 5000);
 
                     if (validUtxos.length > 0) {
-                        const utxo = validUtxos[0];
+                        // Select the largest UTXO for mining (most efficient)
+                        const largestUtxo = validUtxos.reduce((largest, current) => 
+                            parseInt(current.value) > parseInt(largest.value) ? current : largest
+                        );
+                        
                         const formattedUtxo = {
-                            txid: utxo.txid,
-                            vout: utxo.vout,
-                            value: parseInt(utxo.value), // Use 'value' instead of 'amount'
-                            amount: parseInt(utxo.value), // Keep both for compatibility
+                            txid: largestUtxo.txid,
+                            vout: largestUtxo.vout,
+                            value: parseInt(largestUtxo.value), // Use 'value' instead of 'amount'
+                            amount: parseInt(largestUtxo.value), // Keep both for compatibility
                             scriptPubKey: '',
                             address: address,
-                            confirmations: utxo.confirmations || 0
+                            confirmations: largestUtxo.confirmations || 0
                         };
 
                         isMonitoring = false;
-                        console.log('✅ [BitcoinAPI] monitorAddress: valid UTXO found and formatted:', formattedUtxo);
+                        console.log('✅ [BitcoinAPI] monitorAddress: largest valid UTXO found and formatted:', formattedUtxo);
                         if (onUtxoFound) {
                             onUtxoFound(formattedUtxo);
                         }

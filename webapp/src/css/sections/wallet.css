@@ -149,6 +149,10 @@
 /* Wallet Visit Controls */
 .wallet-visit-controls {
     margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .wallet-visit-btn {

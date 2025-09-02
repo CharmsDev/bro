@@ -37,10 +37,22 @@ export class AppController {
             this.miner
         );
 
+        this.modules.walletManager = new WalletManager(
+            this.modules.domElements,
+            this.modules.stepController,
+            this.appState,
+            this.wallet,
+            this.txBuilder,
+            this.modules.miningManager,
+            null // Will set transactionManager after creation
+        );
+
+        // Create wallet visit manager with funding monitor
         this.modules.walletVisitManager = new WalletVisitManager(
             this.modules.domElements,
             this.modules.stepController,
-            this.appState
+            this.appState,
+            this.modules.walletManager.fundingMonitor
         );
 
         this.modules.transactionManager = new TransactionManager(
@@ -51,15 +63,8 @@ export class AppController {
             this.modules.walletVisitManager
         );
 
-        this.modules.walletManager = new WalletManager(
-            this.modules.domElements,
-            this.modules.stepController,
-            this.appState,
-            this.wallet,
-            this.txBuilder,
-            this.modules.miningManager,
-            this.modules.transactionManager
-        );
+        // Update wallet manager with transaction manager reference
+        this.modules.walletManager.transactionManager = this.modules.transactionManager;
 
         this.modules.uiHelpers = new UIHelpers();
         this.modules.broadcastComponent = broadcastComponent;

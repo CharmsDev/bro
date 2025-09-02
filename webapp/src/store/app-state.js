@@ -253,6 +253,12 @@ export class AppState {
         if (this.broadcastResult) {
             calculatedCompleted.push(this.STEPS.BROADCAST);
             calculatedStep = this.STEPS.CLAIM_TOKENS;
+            
+            // Check if we have signed transactions (Step 5 completion indicator)
+            if (this.signedTransactions) {
+                calculatedCompleted.push(this.STEPS.CLAIM_TOKENS);
+                calculatedStep = this.STEPS.VISIT_WALLET;
+            }
         }
 
         // Only update if there's a discrepancy
@@ -414,11 +420,38 @@ export class AppState {
     }
 
     completeBroadcast(result) {
+        // Backward compatibility: treat as Step 4 broadcast completion
+        this.completeMiningBroadcast(result);
+    }
+
+    // Step 4: Mining transaction broadcast completed -> advance to Step 5
+    completeMiningBroadcast(result) {
         this.broadcastResult = result;
         // Save broadcast result to localStorage
         localStorage.setItem('bro_broadcast_data', JSON.stringify(result));
 
+        // Step 4 broadcast completion should advance to Step 5
         this.completeStep(this.STEPS.BROADCAST);
+        this.setCurrentStep(this.STEPS.CLAIM_TOKENS);
+        this.emit('transactionBroadcast', result);
+
+    }
+
+    // Step 5: Commit/Spell broadcast completed -> advance to Step 6
+    completeMintingBroadcast(result) {
+        console.log('[AppState] completeMintingBroadcast called with result:', result);
+        this.broadcastResult = result;
+        // Save final broadcast result to localStorage
+        localStorage.setItem('bro_broadcast_data', JSON.stringify(result));
+
+        console.log('[AppState] Before completeStep - currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
+        // Complete Step 5 and advance to Step 6
+        this.completeStep(this.STEPS.CLAIM_TOKENS);
+        console.log('[AppState] After completeStep - currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
+        
+        this.setCurrentStep(this.STEPS.VISIT_WALLET);
+        console.log('[AppState] After setCurrentStep - currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
+        
         this.emit('transactionBroadcast', result);
 
     }
@@ -549,6 +582,43 @@ export class AppState {
         });
     }
 
+    partialReset() {
+        // Clear localStorage except wallet data
+        localStorage.removeItem('bro_current_step');
+        localStorage.removeItem('bro_completed_steps');
+        localStorage.removeItem('bro_transaction_data');
+        localStorage.removeItem('bro_broadcast_data');
+        localStorage.removeItem('bro_signed_transactions');
+        localStorage.removeItem('bro_utxo_data');
+        // Clear mining data
+        localStorage.removeItem('miningProgress');
+        localStorage.removeItem('miningResult');
+
+        // Reset state but keep wallet
+        const currentWallet = this.wallet; // Preserve wallet
+        this.miningResult = null;
+        this.utxo = null;
+        this.transaction = null;
+        this.broadcastResult = null;
+        this.signedTransactions = null;
+        this.currentStep = 1;
+        this.completedSteps = [];
+        this.stopMonitoring();
+
+        // Keep wallet intact
+        this.wallet = currentWallet;
+
+        // Save the reset state
+        this.saveCurrentStep();
+        this.saveCompletedSteps();
+
+        this.emit('stepChanged', {
+            step: this.currentStep,
+            enabled: true,
+            completedSteps: this.completedSteps
+        });
+    }
+
     getState() {
         return {
             hasWallet: !!this.wallet,
@@ -565,6 +635,11 @@ export class AppState {
             canStartMonitoring: this.canStartMonitoring(),
             steps: this.STEPS
         };
+    }
+
+    setCurrentStep(step) {
+        this.currentStep = step;
+        this.saveCurrentStep();
     }
 }
 
