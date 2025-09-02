@@ -246,16 +246,20 @@ export class MintingUIManager {
         if (progress.status === 'pending') {
             progressElement.style.display = 'block';
 
+            // Only show error info for actual errors, not expected transaction-not-found scenarios
             let errorInfo = '';
-            if (progress.consecutiveErrors > 0) {
+            if (progress.consecutiveErrors > 0 && !progress.isRetrying) {
                 errorInfo = `<div class="warning-line"> ${progress.consecutiveErrors} consecutive errors - using backoff delay</div>`;
             }
 
+            // Show clean "Waiting for Confirmation" message
+            const statusText = progress.isRetrying ? 'Waiting for Confirmation' : 'In Progress...';
+            
             progressElement.innerHTML = `
                 <div class="confirmation-progress">
                     <div class="progress-line">
                         <div class="spinner"></div>
-                        <span>In Progress... (next check in <span class="countdown" data-seconds="${progress.nextCheck}">${progress.nextCheck}</span>s)</span>
+                        <span>${statusText} (next check in <span class="countdown" data-seconds="${progress.nextCheck}">${progress.nextCheck}</span>s)</span>
                     </div>
                     ${errorInfo}
                     <div class="explorer-line">
@@ -279,7 +283,7 @@ export class MintingUIManager {
                 <div class="retry-progress">
                     <div class="progress-line">
                         <div class="spinner"></div>
-                        <span>In Progress... (checking confirmation)</span>
+                        <span>Waiting for Confirmation</span>
                     </div>
                     <div class="explorer-line">
                         <a href="${explorerUrl}" target="_blank" class="explorer-link">View Transaction in Explorer</a>

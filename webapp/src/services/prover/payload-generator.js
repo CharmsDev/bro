@@ -102,13 +102,8 @@ export class PayloadGenerator {
      * @returns {Promise<Object>} Generated payload
      */
     async _generatePayloadCore(miningData, proofData, walletData, template) {
-        // TODO: TEMPORARY HARD-CODED REWARD - REMOVE AFTER TESTING SIGNATURES
-        // Hard-coded to 40000000000 satoshis (400 BRO) for testing purposes
-        // Original logic below should be restored after signature testing is complete
-        let reward = 40000000000; // HARD-CODED VALUE - DO NOT COMMIT TO PRODUCTION
-        
-        // ORIGINAL LOGIC (commented out temporarily):
-        // let reward = (typeof miningData?.reward === 'number' && isFinite(miningData.reward)) ? miningData.reward : 0;
+        // Use real reward calculation from miningData
+        let reward = (typeof miningData?.reward === 'number' && isFinite(miningData.reward)) ? miningData.reward : 0;
 
         // Fallback 1: AppState.miningReward (already uses calculateRewardInfo under the hood)
         if (!reward) {

@@ -107,8 +107,11 @@ export class ConfirmationMonitorService {
 
         const isNetworkError = this._isNetworkError(error);
         const isRecoverableError = this._isRecoverableError(error);
+        const isExpectedError = this._isExpectedTransactionError(error);
 
-        if (onProgress) {
+        // Only show error to user if it's NOT an expected "transaction not found" error
+        // Expected errors are normal when checking immediately after broadcast
+        if (onProgress && !isExpectedError) {
             onProgress({
                 status: 'error',
                 error: error.message,
@@ -117,6 +120,16 @@ export class ConfirmationMonitorService {
                 isNetworkError,
                 isRecoverable: isRecoverableError,
                 canRetry: this.consecutiveErrors < this.maxConsecutiveErrors
+            });
+        } else if (onProgress && isExpectedError) {
+            // For expected errors, show as pending with retry info instead of error
+            onProgress({
+                status: 'pending',
+                retries,
+                maxRetries: this.maxRetries,
+                nextCheck: this._calculateBackoffDelay(this.consecutiveErrors) / 1000,
+                consecutiveErrors: 0, // Don't show error count for expected errors
+                isRetrying: true
             });
         }
 
@@ -165,6 +178,20 @@ export class ConfirmationMonitorService {
         ];
 
         return !nonRecoverablePatterns.some(pattern =>
+            error.message.includes(pattern)
+        );
+    }
+
+    // Check if error is expected (normal when transaction hasn't propagated yet)
+    _isExpectedTransactionError(error) {
+        const expectedErrorPatterns = [
+            'No such mempool or blockchain transaction',
+            'getrawtransaction error',
+            'Transaction not found',
+            'Invalid or non-wallet transaction id'
+        ];
+
+        return expectedErrorPatterns.some(pattern =>
             error.message.includes(pattern)
         );
     }
@@ -222,7 +249,12 @@ export class ConfirmationMonitorService {
             }
 
             // If underlying fetch failed, we don't have a Response to inspect; rethrow
-            console.error('[Confirm] getrawtransaction error:', error.message);
+            // Only log expected errors at debug level to avoid console spam
+            if (this._isExpectedTransactionError(error)) {
+                console.debug('[Confirm] Expected error (transaction not yet propagated):', error.message);
+            } else {
+                console.error('[Confirm] getrawtransaction error:', error.message);
+            }
             throw error;
         }
     }
