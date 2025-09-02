@@ -17,7 +17,7 @@ export class ProverApiClient {
      * @returns {Promise<*>} Response from prover API
      */
     async sendToProver(payload) {
-        // Infinite retry with random delay between 2s and 20s for retryable cases
+        // Infinite retry with random delay between 2s and 20s for any error case
         const minDelayMs = 2000;
         const maxDelayMs = 20000;
         let attempt = 1;
@@ -38,10 +38,9 @@ export class ProverApiClient {
 
                 if (!response.ok) {
                     const errorMessage = `Prover API error: ${response.status} ${response.statusText} - ${rawText}`;
-                    
-                    // Only retry on server errors (5xx) or network issues, not client errors (4xx)
+
+                    // Retry on ALL HTTP errors. For 429, honor Retry-After if present.
                     if (response.status === 429) {
-                        // Respect Retry-After header if present
                         const retryAfterHeader = response.headers.get('retry-after');
                         const retryAfterMs = this._parseRetryAfter(retryAfterHeader, minDelayMs, attempt);
                         const delayMs = retryAfterHeader ? retryAfterMs : this._randomDelay(minDelayMs, maxDelayMs);
@@ -49,15 +48,12 @@ export class ProverApiClient {
                         await this._delay(delayMs);
                         attempt++;
                         continue;
-                    } else if (response.status >= 500 || response.status === 0) {
-                        console.warn(`⚠️ Prover API attempt ${attempt} failed (${response.status}), retrying...`);
-                        await this._delay(this._randomDelay(minDelayMs, maxDelayMs));
-                        attempt++;
-                        continue;
                     }
-                    
-                    console.error('❌ Prover API error response:', rawText);
-                    throw new Error(errorMessage);
+
+                    console.warn(`⚠️ Prover API attempt ${attempt} failed (${response.status}). Will retry.`, rawText);
+                    await this._delay(this._randomDelay(minDelayMs, maxDelayMs));
+                    attempt++;
+                    continue;
                 }
 
                 let data;
