@@ -12,45 +12,172 @@ export class ProverApiClient {
     }
 
     /**
-     * Send payload to prover API
+     * Send payload to prover API with automatic retry mechanism
      * @param {Object} payload - The payload to send
      * @returns {Promise<*>} Response from prover API
      */
     async sendToProver(payload) {
-        try {
-            const response = await fetch(this.apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const contentType = response.headers.get('content-type') || 'unknown';
-            const rawText = await response.text();
-
-            if (!response.ok) {
-                console.error('❌ Prover API error response:', rawText);
-                throw new Error(`Prover API error: ${response.status} ${response.statusText} - ${rawText}`);
-            }
-
-            let data;
+        const maxRetries = 10;
+        const baseDelay = 3000; // 3 second base delay
+        const requestTimeoutMs = 20000; // 20s per-request timeout to avoid hanging
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            // Hoist to ensure visibility in finally
+            let controller;
+            let timeoutId;
             try {
-                data = JSON.parse(rawText);
-            } catch (jsonError) {
-                console.error('❌ Error parsing JSON response (success status):', jsonError.message);
-                throw new Error(`Invalid JSON success response from prover API: ${rawText}`);
+                // Per-attempt abort controller to enforce timeout
+                controller = new AbortController();
+                timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs);
+
+                const response = await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+
+                const contentType = response.headers.get('content-type') || 'unknown';
+                const rawText = await response.text();
+
+                if (!response.ok) {
+                    const errorMessage = `Prover API error: ${response.status} ${response.statusText} - ${rawText}`;
+                    
+                    // Only retry on server errors (5xx) or network issues, not client errors (4xx)
+                    if (response.status === 429) {
+                        // Respect Retry-After header if present
+                        const retryAfterHeader = response.headers.get('retry-after');
+                        const retryAfterMs = this._parseRetryAfter(retryAfterHeader, baseDelay, attempt);
+                        if (attempt < maxRetries) {
+                            console.warn(`⚠️ Prover API attempt ${attempt} hit rate limit (429). Retry after ${Math.round(retryAfterMs)}ms...`);
+                            await this._delay(retryAfterMs);
+                            continue;
+                        }
+                    } else if (response.status >= 500 || response.status === 0) {
+                        if (attempt < maxRetries) {
+                            console.warn(`⚠️ Prover API attempt ${attempt} failed (${response.status}), retrying...`);
+                            await this._delay(this._calculateFixedDelay(baseDelay));
+                            continue;
+                        }
+                    }
+                    
+                    console.error('❌ Prover API error response:', rawText);
+                    throw new Error(errorMessage);
+                }
+
+                let data;
+                try {
+                    data = JSON.parse(rawText);
+                } catch (jsonError) {
+                    // JSON parsing errors should be retried as they might be temporary
+                    if (attempt < maxRetries) {
+                        console.warn(`⚠️ Prover API attempt ${attempt} failed (JSON parse error), retrying...`);
+                        await this._delay(this._calculateFixedDelay(baseDelay));
+                        continue;
+                    }
+                    
+                    console.error('❌ Error parsing JSON response (success status):', jsonError.message);
+                    throw new Error(`Invalid JSON success response from prover API: ${rawText}`);
+                }
+
+                // Validate response format
+                try {
+                    PayloadValidator.validateProverResponse(data);
+                } catch (validationError) {
+                    // Validation errors should be retried as they might be temporary
+                    if (attempt < maxRetries) {
+                        console.warn(`⚠️ Prover API attempt ${attempt} failed (validation error), retrying...`);
+                        await this._delay(this._calculateFixedDelay(baseDelay));
+                        continue;
+                    }
+                    throw validationError;
+                }
+
+                // Success - log if this was a retry
+                if (attempt > 1) {
+                    console.log(`✅ Prover API succeeded on attempt ${attempt}`);
+                }
+                
+                return data;
+
+            } catch (error) {
+                // Network errors, timeouts, etc.
+                if (attempt < maxRetries && this._isRetryableError(error)) {
+                    console.warn(`⚠️ Prover API attempt ${attempt} failed (${error.message}), retrying...`);
+                    await this._delay(this._calculateFixedDelay(baseDelay));
+                    continue;
+                }
+                
+                console.error(`❌ Prover API failed after ${attempt} attempts:`, error);
+                throw error;
+            } finally {
+                // Clear timeout if set
+                if (timeoutId) clearTimeout(timeoutId);
             }
-
-            // Validate response format
-            PayloadValidator.validateProverResponse(data);
-
-            return data;
-
-        } catch (error) {
-            console.error('❌ Error sending to prover API:', error);
-            throw error;
         }
+    }
+
+    /**
+     * Calculate exponential backoff delay with jitter
+     * @param {number} attempt - Current attempt number (1-based)
+     * @param {number} baseDelay - Base delay in milliseconds
+     * @returns {number} Delay in milliseconds
+     */
+    _calculateDelay(attempt, baseDelay) {
+        // Exponential backoff: baseDelay * 2^(attempt-1) with jitter
+        const exponentialDelay = baseDelay * Math.pow(2, attempt - 1);
+        // Add random jitter (±25%) to prevent thundering herd
+        const jitter = exponentialDelay * 0.25 * (Math.random() - 0.5);
+        return Math.min(exponentialDelay + jitter, 30000); // Cap at 30 seconds
+    }
+
+    /**
+     * Check if an error is retryable
+     * @param {Error} error - The error to check
+     * @returns {boolean} True if the error should trigger a retry
+     */
+    _isRetryableError(error) {
+        // Retry on network errors, timeouts, etc.
+        return error.name === 'TypeError' || // Network errors
+               error.name === 'AbortError' || // Request timeouts
+               error.message.includes('fetch') || // Fetch-related errors
+               error.message.includes('network') || // Network-related errors
+               error.message.includes('timeout'); // Timeout errors
+    }
+
+    /**
+     * Delay execution for specified milliseconds
+     * @param {number} ms - Milliseconds to delay
+     * @returns {Promise<void>}
+     */
+    _delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Fixed delay with small jitter around baseDelay (defaults to ~3s)
+     */
+    _calculateFixedDelay(baseDelay) {
+        const jitter = baseDelay * 0.1 * (Math.random() - 0.5); // ±10%
+        return Math.max(0, baseDelay + jitter);
+    }
+
+    /**
+     * Parse Retry-After header into milliseconds. Supports seconds or HTTP-date.
+     * Falls back to exponential backoff if header is invalid/missing.
+     */
+    _parseRetryAfter(headerValue, baseDelay, attempt) {
+        if (!headerValue) return this._calculateFixedDelay(baseDelay);
+        const seconds = Number(headerValue);
+        if (!Number.isNaN(seconds)) return Math.max(0, seconds * 1000);
+        const dateMs = Date.parse(headerValue);
+        if (!Number.isNaN(dateMs)) {
+            const diff = dateMs - Date.now();
+            return Math.max(0, diff);
+        }
+        return this._calculateFixedDelay(baseDelay);
     }
 
     /**
