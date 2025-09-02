@@ -19,24 +19,16 @@ export class ProverApiClient {
     async sendToProver(payload) {
         const maxRetries = 10;
         const baseDelay = 3000; // 3 second base delay
-        const requestTimeoutMs = 20000; // 20s per-request timeout to avoid hanging
         
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            // Hoist to ensure visibility in finally
-            let controller;
-            let timeoutId;
             try {
-                // Per-attempt abort controller to enforce timeout
-                controller = new AbortController();
-                timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs);
 
                 const response = await fetch(this.apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(payload),
-                    signal: controller.signal
+                    body: JSON.stringify(payload)
                 });
 
                 const contentType = response.headers.get('content-type') || 'unknown';
@@ -112,9 +104,6 @@ export class ProverApiClient {
                 
                 console.error(`❌ Prover API failed after ${attempt} attempts:`, error);
                 throw error;
-            } finally {
-                // Clear timeout if set
-                if (timeoutId) clearTimeout(timeoutId);
             }
         }
     }
