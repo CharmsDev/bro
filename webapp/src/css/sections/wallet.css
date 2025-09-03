@@ -155,44 +155,10 @@
     justify-content: center;
 }
 
+/* Wallet visit button sizing */
 .wallet-visit-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.9rem 1.25rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(2, 106, 163, 0.15));
-    border: 1px solid rgba(59, 130, 246, 0.35);
-    color: #dbeafe;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.wallet-visit-btn:hover {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(2, 106, 163, 0.25));
-    border-color: rgba(59, 130, 246, 0.6);
-    transform: translateY(-1px);
-}
-
-/* Green success variant for explorer links and similar actions */
-.wallet-visit-btn.wallet-visit-btn--success {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
-    border: 1px solid rgba(16, 185, 129, 0.35);
-    color: #d1fae5;
-}
-
-.wallet-visit-btn.wallet-visit-btn--success:hover {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.25));
-    border-color: rgba(16, 185, 129, 0.6);
-    transform: translateY(-1px);
-}
-
-.wallet-visit-btn.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    pointer-events: none;
-    filter: grayscale(0.2);
+    width: 100%;
+    max-width: 300px;
 }
 
 /* Section States */
@@ -271,7 +237,8 @@
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         transition: all var(--transition-normal);
     }
-
+ 
+    /* Wallet visit button sizing (mobile) */
     .wallet-visit-btn {
         width: 100%;
         max-width: 300px;

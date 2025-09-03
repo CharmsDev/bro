@@ -17,6 +17,7 @@
 /* Components */
 @import './components/banner.css';
 @import './components/buttons-unified.css';
+@import './components/links.css';
 @import './components/cards.css';
 @import './components/forms.css';
 @import './components/animations.css';
@@ -25,7 +26,10 @@
 /* Sections */
 @import './sections/hero.css';
 @import './sections/wallet.css';
-@import './sections/mining.css';
+/* Mining split */
+@import './sections/mining-container.css';
+@import './sections/mining-hash.css';
+@import './sections/mining-steps.css';
 @import './sections/transaction.css';
 @import './sections/broadcast.css';
 @import './sections/confirmation-monitoring.css';

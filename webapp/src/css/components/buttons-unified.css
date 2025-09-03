@@ -1,14 +1,21 @@
 /* ===================================
-   UNIFIED BUTTON SYSTEM - REFACTORED
+   BUTTON SYSTEM
    ===================================
-   Clean, organized button system with consistent naming
+   Styles for buttons: base, variants, sizes, states, groups, and responsive.
    ================================== */
 
 /* ===================================
    BASE BUTTON STYLES
    ================================== */
 
-.btn-base {
+.btn-base,
+.wallet-visit-btn,
+.wallet-btn,
+.mining-btn,
+.transaction-btn,
+.broadcast-btn,
+.claim-btn,
+.seed-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -29,7 +36,14 @@
     min-height: 48px;
 }
 
-.btn-base::before {
+.btn-base::before,
+.wallet-visit-btn::before,
+.wallet-btn::before,
+.mining-btn::before,
+.transaction-btn::before,
+.broadcast-btn::before,
+.claim-btn::before,
+.seed-btn::before {
     content: '';
     position: absolute;
     top: 0;
@@ -40,7 +54,14 @@
     transition: left 0.5s ease;
 }
 
-.btn-base:hover::before {
+.btn-base:hover::before,
+.wallet-visit-btn:hover::before,
+.wallet-btn:hover::before,
+.mining-btn:hover::before,
+.transaction-btn:hover::before,
+.broadcast-btn:hover::before,
+.claim-btn:hover::before,
+.seed-btn:hover::before {
     left: 100%;
 }
 
@@ -49,7 +70,8 @@
    ================================== */
 
 /* Primary Blue */
-.btn-primary {
+.btn-primary,
+.wallet-btn {
     background: linear-gradient(135deg, #3b82f6, #2563eb);
     box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.3);
 }
@@ -61,7 +83,9 @@
 }
 
 /* Secondary Orange */
-.btn-secondary {
+.btn-secondary,
+.mining-btn,
+.claim-btn {
     background: linear-gradient(135deg, #f59e0b, #d97706);
     box-shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.3);
 }
@@ -73,7 +97,8 @@
 }
 
 /* Success Green */
-.btn-success {
+.btn-success,
+.broadcast-btn {
     background: linear-gradient(135deg, #10b981, #059669);
     box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.3);
 }
@@ -90,14 +115,17 @@
     box-shadow: 0 4px 14px 0 rgba(220, 38, 38, 0.3);
 }
 
-.btn-danger:hover {
+.btn-danger:hover,
+.mining-btn.stop-btn:hover {
     background: linear-gradient(135deg, #b91c1c, #991b1b);
     box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
     transform: translateY(-2px);
 }
 
 /* Purple */
-.btn-purple {
+.btn-purple,
+.transaction-btn,
+.seed-btn {
     background: linear-gradient(135deg, #8b5cf6, #7c3aed);
     box-shadow: 0 4px 14px 0 rgba(139, 92, 246, 0.3);
 }
@@ -112,14 +140,16 @@
    TRANSPARENT/OUTLINE VARIANTS
    ================================== */
 
-.btn-outline-primary {
+.btn-outline-primary,
+.wallet-visit-btn {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.15));
     border: 1px solid rgba(59, 130, 246, 0.35);
     color: #dbeafe;
     box-shadow: none;
 }
 
-.btn-outline-primary:hover {
+.btn-outline-primary:hover,
+.wallet-visit-btn:hover {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.25));
     border-color: rgba(59, 130, 246, 0.6);
     transform: translateY(-1px);
@@ -138,14 +168,16 @@
     transform: translateY(-1px);
 }
 
-.btn-outline-success {
+.btn-outline-success,
+.wallet-visit-btn.wallet-visit-btn--success {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
     border: 1px solid rgba(16, 185, 129, 0.35);
     color: #d1fae5;
     box-shadow: none;
 }
 
-.btn-outline-success:hover {
+.btn-outline-success:hover,
+.wallet-visit-btn.wallet-visit-btn--success:hover {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.25));
     border-color: rgba(16, 185, 129, 0.6);
     transform: translateY(-1px);
@@ -185,7 +217,21 @@
 
 /* Disabled State */
 .btn-base:disabled,
-.btn-base.disabled {
+.btn-base.disabled,
+.wallet-visit-btn:disabled,
+.wallet-visit-btn.disabled,
+.wallet-btn:disabled,
+.wallet-btn.disabled,
+.mining-btn:disabled,
+.mining-btn.disabled,
+.transaction-btn:disabled,
+.transaction-btn.disabled,
+.broadcast-btn:disabled,
+.broadcast-btn.disabled,
+.claim-btn:disabled,
+.claim-btn.disabled,
+.seed-btn:disabled,
+.seed-btn.disabled {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
@@ -195,7 +241,21 @@
 }
 
 .btn-base:disabled:hover,
-.btn-base.disabled:hover {
+.btn-base.disabled:hover,
+.wallet-visit-btn:disabled:hover,
+.wallet-visit-btn.disabled:hover,
+.wallet-btn:disabled:hover,
+.wallet-btn.disabled:hover,
+.mining-btn:disabled:hover,
+.mining-btn.disabled:hover,
+.transaction-btn:disabled:hover,
+.transaction-btn.disabled:hover,
+.broadcast-btn:disabled:hover,
+.broadcast-btn.disabled:hover,
+.claim-btn:disabled:hover,
+.claim-btn.disabled:hover,
+.seed-btn:disabled:hover,
+.seed-btn.disabled:hover {
     transform: none !important;
     box-shadow: 0 4px 14px 0 rgba(100, 116, 139, 0.3) !important;
     background: linear-gradient(135deg, #64748b, #475569) !important;
@@ -288,29 +348,4 @@
     }
 }
 
-/* ===================================
-   USAGE GUIDE
-   ================================== */
-
-/*
-To use the new unified button system, replace old classes with combinations:
-
-OLD CLASS               NEW CLASSES
----------               -----------
-.wallet-btn            .btn-base .btn-primary
-.seed-btn              .btn-base .btn-purple .btn-md  
-.copy-btn              .btn-base .btn-primary .btn-copy
-.mining-btn            .btn-base .btn-secondary
-.mining-btn.stop-btn   .btn-base .btn-danger
-.transaction-btn       .btn-base .btn-purple
-.broadcast-btn         .btn-base .btn-success
-.claim-btn             .btn-base .btn-secondary
-.wallet-visit-btn      .btn-base .btn-primary
-
-AVAILABLE VARIANTS:
-Colors: .btn-primary, .btn-secondary, .btn-success, .btn-danger, .btn-purple
-Outlines: .btn-outline-primary, .btn-outline-secondary, .btn-outline-success
-Sizes: .btn-sm, .btn-md, .btn-lg, .btn-xl
-Special: .btn-copy, .btn-icon
-States: .disabled, .btn-loading
-*/
+/* End of button styles */

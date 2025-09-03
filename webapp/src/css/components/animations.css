@@ -17,11 +17,35 @@
     }
 }
 
+/* Pulse Glow (general-purpose) */
+@keyframes pulse-glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px rgba(209, 133, 10, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(209, 133, 10, 0.8);
+    }
+}
+
 /* Spin Animation */
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Shared Spinner Component */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(209, 133, 10, 0.3);
+    border-top: 2px solid var(--accent-orange);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    flex-shrink: 0;
 }
 
 /* Waiting Pulse Animation */
@@ -281,19 +305,6 @@
     }
 }
 
-/* Pulse Border Animation */
-@keyframes pulse-border {
-
-    0%,
-    100% {
-        box-shadow: 0 0 30px rgba(2, 106, 163, 0.2);
-    }
-
-    50% {
-        box-shadow: 0 0 50px rgba(2, 106, 163, 0.4);
-    }
-}
-
 /* Fade In Animation */
 @keyframes fadeIn {
     from {
@@ -349,17 +360,6 @@
 
     60% {
         transform: translateY(-5px);
-    }
-}
-
-/* Spinner Animation */
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
     }
 }
 
