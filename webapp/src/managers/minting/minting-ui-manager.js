@@ -125,9 +125,8 @@ export class MintingUIManager {
             container.innerHTML = `
                 <div class="progress-line">
                     <div class="spinner"></div>
-                    <span>In Progress...</span>
+                    <span id="prover-status-line">Contacting Prover Service…</span>
                 </div>
-                <div id="prover-status-line" class="status-line">Contacting Prover Service…</div>
             `;
             progressElement.appendChild(container);
         }
