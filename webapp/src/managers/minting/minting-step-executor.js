@@ -126,6 +126,59 @@ export class MintingStepExecutor {
     // Step 4: Prover API request
     async executeStep4_proverApiRequest(payload) {
         this.uiManager.updateStepStatus(3, 'active');
+        // Show spinner and initialize status ticker
+        this.uiManager.showProverSpinner();
+
+        // Message phases
+        const phaseA = [
+            'Prover Service: contacting server…',
+            'Preparing your proof request…',
+            'Establishing secure connection to Prover Service…',
+            'Submitting your request to the proving queue…',
+            'Queueing… this usually takes a few minutes.'
+        ];
+        const phaseB = [
+            "It's taking longer than usual, please be patient.",
+            'Your request is still in the queue. We will keep trying automatically.',
+            'Network conditions fluctuate; we will retry shortly.',
+            'Validating response… retrying if necessary.',
+            'Still working… thanks for your patience.'
+        ];
+        const phaseC = [
+            'Prover Service is experiencing High Load.',
+            'Under High Load, proving may take longer than normal.',
+            'Typical completion: ~10 minutes; during High Load it can take several hours.',
+            'Your request remains queued and will be retried automatically.',
+            'High Load persists; we will keep attempting in the background.'
+        ];
+        const phaseD = [
+            'You can keep this tab open; we will continue automatically.',
+            'Or come back in about an hour — progress will resume.',
+            'We will keep your place in the queue and continue retrying.',
+            'Prover Service remains under High Load; please remain patient.',
+            'We are monitoring continuously and will proceed as soon as it succeeds.'
+        ];
+
+        let attemptRef = 1;
+        let idxA = 0, idxB = 0, idxC = 0, idxD = 0;
+
+        const pickMessage = () => {
+            if (attemptRef <= 1) {
+                const msg = phaseA[idxA % phaseA.length]; idxA++; return msg;
+            } else if (attemptRef <= 3) {
+                const msg = phaseB[idxB % phaseB.length]; idxB++; return msg;
+            } else if (attemptRef <= 5) {
+                const msg = phaseC[idxC % phaseC.length]; idxC++; return msg;
+            } else {
+                const msg = phaseD[idxD % phaseD.length]; idxD++; return msg;
+            }
+        };
+
+        // Rotate the main line every ~12s
+        const ticker = setInterval(() => {
+            this.uiManager.updateProverStatus(pickMessage());
+        }, 12000);
+        this.uiManager.setProverStatusTicker(ticker);
 
         try {
             // ===== COMMENTED OUT: HARDCODED PROVER RESPONSE FOR TESTING =====
@@ -143,12 +196,32 @@ export class MintingStepExecutor {
             // return proverResponse;
             // ===== END COMMENTED OUT SECTION =====
 
-            // Make real prover API request
-            const proverResponse = await this.proverApiService.sendToProver(payload);
+            // Make real prover API request with status callback
+            const proverResponse = await this.proverApiService.sendToProver(payload, ({ phase, attempt, nextDelayMs }) => {
+                // Track attempt to drive phases
+                if (typeof attempt === 'number') attemptRef = attempt;
+                // Update substatus with next retry countdown when retrying
+                if (phase === 'retrying' && typeof nextDelayMs === 'number') {
+                    const seconds = Math.max(1, Math.round(nextDelayMs / 1000));
+                    this.uiManager.updateProverStatus(pickMessage(), `Next retry in ~${seconds}s`);
+                } else if (phase === 'start') {
+                    this.uiManager.updateProverStatus(pickMessage());
+                }
+            });
             
+            // Cleanup ticker and spinner
+            if (typeof this.uiManager.setProverStatusTicker === 'function') {
+                this.uiManager.setProverStatusTicker(null);
+            }
+            this.uiManager.hideProverSpinner();
+
             this.uiManager.updateStepStatus(3, 'completed');
             return proverResponse;
         } catch (error) {
+            // Cleanup ticker and keep progress visible with error status
+            if (typeof this.uiManager.setProverStatusTicker === 'function') {
+                this.uiManager.setProverStatusTicker(null);
+            }
             this.uiManager.updateStepStatus(3, 'error');
             throw new Error(`Prover API request failed: ${error.message}`);
         }

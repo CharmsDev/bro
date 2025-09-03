@@ -14,8 +14,8 @@ export class ProverApiService {
         return this.payloadGenerator.generatePayload(miningData, proofData, walletData);
     }
 
-    async sendToProver(payload) {
-        return this.apiClient.sendToProver(payload);
+    async sendToProver(payload, onStatus) {
+        return this.apiClient.sendToProver(payload, onStatus);
     }
 
     validateProverResponse(response) {

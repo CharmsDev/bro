@@ -5,6 +5,7 @@ export class MintingUIManager {
         this.steps = steps;
         this.countdownInterval = null;
         this._broadcastShown = false;
+        this._proverStatusInterval = null;
     }
 
     // FRESH START: Initialize UI when user clicks Step 5 button (coming from Step 4)
@@ -106,6 +107,59 @@ export class MintingUIManager {
                 stepsContainer.style.display = 'block';
             }
         }
+    }
+
+    // ===== Step 4 (Prover) UI helpers =====
+    _ensureProverProgressArea() {
+        const stepElement = document.getElementById('step-3');
+        if (!stepElement) return null;
+        const progressElement = stepElement.querySelector('.step-progress');
+        if (!progressElement) return null;
+        progressElement.style.display = 'block';
+
+        // Create container if not exists
+        let container = progressElement.querySelector('.prover-progress');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'prover-progress';
+            container.innerHTML = `
+                <div class="progress-line">
+                    <div class="spinner"></div>
+                    <span id="prover-status-line">Contacting Prover Service…</span>
+                </div>
+                <div class="substatus-line" id="prover-substatus-line" style="opacity:0.8"></div>
+            `;
+            progressElement.appendChild(container);
+        }
+        return container;
+    }
+
+    showProverSpinner() {
+        const container = this._ensureProverProgressArea();
+        if (!container) return;
+        // No-op: container creation ensures spinner is visible
+    }
+
+    hideProverSpinner() {
+        const stepElement = document.getElementById('step-3');
+        if (!stepElement) return;
+        const progressElement = stepElement.querySelector('.step-progress');
+        if (!progressElement) return;
+        progressElement.style.display = 'none';
+    }
+
+    updateProverStatus(message, substatus = '') {
+        const container = this._ensureProverProgressArea();
+        if (!container) return;
+        const statusEl = container.querySelector('#prover-status-line');
+        const substatusEl = container.querySelector('#prover-substatus-line');
+        if (statusEl) statusEl.textContent = message;
+        if (substatusEl) substatusEl.textContent = substatus;
+    }
+
+    setProverStatusTicker(intervalId) {
+        if (this._proverStatusInterval) clearInterval(this._proverStatusInterval);
+        this._proverStatusInterval = intervalId || null;
     }
 
     // Check for existing broadcast data and restore completion status
