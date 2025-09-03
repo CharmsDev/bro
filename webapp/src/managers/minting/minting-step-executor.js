@@ -129,34 +129,34 @@ export class MintingStepExecutor {
         // Show spinner and initialize status ticker
         this.uiManager.showProverSpinner();
 
-        // Message phases
+        // Message phases - short, activity-focused, no retry references
         const phaseA = [
-            'Prover Service: contacting server…',
-            'Preparing your proof request…',
-            'Establishing secure connection to Prover Service…',
-            'Submitting your request to the proving queue…',
-            'Queueing… this usually takes a few minutes.'
+            'Connecting to Prover Service…',
+            'Preparing proof request…',
+            'Submitting to proving queue…',
+            'Processing request…',
+            'Validating submission…'
         ];
         const phaseB = [
-            "It's taking longer than usual, please be patient.",
-            'Your request is still in the queue. We will keep trying automatically.',
-            'Network conditions fluctuate; we will retry shortly.',
-            'Validating response… retrying if necessary.',
-            'Still working… thanks for your patience.'
+            'High volume detected…',
+            'Processing may take longer…',
+            'Validating proof data…',
+            'Queue processing active…',
+            'Working on your request…'
         ];
         const phaseC = [
-            'Prover Service is experiencing High Load.',
-            'Under High Load, proving may take longer than normal.',
-            'Typical completion: ~10 minutes; during High Load it can take several hours.',
-            'Your request remains queued and will be retried automatically.',
-            'High Load persists; we will keep attempting in the background.'
+            'High demand - processing continues…',
+            'Proof validation in progress…',
+            'System under high load…',
+            'Processing your proof…',
+            'Validation ongoing…'
         ];
         const phaseD = [
-            'You can keep this tab open; we will continue automatically.',
-            'Or come back in about an hour — progress will resume.',
-            'We will keep your place in the queue and continue retrying.',
-            'Prover Service remains under High Load; please remain patient.',
-            'We are monitoring continuously and will proceed as soon as it succeeds.'
+            'We will keep your place in the queue…',
+            'Processing continues in background…',
+            'High demand - please remain patient…',
+            'Your proof is being processed…',
+            'Validation will complete automatically…'
         ];
 
         let attemptRef = 1;
@@ -197,14 +197,11 @@ export class MintingStepExecutor {
             // ===== END COMMENTED OUT SECTION =====
 
             // Make real prover API request with status callback
-            const proverResponse = await this.proverApiService.sendToProver(payload, ({ phase, attempt, nextDelayMs }) => {
+            const proverResponse = await this.proverApiService.sendToProver(payload, ({ phase, attempt }) => {
                 // Track attempt to drive phases
                 if (typeof attempt === 'number') attemptRef = attempt;
-                // Update substatus with next retry countdown when retrying
-                if (phase === 'retrying' && typeof nextDelayMs === 'number') {
-                    const seconds = Math.max(1, Math.round(nextDelayMs / 1000));
-                    this.uiManager.updateProverStatus(pickMessage(), `Next retry in ~${seconds}s`);
-                } else if (phase === 'start') {
+                // Update status message based on phase
+                if (phase === 'retrying' || phase === 'start') {
                     this.uiManager.updateProverStatus(pickMessage());
                 }
             });

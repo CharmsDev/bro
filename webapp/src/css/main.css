@@ -15,6 +15,7 @@
 @import './layout/footer.css';
 
 /* Components */
+@import './components/banner.css';
 @import './components/buttons-unified.css';
 @import './components/cards.css';
 @import './components/forms.css';

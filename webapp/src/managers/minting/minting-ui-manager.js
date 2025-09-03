@@ -125,9 +125,9 @@ export class MintingUIManager {
             container.innerHTML = `
                 <div class="progress-line">
                     <div class="spinner"></div>
-                    <span id="prover-status-line">Contacting Prover Service…</span>
+                    <span>In Progress...</span>
                 </div>
-                <div class="substatus-line" id="prover-substatus-line" style="opacity:0.8"></div>
+                <div id="prover-status-line" class="status-line">Contacting Prover Service…</div>
             `;
             progressElement.appendChild(container);
         }
@@ -148,13 +148,11 @@ export class MintingUIManager {
         progressElement.style.display = 'none';
     }
 
-    updateProverStatus(message, substatus = '') {
+    updateProverStatus(message) {
         const container = this._ensureProverProgressArea();
         if (!container) return;
         const statusEl = container.querySelector('#prover-status-line');
-        const substatusEl = container.querySelector('#prover-substatus-line');
         if (statusEl) statusEl.textContent = message;
-        if (substatusEl) substatusEl.textContent = substatus;
     }
 
     setProverStatusTicker(intervalId) {
