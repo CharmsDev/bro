@@ -1,10 +1,10 @@
 import { environmentConfig } from '../config/environment.js';
-import { QuickNodeClient } from './providers/quicknode/index.js';
+import BitcoinApiRouter from './providers/bitcoin-api-router.js';
 
 export class BitcoinAPIService {
     constructor() {
         // QuickNode RPC client with Blockbook add-on for complete Bitcoin operations
-        this.client = new QuickNodeClient();
+        this.client = new BitcoinApiRouter();
         this.basePollingInterval = 20000;
         this.minPollingInterval = 15000;
         this.maxPollingInterval = 180000;

@@ -1,5 +1,5 @@
 import { environmentConfig } from '../../config/environment.js';
-import QuickNodeClient from '../providers/quicknode/client.js';
+import BitcoinApiRouter from '../providers/bitcoin-api-router.js';
 
 /**
  * Broadcasts a single Bitcoin transaction to the network
@@ -12,8 +12,8 @@ export async function broadcastTransaction(txHex) {
             throw new Error('Transaction hex is required');
         }
 
-        // Initialize QuickNode client (handles all configuration internally)
-        const client = new QuickNodeClient();
+        // Initialize Bitcoin API router (handles all configuration internally)
+        const client = new BitcoinApiRouter();
 
         // Use proxy-enabled client provider method for broadcast
         const txid = await client.sendRawTransaction(txHex);
@@ -53,7 +53,7 @@ export async function broadcastPackage(signedCommitTx, signedSpellTx, logCallbac
         logCallback(`Network: ${network}`);
         
 
-        const client = new QuickNodeClient();
+        const client = new BitcoinApiRouter();
         const results = await client.submitPackage([signedCommitTx.signedHex, signedSpellTx.signedHex]);
 
         // Handle different possible response structures
@@ -105,7 +105,7 @@ export async function getTransactionStatus(txid) {
             throw new Error('Transaction ID is required');
         }
 
-        const client = new QuickNodeClient();
+        const client = new BitcoinApiRouter();
         // getrawtransaction with verbose true returns confirmations/blockhash when known
         const txData = await client.getRawTransaction(txid, true);
 

@@ -4,7 +4,7 @@
  */
 
 import { PROVER_CONFIG } from './config.js';
-import { QuickNodeClient } from '../providers/quicknode/index.js';
+import BitcoinApiRouter from '../providers/bitcoin-api-router.js';
 import { PayloadUtils } from './payload-utils.js';
 import { TemplateLoader } from './template-loader.js';
 import { PayloadValidator } from './payload-validator.js';
@@ -12,7 +12,7 @@ import { PayloadValidator } from './payload-validator.js';
 
 export class PayloadGenerator {
     constructor() {
-        this.quickNodeClient = new QuickNodeClient();
+        this.client = new BitcoinApiRouter();
         this.templateLoader = new TemplateLoader();
     }
 

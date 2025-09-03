@@ -1,8 +1,8 @@
-import { QuickNodeClient } from './providers/quicknode/index.js';
+import BitcoinApiRouter from './providers/bitcoin-api-router.js';
 
 export class ConfirmationMonitorService {
     constructor() {
-        this.client = new QuickNodeClient();
+        this.client = new BitcoinApiRouter();
         this.pollingInterval = 30000; // 30 seconds
         this.maxRetries = 999999; // Unlimited retries
         this.requestTimeout = 15000; // 15 seconds timeout

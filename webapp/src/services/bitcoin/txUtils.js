@@ -1,6 +1,6 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { environmentConfig } from '../../config/environment.js';
-import QuickNodeClient from '../providers/quicknode/client.js';
+import BitcoinApiRouter from '../providers/bitcoin-api-router.js';
 
 // Decode Bitcoin script to determine type
 export function decodeScript(script) {
@@ -86,7 +86,7 @@ export function getUtxoValueFromTxHex(txHex, vout) {
 // Get UTXO value using QuickNode Bitcoin API - strict mode, no fallbacks
 export async function getUtxoValue(txid, vout) {
     try {
-        const client = new QuickNodeClient();
+        const client = new BitcoinApiRouter();
         const txData = await client.getRawTransaction(txid, true);
 
         if (!txData || !txData.vout || !txData.vout[vout]) {
