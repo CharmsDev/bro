@@ -25,7 +25,7 @@ export class BitcoinAPIService {
     async getAddressUtxos(address) {
         try {
             // Use QuickNode's bb_getUTXOs method which returns only UNSPENT UTXOs
-            const utxos = await this.client.getAddressUtxos(address, { confirmed: false });
+            const utxos = await this.client.getAddressUtxos(address); // Get all UTXOs (confirmed + unconfirmed)
             console.log('[BitcoinAPI] getAddressUtxos: fetched unspent UTXOs:', utxos?.length || 0);
 
             if (!utxos || utxos.length === 0) {
