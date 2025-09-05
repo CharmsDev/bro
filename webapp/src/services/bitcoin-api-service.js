@@ -25,10 +25,15 @@ export class BitcoinAPIService {
     async getAddressUtxos(address) {
         try {
             // Use QuickNode's bb_getUTXOs method which returns only UNSPENT UTXOs
-            const utxos = await this.client.getAddressUtxos(address); // Get all UTXOs (confirmed + unconfirmed)
-            console.log('[BitcoinAPI] getAddressUtxos: fetched unspent UTXOs:', utxos?.length || 0);
+            const raw = await this.client.getAddressUtxos(address); // Get all UTXOs (confirmed + unconfirmed)
+            // Normalize shape: some providers may return { utxos: [...] }
+            const utxos = Array.isArray(raw) ? raw : (Array.isArray(raw?.utxos) ? raw.utxos : []);
+            console.log('[BitcoinAPI] getAddressUtxos: raw shape =',
+                raw && typeof raw === 'object' ? Object.keys(raw) : typeof raw,
+                '| count =', Array.isArray(utxos) ? utxos.length : 0
+            );
 
-            if (!utxos || utxos.length === 0) {
+            if (!Array.isArray(utxos) || utxos.length === 0) {
                 return [];
             }
 
@@ -37,7 +42,7 @@ export class BitcoinAPIService {
                 txid: utxo.txid,
                 vout: utxo.vout,
                 value: parseInt(utxo.value), // Already in satoshis
-                confirmed: utxo.confirmations > 0
+                confirmed: (utxo.confirmations || 0) > 0
             }));
             
             console.log('[BitcoinAPI] getAddressUtxos: formatted UTXOs:', formattedUtxos);

@@ -112,7 +112,22 @@ export default class BitcoinApiRouter {
 
   async getAddressUtxos(address, options = { confirmed: false }) {
     return await this._executeWithFallback(
-      () => this.quicknode.getAddressUtxos(address, options),
+      async () => {
+        const res = await this.quicknode.getAddressUtxos(address, options);
+        // QuickNode sometimes returns {result:null} with HTTP 200. Treat that as error to trigger fallback.
+        if (res == null) {
+          console.warn('[BitcoinApiRouter] QuickNode getAddressUtxos returned null result. Falling back...');
+          throw new Error('QuickNode getAddressUtxos null result');
+        }
+        // If QuickNode ever returns a wrapped shape like { utxos: [...] }, unwrap it.
+        const normalized = Array.isArray(res) ? res : (Array.isArray(res?.utxos) ? res.utxos : null);
+        if (normalized == null) {
+          console.warn('[BitcoinApiRouter] QuickNode getAddressUtxos returned unexpected shape:', typeof res);
+          throw new Error('QuickNode getAddressUtxos unexpected shape');
+        }
+        // Return as-is (empty array is a valid no-UTXO case and should NOT trigger fallback)
+        return normalized;
+      },
       async () => {
         const [utxos, height] = await Promise.all([
           this.mempool.getAddressUtxos(address),
