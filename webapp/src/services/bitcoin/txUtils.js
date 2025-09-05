@@ -1,6 +1,6 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { environmentConfig } from '../../config/environment.js';
-import BitcoinApiRouter from '../providers/bitcoin-api-router.js';
+import BitcoinApiRouter from '../providers/bitcoin-api-router/index.js';
 
 // Decode Bitcoin script to determine type
 export function decodeScript(script) {

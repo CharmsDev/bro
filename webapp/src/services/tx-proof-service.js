@@ -2,7 +2,7 @@
  * TxProofService - Bitcoin transaction proof generator using QuickNode (Bitcoin Core RPC)
  * Uses gettxoutproof for Bitcoin Core compatible proofs
  */
-import BitcoinApiRouter from './providers/bitcoin-api-router.js';
+import BitcoinApiRouter from './providers/bitcoin-api-router/index.js';
 import { environmentConfig } from '../config/environment.js';
 
 export class TxProofService {

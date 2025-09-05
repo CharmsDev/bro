@@ -1,5 +1,5 @@
 import { environmentConfig } from '../../config/environment.js';
-import BitcoinApiRouter from '../providers/bitcoin-api-router.js';
+import BitcoinApiRouter from '../providers/bitcoin-api-router/index.js';
 
 /**
  * Broadcasts a single Bitcoin transaction to the network
