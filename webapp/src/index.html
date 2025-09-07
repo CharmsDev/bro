@@ -6,483 +6,535 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BRO Token - The First Beaming Token on Bitcoin</title>
     <meta name="description"
-        content="Claim your $BRO token, the first beaming token on Bitcoin. Join the Charms ecosystem and be part of the future of decentralized applications.">
+          content="Claim your $BRO token, the first beaming token on Bitcoin. Join the Charms ecosystem and be part of the future of decentralized applications.">
     <link rel="stylesheet" href="css/main.css">
     <link rel="icon" href="assets/images/bro-token.jpg" type="image/jpeg">
-    
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-TPDZFQH9CV"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
 
-      gtag('config', 'G-TPDZFQH9CV');
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-TPDZFQH9CV');
     </script>
 </head>
 
 <body>
-    <!-- High Demand Banner -->
-    <div id="high-demand-banner" class="high-demand-banner">
-        <div class="banner-content">
-            <span class="banner-icon">⚠️</span>
-            <span class="banner-text">We are experiencing high demand. Processing may take longer than usual.</span>
+<!-- High Demand Banner -->
+<div id="high-demand-banner" class="high-demand-banner">
+    <div class="banner-content">
+        <span class="banner-icon">⚠️</span>
+        <span class="banner-text">We are experiencing high demand. Processing may take longer than usual.</span>
+    </div>
+</div>
+
+<div class="background-animation">
+    <div class="gradient-wave"></div>
+    <div class="gradient-wave"></div>
+    <div class="gradient-wave"></div>
+    <div class="gradient-wave"></div>
+    <div class="gradient-wave"></div>
+    <div class="gradient-wave"></div>
+    <div class="gradient-wave"></div>
+    <div class="gradient-wave"></div>
+</div>
+<div class="container">
+    <header>
+        <h1>Bro Token</h1>
+        <div style="margin-bottom: 25px;">
+            <p class="powered-by">Powered by <a href="https://charms.dev" target="_blank">Charms</a></p>
         </div>
-    </div>
+        <h2>The memecoin of the UTXBros.</h2>
+    </header>
 
-    <div class="background-animation">
-        <div class="gradient-wave"></div>
-        <div class="gradient-wave"></div>
-        <div class="gradient-wave"></div>
-        <div class="gradient-wave"></div>
-        <div class="gradient-wave"></div>
-        <div class="gradient-wave"></div>
-        <div class="gradient-wave"></div>
-        <div class="gradient-wave"></div>
-    </div>
-    <div class="container">
-        <header>
-            <h1>Bro Token</h1>
-            <div style="margin-bottom: 25px;">
-                <p class="powered-by">Powered by <a href="https://charms.dev" target="_blank">Charms</a></p>
+    <main>
+        <section class="hero">
+            <div class="token-container">
+                <img src="assets/images/bro-token.jpg" alt="BRO token image" class="token-img">
             </div>
-            <h2>The memecoin of the UTXBros.</h2>
-        </header>
+            <p class="description">Bro hails from Bitcoin, but he lives everywhere. Mine it below, then send it to other
+                UTXO chains - no bridges, no wrappers, just magic. That's wild, bro.</p>
 
-        <main>
-            <section class="hero">
-                <div class="token-container">
-                    <img src="assets/images/bro-token.jpg" alt="BRO token image" class="token-img">
+            <!-- Step 1: Wallet Creation Section -->
+            <section class="wallet-section active">
+                <h3 class="step-title step-title-1">STEP 1: Just Fund It, Bro</h3>
+                <p class="wallet-description">BTC is the gas you'll need to mine and mint $BRO.<br>
+                    Create a new Bitcoin wallet, and fund it with at least 7000 satoshi (0.00007 BTC).</p>
+
+                <div class="wallet-controls">
+                    <button id="createWalletBtn" class="btn-base btn-primary">
+                        <span>Create Wallet</span>
+                    </button>
+                    <button id="importWalletBtn" class="btn-base btn-secondary">
+                        <span>Import Wallet</span>
+                    </button>
                 </div>
-                <p class="description">Bro hails from Bitcoin, but he lives everywhere. Mine it below, then send it to other UTXO chains - no bridges, no wrappers, just magic. That's wild, bro.</p>
 
-                <!-- Step 1: Wallet Creation Section -->
-                <section class="wallet-section active">
-                    <h3 class="step-title step-title-1">STEP 1: Just Fund It, Bro</h3>
-                    <p class="wallet-description">BTC is the gas you'll need to mine and mint $BRO.<br>
-                        Create a new Bitcoin wallet, and fund it with at least 5000 satoshis (0.00005 BTC).</p>
-
-                    <div class="wallet-controls">
-                        <button id="createWalletBtn" class="btn-base btn-primary">
-                            <span>Create Wallet</span>
-                        </button>
-                        <button id="importWalletBtn" class="btn-base btn-secondary">
-                            <span>Import Wallet</span>
-                        </button>
+                <!-- Import Wallet Form (initially hidden) -->
+                <div id="importWalletForm" class="wallet-box import-wallet-box" style="display: none;">
+                    <h4>Import Existing Wallet</h4>
+                    <p class="import-description">Enter your 12-word seed phrase to restore your wallet:</p>
+                    <div class="seed-input-container">
+                        <textarea id="seedPhraseInput" class="seed-phrase-input"
+                                  placeholder="Enter your 12-word seed phrase here..." rows="3"></textarea>
                     </div>
-
-                    <!-- Import Wallet Form (initially hidden) -->
-                    <div id="importWalletForm" class="wallet-box import-wallet-box" style="display: none;">
-                        <h4>Import Existing Wallet</h4>
-                        <p class="import-description">Enter your 12-word seed phrase to restore your wallet:</p>
-                        <div class="seed-input-container">
-                            <textarea id="seedPhraseInput" class="seed-phrase-input" placeholder="Enter your 12-word seed phrase here..." rows="3"></textarea>
-                        </div>
-                        <div class="import-controls">
-                            <button id="importConfirmBtn" class="btn-base btn-primary btn-md">Import Wallet</button>
-                            <button id="importCancelBtn" class="btn-base btn-secondary btn-md">Cancel</button>
-                        </div>
-                        <p class="import-warning">⚠️ Make sure your seed phrase is correct. An incorrect phrase will create a different wallet.</p>
+                    <div class="import-controls">
+                        <button id="importConfirmBtn" class="btn-base btn-primary btn-md">Import Wallet</button>
+                        <button id="importCancelBtn" class="btn-base btn-secondary btn-md">Cancel</button>
                     </div>
+                    <p class="import-warning">⚠️ Make sure your seed phrase is correct. An incorrect phrase will create
+                        a different wallet.</p>
+                </div>
 
-                    <!-- Box 1: Seed Phrase -->
-                    <div id="seedPhraseBox" class="wallet-box seed-phrase-box" style="display: none;">
-                        <h4>Your Seed Phrase</h4>
-                        <div class="seedphrase-controls">
-                            <button id="showSeedBtn" class="btn-base btn-purple btn-md">Show Seed Phrase</button>
-                            <button id="copyDirectSeedBtn" class="btn-base btn-purple btn-md">Copy Seed Phrase</button>
-                            <button id="resetWalletBtn" class="btn-base btn-danger btn-md">🗑️ Reset
-                                Wallet</button>
-                        </div>
-                        <div id="seedPhraseDisplay" class="seedphrase-value" style="display: none;">
-                            <div id="seedPhraseText">Loading...</div>
-                        </div>
-                        <p class="seed-warning">⚠️ Keep your seed phrase safe and private. Never share it with
-                            anyone!</p>
-                    </div>
-
-                    <!-- Box 2: Address & UTXO Monitoring (with 20px margin from Box 1) -->
-                    <div id="addressMonitoringBox" class="wallet-box address-monitoring-box separated-box"
-                        style="display: none;">
-                        <h4>Your Bitcoin Address</h4>
-                        <div class="address-container">
-                            <div id="walletAddress" class="address-value">Loading...</div>
-                            <button id="copyAddressBtn" class="btn-base btn-primary btn-copy" title="Copy address">
-                                <span>📋</span>
-                            </button>
-                        </div>
-                        <p class="address-note">Send funds to this address to begin mining $BRO. (5000 sat minimum).</p>
-                        <p class="faucet-info">
-                            Fund it with at least 5000 satoshis (0.00005 BTC)<br><br>
-                            <b>NOTE:</b> Your address may have over 5000 satoshis, but you still cannot proceed to mining.<br>
-                            To resolve this, deposit another 5000 satoshis or more to your address as a single transaction - not multiple transfers. <br>Your Bitcoin address must carry at least one UTXO that is 5000 satoshis or larger.<br>
-                            Multiple UTXOs of a smaller amount will not allow you to mine $BRO.
-                        </p>
-
-                        <!-- UTXO Monitoring Section -->
-                        <div id="fundingMonitoring" class="funding-monitoring" style="display: none;">
-                            <div class="monitoring-status">
-                                <div class="status-item">
-                                    <span class="status-label">Status:</span>
-                                    <span id="fundingStatus" class="status-value">Waiting for funds...</span>
-                                    <div id="fundingSpinner" class="monitoring-spinner" style="display: none;">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="fundingAnimation" class="waiting-animation"
-                                style="display: none; justify-content: center; margin: 1rem 0;">
-                                <span>Monitoring blockchain</span>
-                                <div class="waiting-dots">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="utxoFoundDisplay" class="utxo-found-display funds-received-subbox"
-                            style="display: none;">
-                            <div class="funds-received-header">
-                                <h4>✅ Funds Received!</h4>
-                            </div>
-                            <div class="utxo-details">
-                                <div class="utxo-item">
-                                    <span class="utxo-label">Transaction ID:</span>
-                                    <span id="foundUtxoTxid" class="utxo-value">-</span>
-                                </div>
-                                <div class="utxo-item">
-                                    <span class="utxo-label">Output Index:</span>
-                                    <span id="foundUtxoVout" class="utxo-value">-</span>
-                                </div>
-                                <div class="utxo-item">
-                                    <span class="utxo-label">Amount:</span>
-                                    <span id="foundUtxoAmount" class="utxo-value">-</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Step 2: Mining Section -->
-                <section class="mining-section">
-                    <h3 class="step-title step-title-2">STEP 2: Just Mine It, Bro</h3>
-                    <p class="mining-description">Find the hash with the maximum leading zero bits. Mining runs infinitely until you stop and claim your best result. Get to work, bro.</p>
-
-                    <div class="mining-controls">
-                        <button id="startMining" class="btn-base btn-secondary">
-                            <span>Start Mining</span>
-                        </button>
-                        <button id="stopMining" class="btn-base btn-danger" style="display: none;">
-                            <span>Stop Mining & Claim Tokens</span>
+                <!-- Box 1: Seed Phrase -->
+                <div id="seedPhraseBox" class="wallet-box seed-phrase-box" style="display: none;">
+                    <h4>Your Seed Phrase</h4>
+                    <div class="seedphrase-controls">
+                        <button id="showSeedBtn" class="btn-base btn-purple btn-md">Show Seed Phrase</button>
+                        <button id="copyDirectSeedBtn" class="btn-base btn-purple btn-md">Copy Seed Phrase</button>
+                        <button id="resetWalletBtn" class="btn-base btn-danger btn-md">🗑️ Reset
+                            Wallet
                         </button>
                     </div>
+                    <div id="seedPhraseDisplay" class="seedphrase-value" style="display: none;">
+                        <div id="seedPhraseText">Loading...</div>
+                    </div>
+                    <p class="seed-warning">⚠️ Keep your seed phrase safe and private. Never share it with
+                        anyone!</p>
+                </div>
 
-                    <div id="miningDisplay" class="mining-display" style="display: none;">
-                        <div class="mining-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Current Nonce:</span>
-                                <span id="nonce" class="stat-value">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Current Zero Bits:</span>
-                                <span id="currentLeadingZeros" class="stat-value">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Status:</span>
-                                <span id="status" class="stat-value">Ready</span>
+                <!-- Box 2: Address & UTXO Monitoring (with 20px margin from Box 1) -->
+                <div id="addressMonitoringBox" class="wallet-box address-monitoring-box separated-box"
+                     style="display: none;">
+                    <h4>Your Bitcoin Address</h4>
+                    <div class="address-container">
+                        <div id="walletAddress" class="address-value">Loading...</div>
+                        <button id="copyAddressBtn" class="btn-base btn-primary btn-copy" title="Copy address">
+                            <span>📋</span>
+                        </button>
+                    </div>
+                    <p class="address-note">Send funds to this address to begin mining $BRO. (7000 sat minimum).</p>
+                    <p class="faucet-info">
+                        Fund it with at least 7000 satoshi (0.00007 BTC)<br><br>
+                        <b>NOTE:</b> Your address may have over 7000 satoshi, but you still cannot proceed to
+                        mining.<br>
+                        To resolve this, deposit another 7000 satoshi or more to your address as a single transaction -
+                        not
+                        multiple transfers. <br>Your Bitcoin address must carry at least one UTXO that is 7000 satoshi
+                        or
+                        larger.<br>
+                        Multiple UTXOs of a smaller amount will not allow you to mine $BRO.
+                    </p>
+
+                    <!-- UTXO Monitoring Section -->
+                    <div id="fundingMonitoring" class="funding-monitoring" style="display: none;">
+                        <div class="monitoring-status">
+                            <div class="status-item">
+                                <span class="status-label">Status:</span>
+                                <span id="fundingStatus" class="status-value">Waiting for funds...</span>
+                                <div id="fundingSpinner" class="monitoring-spinner" style="display: none;">
+                                </div>
                             </div>
                         </div>
 
-                        <div class="hash-display">
-                            <div class="hash-section">
-                                <div class="hash-label">Current Hash:</div>
-                                <div id="currentHash" class="hash-value">Waiting to start...</div>
+                        <div id="fundingAnimation" class="waiting-animation"
+                             style="display: none; justify-content: center; margin: 1rem 0;">
+                            <span>Monitoring blockchain</span>
+                            <div class="waiting-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="best-hash-section">
-                                <div class="best-hash-header">
-                                    <div class="hash-label">🏆 Best Hash Found:</div>
-                                    <div class="best-stats">
+                    <div id="utxoFoundDisplay" class="utxo-found-display funds-received-subbox"
+                         style="display: none;">
+                        <div class="funds-received-header">
+                            <h4>✅ Funds Received!</h4>
+                        </div>
+                        <div class="utxo-details">
+                            <div class="utxo-item">
+                                <span class="utxo-label">Transaction ID:</span>
+                                <span id="foundUtxoTxid" class="utxo-value">-</span>
+                            </div>
+                            <div class="utxo-item">
+                                <span class="utxo-label">Output Index:</span>
+                                <span id="foundUtxoVout" class="utxo-value">-</span>
+                            </div>
+                            <div class="utxo-item">
+                                <span class="utxo-label">Amount:</span>
+                                <span id="foundUtxoAmount" class="utxo-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 2: Mining Section -->
+            <section class="mining-section">
+                <h3 class="step-title step-title-2">STEP 2: Just Mine It, Bro</h3>
+                <p class="mining-description">Find the hash with the maximum leading zero bits. Mining runs infinitely
+                    until you stop and claim your best result. Get to work, bro.</p>
+
+                <div class="mining-controls">
+                    <button id="startMining" class="btn-base btn-secondary">
+                        <span>Start Mining</span>
+                    </button>
+                    <button id="stopMining" class="btn-base btn-danger" style="display: none;">
+                        <span>Stop Mining & Claim Tokens</span>
+                    </button>
+                </div>
+
+                <div id="miningDisplay" class="mining-display" style="display: none;">
+                    <div class="mining-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Current Nonce:</span>
+                            <span id="nonce" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Current Zero Bits:</span>
+                            <span id="currentLeadingZeros" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Status:</span>
+                            <span id="status" class="stat-value">Ready</span>
+                        </div>
+                    </div>
+
+                    <div class="hash-display">
+                        <div class="hash-section">
+                            <div class="hash-label">Current Hash:</div>
+                            <div id="currentHash" class="hash-value">Waiting to start...</div>
+                        </div>
+
+                        <div class="best-hash-section">
+                            <div class="best-hash-header">
+                                <div class="hash-label">🏆 Best Hash Found:</div>
+                                <div class="best-stats">
                                         <span class="best-stat">Nonce: <span id="bestNonce"
-                                                class="best-value">-</span></span>
-                                    </div>
-                                </div>
-                                <div id="bestHash" class="hash-value best">No best hash yet...</div>
-                            </div>
-                        </div>
-
-                        <div class="mining-animation">
-                            <div class="mining-dots">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>
-
-                        <div id="rewardDisplay" class="reward-display">
-                            <h4>💰 Token Reward Calculation</h4>
-                            <div class="reward-info">
-                                <div class="reward-item">
-                                    <span class="reward-label">Proof of Work:</span>
-                                    <span id="proofOfWork" class="reward-value">-</span>
-                                </div>
-                                <div class="reward-item">
-                                    <span class="reward-label">Your Reward:</span>
-                                    <span id="tokenReward" class="reward-value reward-amount">-</span>
-                                    <span class="reward-token">$BRO</span>
+                                                                             class="best-value">-</span></span>
                                 </div>
                             </div>
-                            <div class="reward-formula" style="margin-top: 10px; font-size: 16px; color: #e2e8f0;">
-                                <strong>Formula:</strong> <span id="rewardFormula">100M * clz² / 2^h</span>
+                            <div id="bestHash" class="hash-value best">No best hash yet...</div>
+                        </div>
+                    </div>
+
+                    <div class="mining-animation">
+                        <div class="mining-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+
+                    <div id="rewardDisplay" class="reward-display">
+                        <h4>💰 Token Reward Calculation</h4>
+                        <div class="reward-info">
+                            <div class="reward-item">
+                                <span class="reward-label">Proof of Work:</span>
+                                <span id="proofOfWork" class="reward-value">-</span>
+                            </div>
+                            <div class="reward-item">
+                                <span class="reward-label">Your Reward:</span>
+                                <span id="tokenReward" class="reward-value reward-amount">-</span>
+                                <span class="reward-token">$BRO</span>
                             </div>
                         </div>
-
-                        <div id="successMessage" class="mining-success-box" style="display: none;">
-                            <h4>Nice hash, bro. Now let's put it into a Bitcoin transaction to prove that you did the work.</h4>
+                        <div class="reward-formula" style="margin-top: 10px; font-size: 16px; color: #e2e8f0;">
+                            <strong>Formula:</strong> <span id="rewardFormula">100M * clz² / 2^h</span>
                         </div>
                     </div>
-                </section>
 
-                <!-- Step 3: Transaction Creation Section -->
-                <section class="transaction-section">
-                    <h3 class="step-title step-title-3">STEP 3: Just Build It, Bro</h3>
-                    <p class="transaction-description">Create a Bitcoin transaction with OP_RETURN data containing the
-                        mining hash and nonce. This transaction will spend the UTXO from your monitored address.</p>
-
-                    <div class="transaction-controls">
-                        <button id="createTransaction" class="btn-base btn-purple" disabled>
-                            <span>Create mining transaction</span>
-                        </button>
+                    <div id="successMessage" class="mining-success-box" style="display: none;">
+                        <h4>Nice hash, bro. Now let's put it into a Bitcoin transaction to prove that you did the
+                            work.</h4>
                     </div>
+                </div>
+            </section>
 
-                    <div id="transactionDisplay" class="transaction-display" style="display: none;">
-                        <div class="transaction-info">
-                            <h4>✅ Transaction Created</h4>
-                            <div class="transaction-details">
-                                <div class="transaction-item">
-                                    <span class="transaction-label">🆔 Transaction ID:</span>
-                                    <span id="txId" class="transaction-value">-</span>
-                                </div>
-                                <div class="transaction-item">
-                                    <span class="transaction-label">📏 Size:</span>
-                                    <span id="txSize" class="transaction-value">-</span>
-                                </div>
-                                <div class="transaction-item">
-                                    <span class="transaction-label">📝 OP_RETURN Data:</span>
-                                    <div id="opReturnData" class="transaction-value op-return-data">-</div>
-                                </div>
-                                <div class="transaction-item">
-                                    <span class="transaction-label">🔗 Raw Transaction:</span>
-                                    <div id="rawTransaction" class="transaction-value raw-tx">-</div>
-                                </div>
+            <!-- Step 3: Transaction Creation Section -->
+            <section class="transaction-section">
+                <h3 class="step-title step-title-3">STEP 3: Just Build It, Bro</h3>
+                <p class="transaction-description">Create a Bitcoin transaction with OP_RETURN data containing the
+                    mining hash and nonce. This transaction will spend the UTXO from your monitored address.</p>
+
+                <div class="transaction-controls">
+                    <button id="createTransaction" class="btn-base btn-purple" disabled>
+                        <span>Create mining transaction</span>
+                    </button>
+                </div>
+
+                <div id="transactionDisplay" class="transaction-display" style="display: none;">
+                    <div class="transaction-info">
+                        <h4>✅ Transaction Created</h4>
+                        <div class="transaction-details">
+                            <div class="transaction-item">
+                                <span class="transaction-label">🆔 Transaction ID:</span>
+                                <span id="txId" class="transaction-value">-</span>
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Step 4: Broadcast Transaction Section -->
-                <section class="broadcast-section">
-                    <h3 class="step-title step-title-4">STEP 4: Just Broadcast It, Bro</h3>
-                    <p class="broadcast-description">Broadcast the mining transaction to the Bitcoin network. A
-                        necessary step to use it in the BRO Mint.</p>
-
-                    <div class="broadcast-controls">
-                        <button id="broadcastTransaction" class="btn-base btn-success" disabled>
-                            <span>Broadcast to Network</span>
-                        </button>
-                    </div>
-
-                    <div id="broadcastDisplay" class="broadcast-display" style="display: none;">
-                        <div class="broadcast-info">
-                            <div class="broadcast-item">
-                                <span class="broadcast-label">Status:</span>
-                                <span id="broadcastStatus" class="status-value">Ready to broadcast...</span>
-                                <div id="broadcastSpinner" class="broadcast-spinner" style="display: none;"></div>
+                            <div class="transaction-item">
+                                <span class="transaction-label">📏 Size:</span>
+                                <span id="txSize" class="transaction-value">-</span>
                             </div>
-                            <div class="broadcast-item">
-                                <span class="broadcast-label">Transaction ID:</span>
-                                <span id="broadcastTxid" class="broadcast-value">-</span>
+                            <div class="transaction-item">
+                                <span class="transaction-label">📝 OP_RETURN Data:</span>
+                                <div id="opReturnData" class="transaction-value op-return-data">-</div>
                             </div>
-                            <div class="broadcast-item">
-                                <span class="broadcast-label">Explorer:</span>
-                                <a id="explorerLink" href="#" target="_blank" class="explorer-link"
-                                    style="display: none;">View on Mempool.space</a>
+                            <div class="transaction-item">
+                                <span class="transaction-label">🔗 Raw Transaction:</span>
+                                <div id="rawTransaction" class="transaction-value raw-tx">-</div>
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Step 5: Claim Tokens Section -->
-                <section class="claim-section">
-                    <h3 class="step-title step-title-5">STEP 5: Just Mint It, Bro</h3>
-                    <p class="claim-description">Gnarly - your transaction has been broadcast. Bitcoin approves.<br>
-                        Now you can mint $BRO. Your minting transaction needs time to confirm on chain (~Xmin), so just sit back, chillax, and let Bitcoin handle it.</p>
-
-                    <div class="claim-controls">
-                        <button id="claimTokensBtn" class="btn-base btn-secondary disabled">
-                            <span>Start Minting $BRO</span>
-                        </button>
-                    </div>
-                </section>
-
-                <!-- Step 6: Visit Wallet Section -->
-                <section class="wallet-visit-section disabled">
-                    <h3 class="step-title step-title-6">STEP 6: Enjoy $BRO!</h3>
-                    <p class="wallet-visit-description">Wake up, bro - your Bro tokens just landed!<br>
-                        Access your wallet to view your $BRO balance and manage your funds.</p>
-
-                    <div class="wallet-visit-controls">
-                        <button id="visitWalletBtn" class="btn-base btn-primary disabled">
-                            <span>Go To My Wallet</span>
-                        </button>
-                        <button id="mintMoreBtn" class="btn-base btn-secondary disabled">
-                            <span>Mint More</span>
-                        </button>
-                    </div>
-                </section>
-
-                <div class="token-info">
-                    <h3>Token Details</h3>
-                    <div class="token-info-grid">
-                        <div class="info-item">
-                            <span class="info-item-label">Ticker</span>
-                            <span class="info-item-value">$BRO</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-item-label">Decimals</span>
-                            <span class="info-item-value">8</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-item-label">Issuance</span>
-                            <span class="info-item-value">Proof of Work Mining</span>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section class="faq">
-                <h3>Bro Token FAQ</h3>
-                <div class="faq-card">
-                    <button class="faq-header">
-                        1. What is Bro Token?
-                        <span class="faq-toggle">+</span>
+            <!-- Step 4: Broadcast Transaction Section -->
+            <section class="broadcast-section">
+                <h3 class="step-title step-title-4">STEP 4: Just Broadcast It, Bro</h3>
+                <p class="broadcast-description">Broadcast the mining transaction to the Bitcoin network. A
+                    necessary step to use it in the BRO Mint.</p>
+
+                <div class="broadcast-controls">
+                    <button id="broadcastTransaction" class="btn-base btn-success" disabled>
+                        <span>Broadcast to Network</span>
                     </button>
-                    <div class="faq-content">Bro (ticker: $BRO) is the official memecoin of the UTXBros community and the very first charm you can own. It's a fun token, but also a live demo of the Charms protocol, showing how Bitcoin can power programmable, portable assets across chains.</div>
                 </div>
-                <div class="faq-card">
-                    <button class="faq-header">
-                        2. Why do we need $BRO?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-content">Because memes move markets, but also because $BRO is the first token to run on Charms, the protocol that will connect Bitcoin to Cardano (and beyond). $BRO demonstrates the two core superpowers of Charms that no Bitcoin assets have had before: programmable issuance, and native interoperability.<br><br>Owning $BRO means you're early to the programmable token economy uniting Bitcoin, Cardano, Litecoin, and more.</div>
-                </div>
-                <div class="faq-card">
-                    <button class="faq-header">
-                        3. How do I get $BRO?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-content">You earn $BRO by mining it. The earlier you mine, the bigger your rewards.<br><br>You need a Bitcoin wallet with sufficient funds to pay Bitcoin transaction fees and ZK proving fees. Fund your wallet with at least 5000 sats before beginning to mine.</div>
-                </div>
-                <div class="faq-card">
-                    <button class="faq-header">
-                        4. Why Mining, and how does it work?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-content">Mining $BRO keeps things fair and simple. Instead of insiders or whales buying up the supply, anyone can join from day one and grind for rewards. It also mirrors Bitcoin's ethos—work for your coin, don't beg for an airdrop.<br><br>The process combines the Bitcoin mining model with the Charms protocol. You mine to find a hash with maximum leading zero bits, embed this proof in a Bitcoin transaction, broadcast it to the network, then use the Charms protocol to claim your $BRO tokens.</div>
-                </div>
-                <div class="faq-card">
-                    <button class="faq-header">
-                        5. Where can I buy $BRO?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-content">At launch, you can't buy $BRO on an exchange. You have to mine it first. Later, once people start trading it, $BRO will naturally find its way to marketplaces and DEXs. Early bros get the best shot at building their bag.</div>
-                </div>
-                <div class="faq-card">
-                    <button class="faq-header">
-                        6. Can I send $BRO to another wallet?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-content">Yes – but make sure it's a Charms-integrated wallet. At first, that only includes Charms Wallet and other users of it.<br><br>$BRO lives on Bitcoin, so you can send it like any other Bitcoin-native asset. Once Charms goes live on Cardano and Litecoin, you'll also be able to beam your $BRO across chains.</div>
-                </div>
-                <div class="faq-card">
-                    <button class="faq-header">
-                        7. I don't mine Bitcoin. Can I still get $BRO?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-content">Yes—you don't need an ASIC or mining rig. $BRO has its own lightweight mining process anyone can join with a normal computer or smartphone. Or, you can wait for Bros who mined early to sell it once markets open.</div>
-                </div>
-                <div class="faq-card">
-                    <button class="faq-header">
-                        8. Is $BRO a CNT?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-content">Not at first. $BRO begins life on Bitcoin as charm. But once Charms launches Cardano support, $BRO can be "beamed" over to any Cardano wallet in (CNT) form.</div>
-                </div>
-                <div class="faq-card">
-                    <button class="faq-header">
-                        9. What is Charms?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-content">Charms are programmable, portable smart assets that live natively on Bitcoin and other UTXO blockchains. Instead of being stuck on one chain or needing bridges, Charms use zk-proofs and client-side validation to move freely and safely. $BRO is the first Charm, showing off the tech in action.</div>
-                </div>
-                <div class="faq-card">
-                    <button class="faq-header">
-                        10. Can I send $BRO to Cardano or Litecoin?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-content">At launch, $BRO only lives on Bitcoin. Once Charms is live on Cardano (expected October 2025), you'll be able to beam $BRO to Cardano. Support for other UTXO chains like Litecoin will come soon afterwards.</div>
+
+                <div id="broadcastDisplay" class="broadcast-display" style="display: none;">
+                    <div class="broadcast-info">
+                        <div class="broadcast-item">
+                            <span class="broadcast-label">Status:</span>
+                            <span id="broadcastStatus" class="status-value">Ready to broadcast...</span>
+                            <div id="broadcastSpinner" class="broadcast-spinner" style="display: none;"></div>
+                        </div>
+                        <div class="broadcast-item">
+                            <span class="broadcast-label">Transaction ID:</span>
+                            <span id="broadcastTxid" class="broadcast-value">-</span>
+                        </div>
+                        <div class="broadcast-item">
+                            <span class="broadcast-label">Explorer:</span>
+                            <a id="explorerLink" href="#" target="_blank" class="explorer-link"
+                               style="display: none;">View on Mempool.space</a>
+                        </div>
+                    </div>
                 </div>
             </section>
-        </main>
-    </div>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>About Charms</h4>
-                    <p>Enchant Bitcoin with your own spells. Charms is a protocol for building tokens, NFTs, and other
-                        decentralized applications on the world's most secure blockchain.</p>
+            <!-- Step 5: Claim Tokens Section -->
+            <section class="claim-section">
+                <h3 class="step-title step-title-5">STEP 5: Just Mint It, Bro</h3>
+                <p class="claim-description">Gnarly - your transaction has been broadcast. Bitcoin approves.<br>
+                    Now you can mint $BRO. Your minting transaction needs time to confirm on chain (~Xmin), so just sit
+                    back, chillax, and let Bitcoin handle it.</p>
+
+                <div class="claim-controls">
+                    <button id="claimTokensBtn" class="btn-base btn-secondary disabled">
+                        <span>Start Minting $BRO</span>
+                    </button>
                 </div>
-                <div class="footer-section">
-                    <h4>Resources</h4>
-                    <p><a href="https://charms.dev/" target="_blank">Documentation</a></p>
-                    <p><a href="https://github.com/CharmsDev" target="_blank">GitHub</a></p>
-                    <p><a href="https://charms.dev/Charms-whitepaper.pdf" target="_blank">Whitepaper</a></p>
+            </section>
+
+            <!-- Step 6: Visit Wallet Section -->
+            <section class="wallet-visit-section disabled">
+                <h3 class="step-title step-title-6">STEP 6: Enjoy $BRO!</h3>
+                <p class="wallet-visit-description">Wake up, bro - your Bro tokens just landed!<br>
+                    Access your wallet to view your $BRO balance and manage your funds.</p>
+
+                <div class="wallet-visit-controls">
+                    <button id="visitWalletBtn" class="btn-base btn-primary disabled">
+                        <span>Go To My Wallet</span>
+                    </button>
+                    <button id="mintMoreBtn" class="btn-base btn-secondary disabled">
+                        <span>Mint More</span>
+                    </button>
                 </div>
-                <div class="footer-section">
-                    <h4>Community</h4>
-                    <p>Join our growing community to stay updated and contribute to the Charms ecosystem.</p>
-                    <div class="social-links">
-                        <a href="https://x.com/CharmsDev" target="_blank" class="social-link" aria-label="Twitter">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                            </svg>
-                        </a>
-                        <a class="social-link disabled" aria-label="Discord">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
-                            </svg>
-                        </a>
-                        <a class="social-link disabled" aria-label="Telegram">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-                            </svg>
-                        </a>
+            </section>
+
+            <div class="token-info">
+                <h3>Token Details</h3>
+                <div class="token-info-grid">
+                    <div class="info-item">
+                        <span class="info-item-label">Ticker</span>
+                        <span class="info-item-value">$BRO</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-item-label">Decimals</span>
+                        <span class="info-item-value">8</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-item-label">Issuance</span>
+                        <span class="info-item-value">Proof of Work Mining</span>
                     </div>
                 </div>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2024 Charms. Built on Bitcoin. Powered by innovation.</p>
+        </section>
+
+        <section class="faq">
+            <h3>Bro Token FAQ</h3>
+            <div class="faq-card">
+                <button class="faq-header">
+                    1. What is Bro Token?
+                    <span class="faq-toggle">+</span>
+                </button>
+                <div class="faq-content">Bro (ticker: $BRO) is the official memecoin of the UTXBros community and the
+                    very first charm you can own. It's a fun token, but also a live demo of the Charms protocol, showing
+                    how Bitcoin can power programmable, portable assets across chains.
+                </div>
+            </div>
+            <div class="faq-card">
+                <button class="faq-header">
+                    2. Why do we need $BRO?
+                    <span class="faq-toggle">+</span>
+                </button>
+                <div class="faq-content">Because memes move markets, but also because $BRO is the first token to run on
+                    Charms, the protocol that will connect Bitcoin to Cardano (and beyond). $BRO demonstrates the two
+                    core superpowers of Charms that no Bitcoin assets have had before: programmable issuance, and native
+                    interoperability.<br><br>Owning $BRO means you're early to the programmable token economy uniting
+                    Bitcoin, Cardano, Litecoin, and more.
+                </div>
+            </div>
+            <div class="faq-card">
+                <button class="faq-header">
+                    3. How do I get $BRO?
+                    <span class="faq-toggle">+</span>
+                </button>
+                <div class="faq-content">You earn $BRO by mining it. The earlier you mine, the bigger your
+                    rewards.<br><br>You need a Bitcoin wallet with sufficient funds to pay Bitcoin transaction fees and
+                    ZK proving fees. Fund your wallet with at least 7000 sat before beginning to mine.
+                </div>
+            </div>
+            <div class="faq-card">
+                <button class="faq-header">
+                    4. Why Mining, and how does it work?
+                    <span class="faq-toggle">+</span>
+                </button>
+                <div class="faq-content">Mining $BRO keeps things fair and simple. Instead of insiders or whales buying
+                    up the supply, anyone can join from day one and grind for rewards. It also mirrors Bitcoin's
+                    ethos—work for your coin, don't beg for an airdrop.<br><br>The process combines the Bitcoin mining
+                    model with the Charms protocol. You mine to find a hash with maximum leading zero bits, embed this
+                    proof in a Bitcoin transaction, broadcast it to the network, then use the Charms protocol to claim
+                    your $BRO tokens.
+                </div>
+            </div>
+            <div class="faq-card">
+                <button class="faq-header">
+                    5. Where can I buy $BRO?
+                    <span class="faq-toggle">+</span>
+                </button>
+                <div class="faq-content">At launch, you can't buy $BRO on an exchange. You have to mine it first. Later,
+                    once people start trading it, $BRO will naturally find its way to marketplaces and DEXs. Early bros
+                    get the best shot at building their bag.
+                </div>
+            </div>
+            <div class="faq-card">
+                <button class="faq-header">
+                    6. Can I send $BRO to another wallet?
+                    <span class="faq-toggle">+</span>
+                </button>
+                <div class="faq-content">Yes – but make sure it's a Charms-integrated wallet. At first, that only
+                    includes Charms Wallet and other users of it.<br><br>$BRO lives on Bitcoin, so you can send it like
+                    any other Bitcoin-native asset. Once Charms goes live on Cardano and Litecoin, you'll also be able
+                    to beam your $BRO across chains.
+                </div>
+            </div>
+            <div class="faq-card">
+                <button class="faq-header">
+                    7. I don't mine Bitcoin. Can I still get $BRO?
+                    <span class="faq-toggle">+</span>
+                </button>
+                <div class="faq-content">Yes—you don't need an ASIC or mining rig. $BRO has its own lightweight mining
+                    process anyone can join with a normal computer or smartphone. Or, you can wait for Bros who mined
+                    early to sell it once markets open.
+                </div>
+            </div>
+            <div class="faq-card">
+                <button class="faq-header">
+                    8. Is $BRO a CNT?
+                    <span class="faq-toggle">+</span>
+                </button>
+                <div class="faq-content">Not at first. $BRO begins life on Bitcoin as charm. But once Charms launches
+                    Cardano support, $BRO can be "beamed" over to any Cardano wallet in (CNT) form.
+                </div>
+            </div>
+            <div class="faq-card">
+                <button class="faq-header">
+                    9. What is Charms?
+                    <span class="faq-toggle">+</span>
+                </button>
+                <div class="faq-content">Charms are programmable, portable smart assets that live natively on Bitcoin
+                    and other UTXO blockchains. Instead of being stuck on one chain or needing bridges, Charms use
+                    zk-proofs and client-side validation to move freely and safely. $BRO is the first Charm, showing off
+                    the tech in action.
+                </div>
+            </div>
+            <div class="faq-card">
+                <button class="faq-header">
+                    10. Can I send $BRO to Cardano or Litecoin?
+                    <span class="faq-toggle">+</span>
+                </button>
+                <div class="faq-content">At launch, $BRO only lives on Bitcoin. Once Charms is live on Cardano (expected
+                    October 2025), you'll be able to beam $BRO to Cardano. Support for other UTXO chains like Litecoin
+                    will come soon afterwards.
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About Charms</h4>
+                <p>Enchant Bitcoin with your own spells. Charms is a protocol for building tokens, NFTs, and other
+                    decentralized applications on the world's most secure blockchain.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Resources</h4>
+                <p><a href="https://charms.dev/" target="_blank">Documentation</a></p>
+                <p><a href="https://github.com/CharmsDev" target="_blank">GitHub</a></p>
+                <p><a href="https://charms.dev/Charms-whitepaper.pdf" target="_blank">Whitepaper</a></p>
+            </div>
+            <div class="footer-section">
+                <h4>Community</h4>
+                <p>Join our growing community to stay updated and contribute to the Charms ecosystem.</p>
+                <div class="social-links">
+                    <a href="https://x.com/CharmsDev" target="_blank" class="social-link" aria-label="Twitter">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                    </a>
+                    <a class="social-link disabled" aria-label="Discord">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                    d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                        </svg>
+                    </a>
+                    <a class="social-link disabled" aria-label="Telegram">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                    d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                        </svg>
+                    </a>
+                </div>
             </div>
         </div>
-    </footer>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Charms. Built on Bitcoin. Powered by innovation.</p>
+        </div>
+    </div>
+</footer>
 
-    <script type="module" src="js/main.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 
 </html>

@@ -1,4 +1,4 @@
-import { environmentConfig } from '../config/environment.js';
+import {environmentConfig} from '../config/environment.js';
 import BitcoinApiRouter from './providers/bitcoin-api-router/index.js';
 
 export class BitcoinAPIService {
@@ -44,7 +44,7 @@ export class BitcoinAPIService {
                 value: parseInt(utxo.value), // Already in satoshis
                 confirmed: (utxo.confirmations || 0) > 0
             }));
-            
+
             console.log('[BitcoinAPI] getAddressUtxos: formatted UTXOs:', formattedUtxos);
             return formattedUtxos;
         } catch (error) {
@@ -95,14 +95,14 @@ export class BitcoinAPIService {
                 }
 
                 if (utxos && utxos.length > 0) {
-                    const validUtxos = utxos.filter(utxo => parseInt(utxo.value) >= 5000);
+                    const validUtxos = utxos.filter(utxo => parseInt(utxo.value) >= 7000);
 
                     if (validUtxos.length > 0) {
                         // Select the largest UTXO for mining (most efficient)
-                        const largestUtxo = validUtxos.reduce((largest, current) => 
+                        const largestUtxo = validUtxos.reduce((largest, current) =>
                             parseInt(current.value) > parseInt(largest.value) ? current : largest
                         );
-                        
+
                         const formattedUtxo = {
                             txid: largestUtxo.txid,
                             vout: largestUtxo.vout,
