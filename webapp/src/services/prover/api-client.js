@@ -19,7 +19,7 @@ export class ProverApiClient {
      * @returns {Promise<*>} Response from prover API
      */
     async sendToProver(payload, onStatus) {
-        // Infinite retry with random delay between 2s and 20s for any error case
+        // Only retry on HTTP 5xx. No retries for 4xx, JSON/validation, or network errors.
         const minDelayMs = 2000;
         const maxDelayMs = 20000;
         let attempt = 1;
@@ -44,67 +44,47 @@ export class ProverApiClient {
 
                 if (!response.ok) {
                     const errorMessage = `Prover API error: ${response.status} ${response.statusText} - ${rawText}`;
-
-                    // Retry on ALL HTTP errors. For 429, honor Retry-After if present.
-                    if (response.status === 429) {
-                        const retryAfterHeader = response.headers.get('retry-after');
-                        const retryAfterMs = this._parseRetryAfter(retryAfterHeader, minDelayMs, attempt);
-                        const delayMs = retryAfterHeader ? retryAfterMs : this._randomDelay(minDelayMs, maxDelayMs);
+                    // Only retry on 5xx server errors
+                    if (response.status >= 500) {
                         if (this.enableLogging) {
-                            console.warn(`⚠️ Prover API attempt ${attempt} hit rate limit (429). Retry after ${Math.round(delayMs)}ms...`);
+                            console.warn(`⚠️ Prover API attempt ${attempt} failed with ${response.status}. Retrying...`);
                         }
+                        const nextDelay = this._randomDelay(minDelayMs, maxDelayMs);
                         if (typeof onStatus === 'function') {
-                            try { onStatus({ phase: 'retrying', attempt, statusCode: response.status, rawText, nextDelayMs: delayMs }); } catch {}
+                            try { onStatus({ phase: 'retrying', attempt, statusCode: response.status, rawText, nextDelayMs: nextDelay }); } catch {}
                         }
-                        await this._delay(delayMs);
+                        await this._delay(nextDelay);
                         attempt++;
                         continue;
                     }
 
+                    // For 4xx (including 429) do NOT retry; fail immediately
                     if (this.enableLogging) {
-                        console.warn(`⚠️ Prover API attempt ${attempt} failed (${response.status}). Will retry.`, rawText);
+                        console.error(`❌ Prover API returned non-retryable error (${response.status}). Aborting.`, rawText);
                     }
-                    const nextDelay = this._randomDelay(minDelayMs, maxDelayMs);
-                    if (typeof onStatus === 'function') {
-                        try { onStatus({ phase: 'retrying', attempt, statusCode: response.status, rawText, nextDelayMs: nextDelay }); } catch {}
-                    }
-                    await this._delay(nextDelay);
-                    attempt++;
-                    continue;
+                    throw new Error(errorMessage);
                 }
 
                 let data;
                 try {
                     data = JSON.parse(rawText);
                 } catch (jsonError) {
-                    // JSON parsing errors should be retried as they might be temporary
+                    // Do NOT retry JSON parsing errors
                     if (this.enableLogging) {
-                        console.warn(`⚠️ Prover API attempt ${attempt} failed (JSON parse error), retrying...`);
+                        console.error(`❌ Prover API JSON parse error on attempt ${attempt}. Aborting.`);
                     }
-                    const nextDelay = this._randomDelay(minDelayMs, maxDelayMs);
-                    if (typeof onStatus === 'function') {
-                        try { onStatus({ phase: 'retrying', attempt, statusCode: 0, rawText: 'JSON parse error', nextDelayMs: nextDelay }); } catch {}
-                    }
-                    await this._delay(nextDelay);
-                    attempt++;
-                    continue;
+                    throw jsonError;
                 }
 
                 // Validate response format
                 try {
                     PayloadValidator.validateProverResponse(data);
                 } catch (validationError) {
-                    // Validation errors should be retried as they might be temporary
+                    // Do NOT retry validation errors; abort
                     if (this.enableLogging) {
-                        console.warn(`⚠️ Prover API attempt ${attempt} failed (validation error), retrying...`);
+                        console.error(`❌ Prover API validation error on attempt ${attempt}. Aborting.`);
                     }
-                    const nextDelay = this._randomDelay(minDelayMs, maxDelayMs);
-                    if (typeof onStatus === 'function') {
-                        try { onStatus({ phase: 'retrying', attempt, statusCode: 0, rawText: 'validation error', nextDelayMs: nextDelay }); } catch {}
-                    }
-                    await this._delay(nextDelay);
-                    attempt++;
-                    continue;
+                    throw validationError;
                 }
 
                 // Success - log if this was a retry
@@ -118,22 +98,9 @@ export class ProverApiClient {
                 return data;
 
             } catch (error) {
-                // Network errors, timeouts, etc.
-                if (this._isRetryableError(error)) {
-                    if (this.enableLogging) {
-                        console.warn(`⚠️ Prover API attempt ${attempt} failed (${error.message}), retrying...`);
-                    }
-                    const nextDelay = this._randomDelay(minDelayMs, maxDelayMs);
-                    if (typeof onStatus === 'function') {
-                        try { onStatus({ phase: 'retrying', attempt, statusCode: 0, rawText: error.message, nextDelayMs: nextDelay }); } catch {}
-                    }
-                    await this._delay(nextDelay);
-                    attempt++;
-                    continue;
-                }
-
+                // Do NOT retry network/fetch/timeout or unknown errors; abort
                 if (this.enableLogging) {
-                    console.error(`❌ Prover API failed after ${attempt} attempts:`, error);
+                    console.error(`❌ Prover API failed on attempt ${attempt}:`, error);
                 }
                 throw error;
             }
