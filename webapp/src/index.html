@@ -186,6 +186,13 @@
                     until you stop and claim your best result. Get to work, bro.</p>
 
                 <div class="mining-controls">
+                    <div class="mining-mode" style="margin-right: 12px; display: inline-flex; align-items: center; gap: 8px;">
+                        <label for="miningMode" style="color: #e2e8f0; font-size: 14px;">Mode:</label>
+                        <select id="miningMode" class="select mode-select" style="padding: 6px 10px; font-size: 14px;">
+                            <option value="cpu">CPU</option>
+                            <option value="webgpu">WebGPU (beta)</option>
+                        </select>
+                    </div>
                     <button id="startMining" class="btn-base btn-secondary">
                         <span>Start Mining</span>
                     </button>
