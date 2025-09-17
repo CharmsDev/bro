@@ -5,11 +5,11 @@ export class WebGPUMiner {
         this.adapter = null;
         this.pipeline = null;
         this.supported = typeof navigator !== 'undefined' && 'gpu' in navigator;
-        this.maxBatch = 1000000;
         this.block0Buffer = null;
         this.tailBuffer = null;
         this.challengeLen = 0;
         this.tailLen = 0;
+        this.workgroupSize = 256;
     }
 
     isSupported() {
@@ -362,6 +362,17 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         const bestNonceLo = infoArr[1] >>> 0;
         const bestNonceHi = infoArr[2] >>> 0;
         return { bestWords, bestLeadingZeros: infoArr[0] >>> 0, bestNonceLo, bestNonceHi };
+    }
+
+    getRecommendedBatchSize() {
+        try {
+            const limits = this.device.limits || {};
+            const maxGroups = limits.maxComputeWorkgroupsPerDimension ?? 65535;
+            return this.workgroupSize * maxGroups;
+        } catch (_) {
+            // Sensible default
+            return 256 * 256; // 65,536
+        }
     }
 }
 

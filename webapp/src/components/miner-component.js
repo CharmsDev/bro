@@ -191,8 +191,7 @@ class BitcoinMiner {
 
         while (this.isRunning) {
             if (gpu) {
-                // Batch compute for better throughput
-                const batchSize = this.gpuBatchSize;
+                const batchSize = (gpu.getRecommendedBatchSize ? gpu.getRecommendedBatchSize() : this.gpuBatchSize);
                 const start = BigInt(this.currentNonce);
                 if (gpu.setStartNonceForBatch) {
                     gpu.setStartNonceForBatch(start);
