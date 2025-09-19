@@ -377,6 +377,7 @@ input:checked + .slider:before {
     border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .input-group {
@@ -397,4 +398,5 @@ input:checked + .slider:before {
     .radio {
         font-size: 0.9rem;
     }
+    
 }

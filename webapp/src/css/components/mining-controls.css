@@ -1,0 +1,245 @@
+/* ===================================
+   MINING CONTROLS COMPONENTS
+   ===================================
+   Specialized components for mining interface
+   ================================== */
+
+/* Mining Controls Layout */
+.mining-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
+}
+
+/* Mining Mode Selector */
+.mining-mode-boxes {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.mining-mode-box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    width: 320px;
+    height: 100px;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 2px solid rgba(71, 85, 105, 0.4);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+    gap: 16px;
+}
+
+/* Subtle gradient background */
+.mining-mode-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(2, 106, 163, 0.05), rgba(59, 130, 246, 0.05));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Hover Effects */
+.mining-mode-box:hover {
+    border-color: rgba(2, 106, 163, 0.6);
+    background: rgba(15, 23, 42, 0.9);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(2, 106, 163, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.mining-mode-box:hover::before {
+    opacity: 1;
+}
+
+.mining-mode-box:hover .mode-icon {
+    transform: scale(1.1);
+    filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(100, 180, 255, 0.8));
+}
+
+.mining-mode-box:hover .mode-title {
+    color: #64b4ff;
+    text-shadow: 0 0 8px rgba(100, 180, 255, 0.6);
+}
+
+/* Active State */
+.mining-mode-box.active {
+    border-color: var(--accent-blue);
+    background: rgba(2, 106, 163, 0.15);
+    box-shadow: 
+        0 0 0 1px rgba(2, 106, 163, 0.4),
+        0 8px 25px rgba(2, 106, 163, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.mining-mode-box.active::before {
+    opacity: 1;
+    background: linear-gradient(135deg, rgba(2, 106, 163, 0.1), rgba(59, 130, 246, 0.1));
+}
+
+.mining-mode-box.active .mode-icon {
+    transform: scale(1.05);
+    filter: brightness(0) invert(1) drop-shadow(0 0 12px rgba(100, 180, 255, 0.8));
+}
+
+.mining-mode-box.active .mode-title {
+    color: #64b4ff;
+    text-shadow: 0 0 8px rgba(100, 180, 255, 0.6);
+}
+
+.mining-mode-box.active .mode-description {
+    color: #a0c4ff;
+    opacity: 1;
+}
+
+
+/* Active state glow animation */
+.mining-mode-box.active::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+        transparent, 
+        rgba(2, 106, 163, 0.3), 
+        transparent, 
+        rgba(59, 130, 246, 0.3), 
+        transparent
+    );
+    border-radius: 14px;
+    z-index: -1;
+    animation: activeGlow 3s ease-in-out infinite;
+}
+
+@keyframes activeGlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+}
+
+/* Icon and Text Styling */
+.mode-icon {
+    width: 55px;
+    height: 55px;
+    display: block;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+    filter: brightness(0) invert(1);
+    flex-shrink: 0;
+}
+
+.mode-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.mode-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    line-height: 1.2;
+}
+
+.mode-description {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    opacity: 0.9;
+}
+
+
+/* Mining Start Section */
+.mining-start-section {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Click Animation */
+.mining-mode-box:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .mining-mode-boxes {
+        flex-direction: column;
+        gap: 16px;
+        align-items: center;
+    }
+    
+    .mining-mode-box {
+        width: 300px;
+        height: 90px;
+        padding: 16px;
+        gap: 12px;
+    }
+    
+    .mode-icon {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .mode-title {
+        font-size: 16px;
+    }
+    
+    .mode-description {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+}
+
+@media (max-width: 480px) {
+    .mining-mode-box {
+        width: 280px;
+        height: 80px;
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .mode-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .mode-title {
+        font-size: 14px;
+    }
+    
+    .mode-description {
+        font-size: 10px;
+        line-height: 1.2;
+    }
+}
