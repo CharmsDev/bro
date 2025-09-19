@@ -95,7 +95,7 @@ export class BitcoinAPIService {
                 }
 
                 if (utxos && utxos.length > 0) {
-                    const validUtxos = utxos.filter(utxo => parseInt(utxo.value) >= 7000);
+                    const validUtxos = utxos.filter(utxo => parseInt(utxo.value) >= 6995);
 
                     if (validUtxos.length > 0) {
                         // Select the largest UTXO for mining (most efficient)
