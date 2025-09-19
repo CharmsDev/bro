@@ -8,6 +8,10 @@ class BitcoinMiner {
         this.bestLeadingZeros = 0;
         this.challenge = '';
         this.saveInterval = 10000;
+        this.mode = 'cpu';
+        this.webgpu = null;
+        this.gpuBatchSize = 256 * 256;
+        this.gpuLastSavedNonce = 0;
     }
 
     generateChallenge(seedTxid, vout) {
@@ -58,7 +62,7 @@ class BitcoinMiner {
             nonce: this.currentNonce,
             hash: this.currentHash,
             bestHash: this.bestHash,
-            bestNonce: this.bestNonce,
+            bestNonce: typeof this.bestNonce === 'bigint' ? this.bestNonce.toString() : this.bestNonce,
             bestLeadingZeros: this.bestLeadingZeros,
             challenge: this.challenge,
             timestamp: Date.now()
@@ -74,7 +78,7 @@ class BitcoinMiner {
                 this.currentNonce = progressData.nonce || 0;
                 this.currentHash = progressData.hash || '';
                 this.bestHash = progressData.bestHash || '';
-                this.bestNonce = progressData.bestNonce || 0;
+                this.bestNonce = typeof progressData.bestNonce === 'string' ? Number(progressData.bestNonce) : (progressData.bestNonce || 0);
                 this.bestLeadingZeros = progressData.bestLeadingZeros || 0;
                 this.challenge = progressData.challenge || '';
 
@@ -94,10 +98,10 @@ class BitcoinMiner {
 
     saveMiningResult(result) {
         const resultData = {
-            nonce: result.nonce,
+            nonce: typeof result.nonce === 'bigint' ? result.nonce.toString() : result.nonce,
             hash: result.hash,
             bestHash: result.bestHash,
-            bestNonce: result.bestNonce,
+            bestNonce: typeof result.bestNonce === 'bigint' ? result.bestNonce.toString() : result.bestNonce,
             bestLeadingZeros: result.bestLeadingZeros,
             challenge: this.challenge,
             timestamp: Date.now(),
@@ -142,69 +146,129 @@ class BitcoinMiner {
                 this.bestHash = savedProgress.bestHash || '';
                 this.bestNonce = savedProgress.bestNonce || 0;
                 this.bestLeadingZeros = savedProgress.bestLeadingZeros || 0;
+                this.gpuLastSavedNonce = this.currentNonce;
             } else {
                 this.currentNonce = 0;
                 this.bestHash = '';
                 this.bestNonce = 0;
                 this.bestLeadingZeros = 0;
+                this.gpuLastSavedNonce = 0;
             }
         } else {
             this.currentNonce = 0;
             this.bestHash = '';
             this.bestNonce = 0;
             this.bestLeadingZeros = 0;
+            this.gpuLastSavedNonce = 0;
         }
 
         const challengeBuffer = this.stringToBuffer(challenge);
 
-        while (this.isRunning) {
+        // Decide backend
+        const useWebGPU = this.mode === 'webgpu' && window.WebGPUMiner && new window.WebGPUMiner().isSupported();
+        let gpu = null;
+        if (useWebGPU) {
+            gpu = new window.WebGPUMiner();
+            try {
+                await gpu.init();
+                gpu.setChallenge(challengeBuffer);
+                console.log('[Miner] Backend: WebGPU');
+            } catch (_) { gpu = null; }
+        }
+        if (!gpu) {
+            console.log('[Miner] Backend: CPU');
+        }
+
+        const cpuStep = async () => {
             const nonceStr = this.currentNonce.toString();
             const nonceBuffer = this.stringToBuffer(nonceStr);
-
-            // Combine challenge and nonce
             const combined = new Uint8Array(challengeBuffer.length + nonceBuffer.length);
             combined.set(challengeBuffer);
             combined.set(nonceBuffer, challengeBuffer.length);
-
             const hashBuffer = await this.doubleSha256(combined);
-            const hash = this.bufferToHex(hashBuffer);
+            return this.bufferToHex(hashBuffer);
+        };
 
-            this.currentHash = hash;
-
-            // Count leading zero bits for this hash
-            const leadingZeroBits = this.countLeadingZeroBits(hash);
-
-            // Check if this is the best hash so far
-            let isNewBest = false;
-            if (leadingZeroBits > this.bestLeadingZeros || this.bestHash === '') {
-                this.bestHash = hash;
-                this.bestNonce = this.currentNonce;
-                this.bestLeadingZeros = leadingZeroBits;
-                isNewBest = true;
-            }
-
-            if (onProgress) {
-                onProgress({
-                    nonce: this.currentNonce,
-                    hash: hash,
-                    leadingZeroBits: leadingZeroBits,
-                    bestHash: this.bestHash,
-                    bestNonce: this.bestNonce,
-                    bestLeadingZeros: this.bestLeadingZeros,
-                    isNewBest: isNewBest
-                });
-            }
-
-            this.currentNonce++;
-
-            // Periodic progress save
-            if (this.currentNonce % this.saveInterval === 0) {
-                this.saveMiningProgress();
-            }
-
-            // Yield control to prevent UI blocking
-            if (this.currentNonce % 100 === 0) {
-                await new Promise(resolve => setTimeout(resolve, 1));
+        while (this.isRunning) {
+            if (gpu) {
+                const batchSize = (gpu.getRecommendedBatchSize ? gpu.getRecommendedBatchSize() : this.gpuBatchSize);
+                const start = BigInt(this.currentNonce);
+                if (gpu.setStartNonceForBatch) {
+                    gpu.setStartNonceForBatch(start);
+                }
+                const result = await gpu.computeBatch(start, batchSize);
+                const wordsPerHash = 8;
+                const bestLz = result.bestLeadingZeros >>> 0;
+                if (bestLz > this.bestLeadingZeros || this.bestHash === '') {
+                    let hex = '';
+                    for (let w = 0; w < wordsPerHash; w++) {
+                        const v = result.bestWords[w] >>> 0;
+                        hex += v.toString(16).padStart(8, '0');
+                    }
+                    this.bestHash = hex;
+                    // reconstruct u64 nonce from hi/lo into JS BigInt
+                    const bestNonce = (BigInt(result.bestNonceHi >>> 0) << 32n) | BigInt(result.bestNonceLo >>> 0);
+                    this.bestNonce = bestNonce;
+                    this.bestLeadingZeros = bestLz;
+                    this.currentHash = this.bestHash;
+                    if (onProgress) {
+                        onProgress({
+                            nonce: Number(this.bestNonce),
+                            hash: this.bestHash,
+                            leadingZeroBits: bestLz,
+                            bestHash: this.bestHash,
+                            bestNonce: this.bestNonce,
+                            bestLeadingZeros: this.bestLeadingZeros,
+                            isNewBest: true
+                        });
+                    }
+                } else if (onProgress) {
+                    let hex = '';
+                    for (let w = 0; w < wordsPerHash; w++) {
+                        const v = result.bestWords[w] >>> 0;
+                        hex += v.toString(16).padStart(8, '0');
+                    }
+                    this.currentHash = hex;
+                    onProgress({
+                        nonce: this.currentNonce + batchSize - 1,
+                        hash: this.currentHash,
+                        leadingZeroBits: bestLz,
+                        bestHash: this.bestHash,
+                        bestNonce: this.bestNonce,
+                        bestLeadingZeros: this.bestLeadingZeros,
+                        isNewBest: false
+                    });
+                }
+                this.currentNonce += batchSize;
+                if ((this.currentNonce - this.gpuLastSavedNonce) >= this.saveInterval) {
+                    this.saveMiningProgress();
+                    this.gpuLastSavedNonce = this.currentNonce;
+                }
+            } else {
+                const hash = await cpuStep();
+                this.currentHash = hash;
+                const leadingZeroBits = this.countLeadingZeroBits(hash);
+                let isNewBest = false;
+                if (leadingZeroBits > this.bestLeadingZeros || this.bestHash === '') {
+                    this.bestHash = hash;
+                    this.bestNonce = this.currentNonce;
+                    this.bestLeadingZeros = leadingZeroBits;
+                    isNewBest = true;
+                }
+                if (onProgress) {
+                    onProgress({
+                        nonce: this.currentNonce,
+                        hash: hash,
+                        leadingZeroBits: leadingZeroBits,
+                        bestHash: this.bestHash,
+                        bestNonce: this.bestNonce,
+                        bestLeadingZeros: this.bestLeadingZeros,
+                        isNewBest: isNewBest
+                    });
+                }
+                this.currentNonce++;
+                if (this.currentNonce % this.saveInterval === 0) this.saveMiningProgress();
+                if (this.currentNonce % 100 === 0) await new Promise(resolve => setTimeout(resolve, 1));
             }
         }
 
@@ -214,10 +278,10 @@ class BitcoinMiner {
 
             if (this.bestHash) {
                 const result = {
-                    nonce: this.bestNonce,
+                    nonce: typeof this.bestNonce === 'bigint' ? this.bestNonce.toString() : this.bestNonce,
                     hash: this.bestHash,
                     bestHash: this.bestHash,
-                    bestNonce: this.bestNonce,
+                    bestNonce: typeof this.bestNonce === 'bigint' ? this.bestNonce.toString() : this.bestNonce,
                     bestLeadingZeros: this.bestLeadingZeros
                 };
 

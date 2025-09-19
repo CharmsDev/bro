@@ -6,6 +6,7 @@ import { WalletService } from '../services/wallet-service.js';
 import { BitcoinAPIService } from '../services/bitcoin-api-service.js';
 import { AppController } from '../controllers/app-controller.js';
 import { calculateRewardInfo } from '../mining/reward-calculator.js';
+import '../services/webgpu-miner.js';
 
 
 // Initialize libraries first

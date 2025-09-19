@@ -384,6 +384,15 @@ export class MiningManager {
     setupEventListeners() {
         this.setupStartMiningButton();
         this.setupStopMiningButton();
+        const modeEl = document.getElementById('miningMode');
+        if (modeEl && this.miner) {
+            const applyMode = () => {
+                const mode = modeEl.value;
+                this.miner.mode = mode;
+            };
+            applyMode();
+            modeEl.addEventListener('change', applyMode);
+        }
     }
 
     setupStartMiningButton() {
