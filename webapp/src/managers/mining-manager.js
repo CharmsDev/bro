@@ -384,15 +384,35 @@ export class MiningManager {
     setupEventListeners() {
         this.setupStartMiningButton();
         this.setupStopMiningButton();
-        const modeEl = document.getElementById('miningMode');
-        if (modeEl && this.miner) {
-            const applyMode = () => {
-                const mode = modeEl.value;
-                this.miner.mode = mode;
-            };
-            applyMode();
-            modeEl.addEventListener('change', applyMode);
+        this.setupMiningModeSelector();
+    }
+
+    setupMiningModeSelector() {
+        const modeBoxes = document.querySelectorAll('.mining-mode-box');
+        if (modeBoxes.length === 0 || !this.miner) return;
+
+        // Set initial mode from the active box
+        const activeBox = document.querySelector('.mining-mode-box.active');
+        if (activeBox) {
+            this.miner.mode = activeBox.dataset.mode;
         }
+
+        // Add click handlers for mode selection
+        modeBoxes.forEach(box => {
+            box.addEventListener('click', () => {
+                // Remove active class from all boxes
+                modeBoxes.forEach(b => b.classList.remove('active'));
+                
+                // Add active class to clicked box
+                box.classList.add('active');
+                
+                // Update miner mode
+                const mode = box.dataset.mode;
+                this.miner.mode = mode;
+                
+                console.log(`Mining mode switched to: ${mode}`);
+            });
+        });
     }
 
     setupStartMiningButton() {

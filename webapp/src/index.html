@@ -186,16 +186,27 @@
                     until you stop and claim your best result. Get to work, bro.</p>
 
                 <div class="mining-controls">
-                    <div class="mining-mode" style="margin-right: 12px; display: inline-flex; align-items: center; gap: 8px;">
-                        <label for="miningMode" style="color: #e2e8f0; font-size: 14px;">Mode:</label>
-                        <select id="miningMode" class="select mode-select" style="padding: 6px 10px; font-size: 14px;">
-                            <option value="cpu">CPU</option>
-                            <option value="webgpu">WebGPU (beta)</option>
-                        </select>
+                    <div class="mining-mode-boxes">
+                        <div class="mining-mode-box active" data-mode="cpu">
+                            <img src="assets/icons/cpu-processor-svgrepo-com.svg" alt="CPU" class="mode-icon">
+                            <div class="mode-content">
+                                <span class="mode-title">CPU</span>
+                                <span class="mode-description">Steady reliable mining processor.<br>Compatible with all devices.</span>
+                            </div>
+                        </div>
+                        <div class="mining-mode-box" data-mode="webgpu">
+                            <img src="assets/icons/graphics-card-svgrepo-com.svg" alt="GPU" class="mode-icon">
+                            <div class="mode-content">
+                                <span class="mode-title">GPU</span>
+                                <span class="mode-description">Accelerated mining graphics power.<br>Requires WebGPU for calculations.</span>
+                            </div>
+                        </div>
                     </div>
-                    <button id="startMining" class="btn-base btn-secondary">
-                        <span>Start Mining</span>
-                    </button>
+                    <div class="mining-start-section">
+                        <button id="startMining" class="btn-base btn-secondary">
+                            <span>Start Mining</span>
+                        </button>
+                    </div>
                     <button id="stopMining" class="btn-base btn-danger" style="display: none;">
                         <span>Stop Mining & Claim Tokens</span>
                     </button>
