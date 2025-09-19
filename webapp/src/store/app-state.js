@@ -172,10 +172,10 @@ export class AppState {
             return;
         }
 
-        // If we have a wallet but no UTXO, we should be at step 2 with step 1 completed
+        // If we have a wallet but no UTXO, we should stay at step 1 until UTXO is found
         if (this.wallet && !this.utxo) {
-            console.log(`[AppState] Wallet found but no UTXO, setting to step 2 (auto-advance path)`);
-            this.currentStep = this.STEPS.MINING;
+            console.log(`[AppState] Wallet found but no UTXO, staying at step 1 until UTXO is found`);
+            this.currentStep = this.STEPS.WALLET_CREATION;
             this.completedSteps = [this.STEPS.WALLET_CREATION];
             this.saveCurrentStep();
             this.saveCompletedSteps();
@@ -390,10 +390,11 @@ export class AppState {
         // Persist UTXO so state survives page reloads
         try { localStorage.setItem('bro_utxo_data', JSON.stringify(utxo)); } catch (_) { }
         
-        // Complete Step 1 and advance to Step 2
+        // Complete Step 1 and advance to Step 2 when UTXO is found
         if (!this.isStepCompleted(this.STEPS.WALLET_CREATION)) {
             this.completeStep(this.STEPS.WALLET_CREATION);
         }
+        this.setCurrentStep(this.STEPS.MINING);
         this.emit('utxoFound', utxo);
     }
 
@@ -402,6 +403,7 @@ export class AppState {
         this.isMonitoring = false;
         // Persist UTXO so state survives page reloads
         try { localStorage.setItem('bro_utxo_data', JSON.stringify(utxo)); } catch (_) { }
+        this.setCurrentStep(this.STEPS.MINING);
         this.emit('utxoFound', utxo);
 
         // Emit step change to update button states
