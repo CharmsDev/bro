@@ -439,7 +439,7 @@ export class MiningManager {
                     // Restore previous state
                     this.dom.setText('nonce', miningProgress.nonce.toLocaleString());
                     this.updateHashDisplay('currentHash', miningProgress.hash);
-                    this.dom.setText('currentLeadingZeros', this.miner.countLeadingZeroBits(miningProgress.hash));
+                    this.dom.setText('currentLeadingZeros', this.miner.hashAnalyzer.countLeadingZeroBits(miningProgress.hash));
 
                     if (miningProgress.bestHash) {
                         this.updateHashDisplay('bestHash', miningProgress.bestHash);

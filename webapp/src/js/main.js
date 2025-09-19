@@ -7,7 +7,7 @@ import { WalletService } from '../services/wallet-service.js';
 import { BitcoinAPIService } from '../services/bitcoin-api-service.js';
 import { AppController } from '../controllers/app-controller.js';
 import { calculateRewardInfo } from '../mining/reward-calculator.js';
-import '../services/webgpu-miner.js';
+import '../mining/webgpu-miner.js';
 
 
 // Initialize libraries first
@@ -22,7 +22,7 @@ import '../services/wallet-service.js';
 import '../services/bitcoin-api-service.js';
 import '../services/transaction-builder-service.js';
 import '../services/transaction-signer-service.js';
-import '../components/miner-component.js';
+import '../mining/mining-orchestrator.js';
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', async function () {
@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Initialize prover selection with AppState
         const proverSelection = new ProverSelection(appController.modules.domElements, appController.appState);
         window.proverSelection = proverSelection;
+        console.log(`[Main] ProverSelection assigned to window.proverSelection:`, !!window.proverSelection);
     } catch (error) {
         console.error('❌ Failed to initialize application:', error);
     }
