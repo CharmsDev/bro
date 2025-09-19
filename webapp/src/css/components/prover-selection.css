@@ -1,0 +1,167 @@
+/* Prover Selection Styles */
+.prover-selection {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+.prover-option {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 16px;
+}
+
+.prover-option:hover {
+    border-color: rgba(2, 106, 163, 0.4);
+    background: rgba(2, 106, 163, 0.1);
+}
+
+.prover-option.active {
+    border-color: #64b4ff;
+    background: rgba(100, 180, 255, 0.15);
+    box-shadow: 0 0 0 1px rgba(100, 180, 255, 0.3);
+}
+
+.prover-icon {
+    font-size: 31px;
+    margin-right: 16px;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(100, 180, 255, 0.2);
+    border-radius: 8px;
+}
+
+.prover-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.prover-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.prover-description {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.custom-prover-toggle {
+    text-align: center;
+    padding: 12px;
+    cursor: pointer;
+    color: #64b4ff;
+    font-size: 14px;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+}
+
+.custom-prover-toggle:hover {
+    color: #a0c4ff;
+}
+
+.custom-prover-section {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.custom-prover-section.active {
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
+}
+
+.custom-prover-input {
+    margin-bottom: 16px;
+}
+
+.custom-prover-input label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.custom-prover-input input {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.custom-prover-input input:focus {
+    outline: none;
+    border-color: #64b4ff;
+    box-shadow: 0 0 0 2px rgba(100, 180, 255, 0.2);
+}
+
+.custom-prover-input input::placeholder {
+    color: var(--text-secondary);
+}
+
+.prover-disclaimer {
+    padding: 12px 16px;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 6px;
+}
+
+.prover-disclaimer p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #ffc107;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .prover-selection {
+        padding: 16px;
+    }
+    
+    .prover-option {
+        padding: 12px;
+    }
+    
+    .prover-icon {
+        width: 47px;
+        height: 47px;
+        font-size: 26px;
+        margin-right: 12px;
+    }
+    
+    .prover-title {
+        font-size: 15px;
+    }
+    
+    .prover-description {
+        font-size: 13px;
+    }
+    
+    .custom-prover-section {
+        padding: 16px;
+    }
+}

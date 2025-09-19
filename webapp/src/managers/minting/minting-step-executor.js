@@ -196,6 +196,17 @@ export class MintingStepExecutor {
             // return proverResponse;
             // ===== END COMMENTED OUT SECTION =====
 
+            // Get custom prover URL if selected
+            const proverConfig = window.proverSelection ? window.proverSelection.getProverConfig() : { type: 'charms', url: null };
+            
+            // Update prover API URL if custom prover is selected
+            if (proverConfig.type === 'custom' && proverConfig.url) {
+                this.proverApiService.setApiUrl(proverConfig.url);
+                console.log(`[MintingStepExecutor] Using custom prover: ${proverConfig.url}`);
+            } else {
+                console.log(`[MintingStepExecutor] Using official Charms prover`);
+            }
+
             // Make real prover API request with status callback
             const proverResponse = await this.proverApiService.sendToProver(payload, ({ phase, attempt }) => {
                 // Track attempt to drive phases

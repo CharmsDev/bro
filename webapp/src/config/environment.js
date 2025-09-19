@@ -49,6 +49,28 @@ class EnvironmentConfig {
         };
     }
 
+    // Get prover API URL - supports custom prover override
+    getProverApiUrl(customUrl = null) {
+        if (customUrl && this.isValidUrl(customUrl)) {
+            console.log(`[Environment] Using custom prover URL: ${customUrl}`);
+            return customUrl;
+        }
+        
+        const defaultUrl = this.config.prover.apiUrl;
+        console.log(`[Environment] Using default prover URL: ${defaultUrl}`);
+        return defaultUrl;
+    }
+
+    // Validate URL format
+    isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
     // Get the current Bitcoin network
     getNetwork() {
         console.log(`[Environment] VITE_BITCOIN_NETWORK: ${import.meta.env.VITE_BITCOIN_NETWORK}`);

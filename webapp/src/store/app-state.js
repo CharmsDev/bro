@@ -11,6 +11,10 @@ export class AppState {
         this.completedSteps = [];
         this.isMonitoring = false;
         this.monitoringStopFunction = null;
+        this.proverConfig = {
+            isCustomProverMode: false,
+            customProverUrl: ''
+        };
 
         this.STEPS = {
             WALLET_CREATION: 1,
@@ -144,6 +148,19 @@ export class AppState {
             } catch (error) {
                 console.warn('Invalid signed transaction data, clearing');
                 localStorage.removeItem('bro_signed_transactions');
+            }
+        }
+
+        // Load prover configuration
+        const proverConfigData = localStorage.getItem('bro_prover_config');
+        if (proverConfigData) {
+            try {
+                this.proverConfig = JSON.parse(proverConfigData);
+                console.log(`[AppState] Prover config loaded:`, this.proverConfig);
+            } catch (error) {
+                console.warn('Invalid prover config data, clearing');
+                localStorage.removeItem('bro_prover_config');
+                this.proverConfig = { isCustomProverMode: false, customProverUrl: '' };
             }
         }
 
@@ -565,6 +582,7 @@ export class AppState {
         localStorage.removeItem('bro_transaction_data');
         localStorage.removeItem('bro_broadcast_data');
         localStorage.removeItem('bro_signed_transactions');
+        localStorage.removeItem('bro_prover_config');
         // Clear mining data
         localStorage.removeItem('miningProgress');
         localStorage.removeItem('miningResult');
@@ -578,6 +596,7 @@ export class AppState {
         this.signedTransactions = null;
         this.currentStep = 1;
         this.completedSteps = [];
+        this.proverConfig = { isCustomProverMode: false, customProverUrl: '' };
         this.stopMonitoring();
 
         this.emit('stepChanged', {
@@ -600,8 +619,9 @@ export class AppState {
         localStorage.removeItem('miningProgress');
         localStorage.removeItem('miningResult');
 
-        // Reset state but keep wallet
+        // Reset state but keep wallet and prover config
         const currentWallet = this.wallet; // Preserve wallet
+        const currentProverConfig = this.proverConfig; // Preserve prover config
         this.miningResult = null;
         this.utxo = null;
         this.transaction = null;
@@ -611,8 +631,9 @@ export class AppState {
         this.completedSteps = [];
         this.stopMonitoring();
 
-        // Keep wallet intact
+        // Keep wallet and prover config intact
         this.wallet = currentWallet;
+        this.proverConfig = currentProverConfig;
 
         // Save the reset state
         this.saveCurrentStep();
@@ -623,7 +644,7 @@ export class AppState {
             enabled: true,
             completedSteps: this.completedSteps
         });
-        console.log('[AppState] partialReset completed. currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
+        console.log('[AppState] partialReset completed');
     }
 
     getState() {
@@ -648,6 +669,21 @@ export class AppState {
         console.log(`[AppState] setCurrentStep: ${this.currentStep} -> ${step}`);
         this.currentStep = step;
         this.saveCurrentStep();
+    }
+
+    // Prover configuration management methods
+    updateProverConfig(config) {
+        this.proverConfig = { ...this.proverConfig, ...config };
+        try {
+            localStorage.setItem('bro_prover_config', JSON.stringify(this.proverConfig));
+            console.log('[AppState] Prover config saved:', this.proverConfig);
+        } catch (error) {
+            console.warn('[AppState] Failed to save prover config:', error);
+        }
+    }
+
+    getProverConfig() {
+        return { ...this.proverConfig };
     }
 }
 

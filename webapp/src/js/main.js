@@ -1,7 +1,8 @@
 // Main application entry point
 import './polyfills.js';
 import { initializeLibraries } from '../core/libraries.js';
-import { AppState } from '../store/app-state.js';
+import { MiningManager } from '../managers/mining-manager.js';
+import { ProverSelection } from './prover-selection.js';
 import { WalletService } from '../services/wallet-service.js';
 import { BitcoinAPIService } from '../services/bitcoin-api-service.js';
 import { AppController } from '../controllers/app-controller.js';
@@ -29,6 +30,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
         await appController.initialize();
+        
+        // Initialize prover selection with AppState
+        const proverSelection = new ProverSelection(appController.modules.domElements, appController.appState);
+        window.proverSelection = proverSelection;
     } catch (error) {
         console.error('❌ Failed to initialize application:', error);
     }
