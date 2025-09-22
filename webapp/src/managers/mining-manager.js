@@ -594,10 +594,8 @@ export class MiningManager {
             buttonSpan.textContent = 'Mining...';
         } else if (hasSavedProgress) {
             buttonSpan.textContent = 'Continue Mining';
-            console.log('[MiningManager] Button text set to "Continue Mining" - saved nonce found');
         } else {
             buttonSpan.textContent = 'Start Mining';
-            console.log('[MiningManager] Button text set to "Start Mining" - no saved nonce');
         }
 
         // Toggle disabled state based on readiness

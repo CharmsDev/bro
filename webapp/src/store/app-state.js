@@ -308,7 +308,6 @@ export class AppState {
     }
 
     completeStep(step) {
-        console.log(`[AppState] completeStep called for step ${step}. Current: ${this.currentStep}, Completed:`, this.completedSteps);
         if (!this.completedSteps.includes(step)) {
             this.completedSteps.push(step);
             this.saveCompletedSteps();
@@ -327,8 +326,7 @@ export class AppState {
         if (this.currentStep < this.STEPS.VISIT_WALLET) {
             this.currentStep++;
             this.saveCurrentStep();
-            console.log(`[AppState] advanceToNextStep: ${prev} -> ${this.currentStep}`);
-            this.emit('stepChanged', {
+                this.emit('stepChanged', {
                 step: this.currentStep,
                 enabled: true,
                 completedSteps: this.completedSteps
@@ -362,7 +360,6 @@ export class AppState {
         // DO NOT save miningResult - only use current11 for nonce storage
         // this.miningResult = result;
         // localStorage.setItem('miningResult', JSON.stringify(result));
-        console.log(`[AppState] Mining completed - using current11 for nonce storage only:`, result);
         this.completeStep(this.STEPS.MINING);
         this.emit('miningCompleted', result);
 

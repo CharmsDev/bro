@@ -41,12 +41,6 @@ class BitcoinMiner {
 
     // SIMPLIFIED: Save current nonce + best hash + best nonce
     saveMiningProgress() {
-        console.log('[BitcoinMiner] Saving mining progress:', {
-            currentNonce: this.currentNonce,
-            bestHash: this.bestHash,
-            bestNonce: this.bestNonce,
-            bestLeadingZeros: this.bestLeadingZeros
-        });
         localStorage.setItem('current11', this.currentNonce.toString());
         if (this.bestHash) {
             localStorage.setItem('bestHash11', this.bestHash);
@@ -61,12 +55,6 @@ class BitcoinMiner {
         const savedBestNonce = localStorage.getItem('bestNonce11');
         const savedBestZeros = localStorage.getItem('bestZeros11');
         
-        console.log('[BitcoinMiner] Loading mining progress:', {
-            currentNonce: savedNonce,
-            bestHash: savedBestHash,
-            bestNonce: savedBestNonce,
-            bestZeros: savedBestZeros
-        });
         
         if (savedNonce) {
             this.currentNonce = parseInt(savedNonce, 10) || 0;
@@ -81,7 +69,6 @@ class BitcoinMiner {
                 bestLeadingZeros: this.bestLeadingZeros
             };
         }
-        console.log('[BitcoinMiner] No saved progress, starting fresh');
         this.currentNonce = 0;
         this.bestHash = '';
         this.bestNonce = 0;
@@ -90,7 +77,6 @@ class BitcoinMiner {
     }
 
     clearMiningProgress() {
-        console.log('[BitcoinMiner] Clearing all mining progress from localStorage');
         localStorage.removeItem('current11');
         localStorage.removeItem('bestHash11');
         localStorage.removeItem('bestNonce11');
@@ -115,7 +101,6 @@ class BitcoinMiner {
             completed: true
         };
         localStorage.setItem('miningResult', JSON.stringify(resultData));
-        console.log('[BitcoinMiner] Mining result saved, keeping current nonce for potential continuation');
     }
 
     loadMiningResult() {
@@ -250,7 +235,6 @@ class BitcoinMiner {
         this.isRunning = false;
         this.stoppedManually = true;
         // CRITICAL: Save current exact nonce when manually stopped
-        console.log('[BitcoinMiner] Manual stop - saving current nonce:', this.currentNonce);
         this.saveMiningProgress();
     }
 

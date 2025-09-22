@@ -61,14 +61,12 @@ export class StepController {
         // Ensure completedSteps is an array to prevent TypeError
         const safeCompletedSteps = Array.isArray(completedSteps) ? completedSteps : [];
         
-        console.log(`[StepController] updateAllSteps - currentStep: ${currentStep}, completedSteps:`, safeCompletedSteps);
         
         for (let step = 1; step <= 6; step++) {
             const isCompleted = safeCompletedSteps.includes(step);
             const isActive = step === currentStep;
             const canAccess = this.disableLocks ? true : step <= currentStep;
 
-            console.log(`[StepController] Step ${step} - isCompleted: ${isCompleted}, isActive: ${isActive}, canAccess: ${canAccess}`);
             this.updateStepState(step, isCompleted, isActive, canAccess);
         }
     }
@@ -127,13 +125,10 @@ export class StepController {
                 // Special case for minting button - enable if broadcast completed
                 if (buttonId === 'claimTokensBtn') {
                     const hasBroadcast = !!(this.appState && this.appState.broadcastResult);
-                    console.log(`[StepController] claimTokensBtn button check - step: ${step}, hasBroadcast: ${hasBroadcast}, broadcastResult:`, this.appState?.broadcastResult);
                     if (hasBroadcast && step === 5) {
-                        console.log(`[StepController] Enabling claimTokensBtn button`);
                         this.enableButton(button);
                         return;
                     } else {
-                        console.log(`[StepController] Not enabling claimTokensBtn button - step: ${step}, hasBroadcast: ${hasBroadcast}`);
                     }
                 }
 
