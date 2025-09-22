@@ -23,9 +23,11 @@ export class MiningPersistence {
     // Load mining progress from localStorage
     loadProgress() {
         const saved = localStorage.getItem(this.PROGRESS_KEY);
+        console.log('[MiningPersistence] Loading progress from localStorage - found data:', !!saved);
         if (saved) {
             try {
                 const progressData = JSON.parse(saved);
+                console.log('[MiningPersistence] Loaded nonce:', progressData.nonce, 'challenge:', progressData.challenge);
                 return {
                     nonce: progressData.nonce || 0,
                     hash: progressData.hash || '',
@@ -45,7 +47,11 @@ export class MiningPersistence {
 
     // Clear mining progress
     clearProgress() {
+        console.log('[MiningPersistence] Clearing progress from localStorage key:', this.PROGRESS_KEY);
+        const before = localStorage.getItem(this.PROGRESS_KEY);
         localStorage.removeItem(this.PROGRESS_KEY);
+        const after = localStorage.getItem(this.PROGRESS_KEY);
+        console.log('[MiningPersistence] Progress cleared - before:', !!before, 'after:', !!after);
     }
 
     // Save mining result to localStorage

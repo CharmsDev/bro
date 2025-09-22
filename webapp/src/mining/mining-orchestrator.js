@@ -1,6 +1,5 @@
 import { MiningValidator } from '../utils/mining-validator.js';
 import { CPUMiner } from './cpu-miner.js';
-import { MiningPersistence } from './mining-persistence.js';
 import { MiningHashAnalyzer } from './mining-hash-analyzer.js';
 import { WebGPUCoordinator } from './webgpu-coordinator.js';
 
@@ -17,7 +16,8 @@ class BitcoinMiner {
         this.stoppedManually = false;
         
         // Configuration
-        this.saveInterval = 10000;
+        this.saveInterval = 10000; // CPU mining: save every 10,000 nonces
+        this.gpuSaveInterval = 100000000; // GPU mining: save every 100,000,000 nonces
         this.mode = 'cpu';
         this.gpuBatchSize = 256 * 256;
         this.gpuLastSavedNonce = 0;
@@ -27,8 +27,7 @@ class BitcoinMiner {
         this.challengeVout = 0;
         this.validationResults = null;
         
-        // Helper instances
-        this.persistence = new MiningPersistence();
+        // Helper instances - REMOVED MiningPersistence
         this.hashAnalyzer = new MiningHashAnalyzer();
         this.webgpuCoordinator = new WebGPUCoordinator();
         this.cpuMiner = new CPUMiner();
@@ -40,43 +39,103 @@ class BitcoinMiner {
 
 
 
-    // Delegate to persistence helper
+    // SIMPLIFIED: Save current nonce + best hash + best nonce
     saveMiningProgress() {
-        this.persistence.saveProgress(this);
+        console.log('[BitcoinMiner] Saving mining progress:', {
+            currentNonce: this.currentNonce,
+            bestHash: this.bestHash,
+            bestNonce: this.bestNonce,
+            bestLeadingZeros: this.bestLeadingZeros
+        });
+        localStorage.setItem('current11', this.currentNonce.toString());
+        if (this.bestHash) {
+            localStorage.setItem('bestHash11', this.bestHash);
+            localStorage.setItem('bestNonce11', this.bestNonce.toString());
+            localStorage.setItem('bestZeros11', this.bestLeadingZeros.toString());
+        }
     }
 
     loadMiningProgress() {
-        const progressData = this.persistence.loadProgress();
-        if (progressData && progressData.challenge === this.challenge) {
-            this.currentNonce = progressData.nonce;
-            this.currentHash = progressData.hash;
-            this.bestHash = progressData.bestHash;
-            this.bestNonce = progressData.bestNonce;
-            this.bestLeadingZeros = progressData.bestLeadingZeros;
-            return progressData;
+        const savedNonce = localStorage.getItem('current11');
+        const savedBestHash = localStorage.getItem('bestHash11');
+        const savedBestNonce = localStorage.getItem('bestNonce11');
+        const savedBestZeros = localStorage.getItem('bestZeros11');
+        
+        console.log('[BitcoinMiner] Loading mining progress:', {
+            currentNonce: savedNonce,
+            bestHash: savedBestHash,
+            bestNonce: savedBestNonce,
+            bestZeros: savedBestZeros
+        });
+        
+        if (savedNonce) {
+            this.currentNonce = parseInt(savedNonce, 10) || 0;
+            this.bestHash = savedBestHash || '';
+            this.bestNonce = parseInt(savedBestNonce, 10) || 0;
+            this.bestLeadingZeros = parseInt(savedBestZeros, 10) || 0;
+            
+            return {
+                nonce: this.currentNonce,
+                bestHash: this.bestHash,
+                bestNonce: this.bestNonce,
+                bestLeadingZeros: this.bestLeadingZeros
+            };
         }
+        console.log('[BitcoinMiner] No saved progress, starting fresh');
+        this.currentNonce = 0;
+        this.bestHash = '';
+        this.bestNonce = 0;
+        this.bestLeadingZeros = 0;
         return null;
     }
 
     clearMiningProgress() {
-        this.persistence.clearProgress();
+        console.log('[BitcoinMiner] Clearing all mining progress from localStorage');
+        localStorage.removeItem('current11');
+        localStorage.removeItem('bestHash11');
+        localStorage.removeItem('bestNonce11');
+        localStorage.removeItem('bestZeros11');
+        this.currentNonce = 0;
+        this.bestHash = '';
+        this.bestNonce = 0;
+        this.bestLeadingZeros = 0;
     }
 
     saveMiningResult(result) {
-        const challengeInfo = {
+        const resultData = {
+            nonce: typeof result.nonce === 'bigint' ? result.nonce.toString() : result.nonce,
+            hash: result.hash,
+            bestHash: result.bestHash,
+            bestNonce: typeof result.bestNonce === 'bigint' ? result.bestNonce.toString() : result.bestNonce,
+            bestLeadingZeros: result.bestLeadingZeros,
             challenge: this.challenge,
             challengeTxid: this.challengeTxid,
-            challengeVout: this.challengeVout
+            challengeVout: this.challengeVout,
+            timestamp: Date.now(),
+            completed: true
         };
-        this.persistence.saveResult(result, challengeInfo);
+        localStorage.setItem('miningResult', JSON.stringify(resultData));
+        console.log('[BitcoinMiner] Mining result saved, keeping current nonce for potential continuation');
     }
 
     loadMiningResult() {
-        return this.persistence.loadResult();
+        const saved = localStorage.getItem('miningResult');
+        if (saved) {
+            try {
+                const resultData = JSON.parse(saved);
+                if (resultData.completed) {
+                    return resultData;
+                }
+            } catch (error) {
+                console.error('Error loading mining result:', error);
+                this.clearMiningResult();
+            }
+        }
+        return null;
     }
 
     clearMiningResult() {
-        this.persistence.clearResult();
+        localStorage.removeItem('miningResult');
     }
 
     async minePoW(challenge, onProgress, resumeFromSaved = false) {
@@ -106,24 +165,15 @@ class BitcoinMiner {
     
     initializeState(resumeFromSaved) {
         if (resumeFromSaved) {
-            const savedProgress = this.loadMiningProgress();
-            if (savedProgress) {
-                this.currentNonce = savedProgress.nonce;
-                this.currentHash = savedProgress.hash;
-                this.bestHash = savedProgress.bestHash || '';
-                this.bestNonce = savedProgress.bestNonce || 0;
-                this.bestLeadingZeros = savedProgress.bestLeadingZeros || 0;
-                this.gpuLastSavedNonce = this.currentNonce;
-                return;
-            }
+            this.loadMiningProgress(); // Simply loads currentNonce from localStorage
+        } else {
+            // Reset state for new mining session
+            this.currentNonce = 0;
+            this.bestHash = '';
+            this.bestNonce = 0;
+            this.bestLeadingZeros = 0;
+            this.gpuLastSavedNonce = 0;
         }
-        
-        // Reset state for new mining session
-        this.currentNonce = 0;
-        this.bestHash = '';
-        this.bestNonce = 0;
-        this.bestLeadingZeros = 0;
-        this.gpuLastSavedNonce = 0;
     }
     
     async processWebGPUStep(gpu, onProgress) {
@@ -135,8 +185,9 @@ class BitcoinMiner {
             this.hashAnalyzer
         );
         
-        // Save progress periodically
-        if (this.webgpuCoordinator.shouldSaveProgress(this.currentNonce, this.gpuLastSavedNonce, this.saveInterval)) {
+        // Save progress periodically - GPU mining uses different interval due to speed
+        // Save every 100,000,000 nonces for GPU (vs 10,000 for CPU) due to much faster processing
+        if (this.webgpuCoordinator.shouldSaveProgress(this.currentNonce, this.gpuLastSavedNonce, this.gpuSaveInterval)) {
             this.saveMiningProgress();
             this.gpuLastSavedNonce = this.currentNonce;
         }
@@ -153,6 +204,8 @@ class BitcoinMiner {
             this.bestHash = hash;
             this.bestNonce = this.currentNonce;
             this.bestLeadingZeros = leadingZeroBits;
+            // Save immediately when new best is found
+            this.saveMiningProgress();
         }
         
         if (onProgress) {
@@ -169,7 +222,8 @@ class BitcoinMiner {
     
     handleMiningCompletion() {
         if (!this.isRunning) {
-            this.saveMiningProgress();
+            // Don't save progress here - already saved in stop() for manual stops
+            // and saved periodically during mining for automatic saves
             
             if (this.bestHash) {
                 const result = {
@@ -195,6 +249,9 @@ class BitcoinMiner {
     stop() {
         this.isRunning = false;
         this.stoppedManually = true;
+        // CRITICAL: Save current exact nonce when manually stopped
+        console.log('[BitcoinMiner] Manual stop - saving current nonce:', this.currentNonce);
+        this.saveMiningProgress();
     }
 
     async startPoW(onProgress, onComplete, resumeFromSaved = false, utxo = null) {
