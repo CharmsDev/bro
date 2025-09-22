@@ -35,7 +35,7 @@ struct Params { startLo: u32, startHi: u32, count: u32, challengeLen: u32, tailL
 struct BestInfo { bestLz: atomic<u32>, bestNonceLo: atomic<u32>, bestNonceHi: atomic<u32> };
 @group(0) @binding(4) var<storage, read_write> bestInfo: BestInfo;
 
-var<private> bestLock: atomic<u32>;
+var<storage, read_write> bestLock: atomic<u32>;
 
 fn rotr(x: u32, n: u32) -> u32 { return (x >> n) | (x << (32u - n)); }
 // 64-bit helpers (two u32 words, lo and hi)
