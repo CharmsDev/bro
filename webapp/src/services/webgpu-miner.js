@@ -228,23 +228,21 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
   // Update global best using atomicMax on leading zeros
   let prev = atomicMax(&bestInfo.bestLz, lz);
-  storageBarrier();
 
   if (lz > prev) {
-    let maybeCur = atomicMax(&bestInfo.bestLz, lz);
-    if (lz == maybeCur) {
-      let prevLock = atomicAdd(&bestInfo.bestLock, 1u);
+    let prevLock = atomicAdd(&bestInfo.bestLock, 1u);
 
-      if (prevLock == 0u) {
-        for (var i: u32 = 0u; i < 8u; i = i + 1u) {
-          bestDigest[i] = second[i];
-        }
-        atomicStore(&bestInfo.bestNonceLo, nonce_lo);
-        atomicStore(&bestInfo.bestNonceHi, nonce_hi);
+    var cur = atomicLoad(&bestInfo.bestLz);
+
+    if (prevLock == 0u && cur == lz) {
+      for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+        bestDigest[i] = second[i];
       }
-
-      _ = atomicSub(&bestInfo.bestLock, 1u);
+      atomicStore(&bestInfo.bestNonceLo, nonce_lo);
+      atomicStore(&bestInfo.bestNonceHi, nonce_hi);
     }
+
+    _ = atomicSub(&bestInfo.bestLock, 1u);
   }
 }`;
 
