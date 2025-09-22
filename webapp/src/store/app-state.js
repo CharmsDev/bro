@@ -122,13 +122,11 @@ export class AppState {
         if (broadcastData) {
             try {
                 this.broadcastResult = JSON.parse(broadcastData);
-                console.log('[AppState] Loaded broadcastResult from localStorage:', this.broadcastResult);
             } catch (error) {
                 console.warn('Invalid broadcast data, clearing');
                 localStorage.removeItem('bro_broadcast_data');
             }
         } else {
-            console.log('[AppState] No broadcast data found in localStorage');
         }
 
         // Load signed transactions
@@ -161,7 +159,6 @@ export class AppState {
         this.validateStateConsistency();
         
         // Force recalculation after all data is loaded
-        console.log('[AppState] Forcing recalculation after data load');
         this.recalculateCurrentStep();
     }
 
@@ -208,12 +205,6 @@ export class AppState {
 
     // Recalculate current step based on available data
     recalculateCurrentStep() {
-        console.log('[AppState] recalculateCurrentStep - checking data:', {
-            wallet: !!this.wallet,
-            transaction: !!this.transaction,
-            broadcastResult: !!this.broadcastResult,
-            signedTransactions: !!this.signedTransactions
-        });
 
         let calculatedStep = this.STEPS.WALLET_CREATION;
         let calculatedCompleted = [];
@@ -229,42 +220,33 @@ export class AppState {
         if (bestHash && bestNonce) {
             calculatedCompleted.push(this.STEPS.MINING);
             calculatedStep = this.STEPS.TRANSACTION_CREATION;
-            console.log('[AppState] Mining complete, advancing to TRANSACTION_CREATION');
         }
 
         if (this.transaction) {
             calculatedCompleted.push(this.STEPS.TRANSACTION_CREATION);
             calculatedStep = this.STEPS.BROADCAST;
-            console.log('[AppState] Transaction exists, advancing to BROADCAST');
         }
 
         if (this.broadcastResult) {
             calculatedCompleted.push(this.STEPS.BROADCAST);
             calculatedStep = this.STEPS.CLAIM_TOKENS;
-            console.log('[AppState] broadcastResult found, setting step to CLAIM_TOKENS (5)');
             
             // Check if we have signed transactions (Step 5 completion indicator)
             if (this.signedTransactions) {
                 calculatedCompleted.push(this.STEPS.CLAIM_TOKENS);
                 calculatedStep = this.STEPS.VISIT_WALLET;
-                console.log('[AppState] signedTransactions found, setting step to VISIT_WALLET (6)');
             }
         }
 
-        console.log('[AppState] Calculated step:', calculatedStep, 'Calculated completed:', calculatedCompleted);
-        console.log('[AppState] Current step:', this.currentStep, 'Current completed:', this.completedSteps);
 
         // Only update if there's a discrepancy
         if (this.currentStep !== calculatedStep || 
             JSON.stringify(this.completedSteps.sort()) !== JSON.stringify(calculatedCompleted.sort())) {
-            console.log('[AppState] Updating state - from step', this.currentStep, 'to step', calculatedStep);
             this.currentStep = calculatedStep;
             this.completedSteps = calculatedCompleted;
             this.saveCurrentStep();
             this.saveCompletedSteps();
-            console.log(`[AppState] State updated - currentStep: ${this.currentStep}, completedSteps:`, this.completedSteps);
         } else {
-            console.log('[AppState] No state update needed');
         }
     }
 
@@ -290,7 +272,6 @@ export class AppState {
             try {
                 const miner = new window.BitcoinMiner();
                 const result = miner.loadMiningResult();
-                console.log(`[AppState] BitcoinMiner fallback result:`, result);
                 if (result) {
                     this.miningResult = result;
                     if (!this.isStepCompleted(this.STEPS.MINING)) {
@@ -423,16 +404,13 @@ export class AppState {
 
     // Step 5: Commit/Spell broadcast completed -> advance to Step 6
     completeMintingBroadcast(result) {
-        console.log('[AppState] completeMintingBroadcast called with result:', result);
         this.broadcastResult = result;
         // Save final broadcast result to localStorage
         localStorage.setItem('bro_broadcast_data', JSON.stringify(result));
 
-        console.log('[AppState] Before completeStep - currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
         // Complete Step 5 and advance to Step 6
         this.completeStep(this.STEPS.CLAIM_TOKENS);
         this.setCurrentStep(this.STEPS.VISIT_WALLET);
-        console.log('[AppState] After completeStep - currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
         this.emit('transactionBroadcast', result);
     }
 
@@ -577,7 +555,6 @@ export class AppState {
     }
 
     partialReset() {
-        console.log('[AppState] partialReset starting...');
         // Clear ALL minting-related localStorage data
         // PRESERVE: bro_wallet_data and bro_prover_config (not removed)
         localStorage.removeItem('bro_current_step');
@@ -619,7 +596,6 @@ export class AppState {
             enabled: true,
             completedSteps: this.completedSteps
         });
-        console.log('[AppState] partialReset completed');
     }
 
     getState() {
@@ -641,7 +617,6 @@ export class AppState {
     }
 
     setCurrentStep(step) {
-        console.log(`[AppState] setCurrentStep: ${this.currentStep} -> ${step}`);
         this.currentStep = step;
         this.saveCurrentStep();
     }
@@ -651,7 +626,6 @@ export class AppState {
         this.proverConfig = { ...this.proverConfig, ...config };
         try {
             localStorage.setItem('bro_prover_config', JSON.stringify(this.proverConfig));
-            console.log('[AppState] Prover config saved:', this.proverConfig);
         } catch (error) {
             console.warn('[AppState] Failed to save prover config:', error);
         }

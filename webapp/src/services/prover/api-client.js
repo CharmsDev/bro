@@ -42,15 +42,11 @@ export class ProverApiClient {
                     urlToUse = inputUrl;
                     try {
                         new URL(inputUrl);
-                        console.log(`[ProverApiClient] Using valid custom prover URL from input: ${urlToUse}`);
                     } catch {
-                        console.log(`[ProverApiClient] Using invalid custom URL from input: "${inputUrl}" (will likely fail)`);
                     }
                 } else {
-                    console.log(`[ProverApiClient] No custom URL in input, using default: ${urlToUse}`);
                 }
 
-                console.log(`[ProverApiClient] Making request to: ${urlToUse}`);
                 const response = await fetch(urlToUse, {
                     method: 'POST',
                     headers: {

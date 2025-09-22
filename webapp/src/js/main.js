@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Initialize prover selection with AppState
         const proverSelection = new ProverSelection(appController.modules.domElements, appController.appState);
         window.proverSelection = proverSelection;
-        console.log(`[Main] ProverSelection assigned to window.proverSelection:`, !!window.proverSelection);
     } catch (error) {
         console.error('❌ Failed to initialize application:', error);
     }
