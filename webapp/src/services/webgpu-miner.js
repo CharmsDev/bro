@@ -32,8 +32,10 @@ struct Params { startLo: u32, startHi: u32, count: u32, challengeLen: u32, tailL
 @group(0) @binding(1) var<storage, read> block0Words: array<u32>; // 16 u32 words (first 64 bytes of challenge)
 @group(0) @binding(2) var<storage, read> tailBytes: array<u32>;  // each entry is a byte (0..255) as u32, length=tailLen
 @group(0) @binding(3) var<storage, read_write> bestDigest: array<u32>; // 8 u32 words
-struct BestInfo { bestLz: atomic<u32>, bestLock: atomic<u32>, bestNonceLo: atomic<u32>, bestNonceHi: atomic<u32> };
+struct BestInfo { bestLz: atomic<u32>, bestNonceLo: atomic<u32>, bestNonceHi: atomic<u32> };
 @group(0) @binding(4) var<storage, read_write> bestInfo: BestInfo;
+
+var<private> bestLock: atomic<u32>;
 
 fn rotr(x: u32, n: u32) -> u32 { return (x >> n) | (x << (32u - n)); }
 // 64-bit helpers (two u32 words, lo and hi)
@@ -231,9 +233,9 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   storageBarrier();
 
   if (lz > prev) {
-    let prev = atomicMax(&bestInfo.bestLz, lz);
-    if (lz == prev) {
-      let prevLock = atomicAdd(&bestInfo.bestLock, 1u);
+    let maybeCur = atomicMax(&bestInfo.bestLz, lz);
+    if (lz == maybeCur) {
+      let prevLock = atomicAdd(&bestLock, 1u);
 
       if (prevLock == 0u) {
         for (var i: u32 = 0u; i < 8u; i = i + 1u) {
@@ -243,7 +245,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         atomicStore(&bestInfo.bestNonceHi, nonce_hi);
       }
 
-      let _ = atomicSub(&bestInfo.bestLock, 1u);
+      let _ = atomicSub(&bestLock, 1u);
     }
   }
 }`;
