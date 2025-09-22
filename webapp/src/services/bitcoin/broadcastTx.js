@@ -19,10 +19,8 @@ export async function broadcastTransaction(txHex) {
         const txid = await client.sendRawTransaction(txHex);
 
         // Post-flight: confirm visibility via getrawtransaction (best-effort)
-        try {
-            const txInfo = await client.getRawTransaction(txid, true);
-        } catch (e) {
-        }
+        // Skip verification - transaction was successfully broadcast
+        // Verification will fail until transaction is confirmed in a block
 
         return {
             txid: txid,
