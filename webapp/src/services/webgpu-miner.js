@@ -32,7 +32,7 @@ struct Params { startLo: u32, startHi: u32, count: u32, challengeLen: u32, tailL
 @group(0) @binding(1) var<storage, read> block0Words: array<u32>; // 16 u32 words (first 64 bytes of challenge)
 @group(0) @binding(2) var<storage, read> tailBytes: array<u32>;  // each entry is a byte (0..255) as u32, length=tailLen
 @group(0) @binding(3) var<storage, read_write> bestDigest: array<u32>; // 8 u32 words
-struct BestInfo { bestLz: atomic<u32>, bestNonceLo: atomic<u32>, bestNonceHi: atomic<u32> };
+struct BestInfo { bestLz: atomic<u32>, bestLock: atomic<u32>, bestNonceLo: atomic<u32>, bestNonceHi: atomic<u32> };
 @group(0) @binding(4) var<storage, read_write> bestInfo: BestInfo;
 
 fn rotr(x: u32, n: u32) -> u32 { return (x >> n) | (x << (32u - n)); }
@@ -225,21 +225,33 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     lz = lz + c;
     if (c != 32u) { break; }
   }
+
   // Update global best using atomicMax on leading zeros
   let prev = atomicMax(&bestInfo.bestLz, lz);
+  storageBarrier();
+
   if (lz > prev) {
-    for (var i: u32 = 0u; i < 8u; i = i + 1u) {
-      bestDigest[i] = second[i];
+    let prev = atomicMax(&bestInfo.bestLz, lz);
+    if (lz == prev) {
+      let prevLock = atomicAdd(&bestInfo.bestLock, 1u);
+
+      if (prevLock == 0u) {
+        for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+          bestDigest[i] = second[i];
+        }
+        atomicStore(&bestInfo.bestNonceLo, nonce_lo);
+        atomicStore(&bestInfo.bestNonceHi, nonce_hi);
+      }
+
+      let _ = atomicSub(&bestInfo.bestLock, 1u);
     }
-    atomicStore(&bestInfo.bestNonceLo, nonce_lo);
-    atomicStore(&bestInfo.bestNonceHi, nonce_hi);
   }
 }`;
 
-        const module = this.device.createShaderModule({ code: shaderCode });
+        const module = this.device.createShaderModule({code: shaderCode});
         this.pipeline = this.device.createComputePipeline({
             layout: 'auto',
-            compute: { module, entryPoint: 'main' }
+            compute: {module, entryPoint: 'main'}
         });
     }
 
@@ -253,10 +265,10 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         // pack first 64 bytes into 16 BE words
         const block0 = new Uint32Array(16);
         for (let i = 0; i < 16; i++) {
-            const b0 = first[i*4 + 0] || 0;
-            const b1 = first[i*4 + 1] || 0;
-            const b2 = first[i*4 + 2] || 0;
-            const b3 = first[i*4 + 3] || 0;
+            const b0 = first[i * 4 + 0] || 0;
+            const b1 = first[i * 4 + 1] || 0;
+            const b2 = first[i * 4 + 2] || 0;
+            const b3 = first[i * 4 + 3] || 0;
             block0[i] = ((b0 << 24) | (b1 << 16) | (b2 << 8) | b3) >>> 0;
         }
 
@@ -319,11 +331,11 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         const bindGroup = this.device.createBindGroup({
             layout: this.pipeline.getBindGroupLayout(0),
             entries: [
-                { binding: 0, resource: { buffer: uniformBuffer } },
-                { binding: 1, resource: { buffer: this.block0Buffer } },
-                { binding: 2, resource: { buffer: this.tailBuffer } },
-                { binding: 3, resource: { buffer: bestDigestBuffer } },
-                { binding: 4, resource: { buffer: bestInfoBuffer } }
+                {binding: 0, resource: {buffer: uniformBuffer}},
+                {binding: 1, resource: {buffer: this.block0Buffer}},
+                {binding: 2, resource: {buffer: this.tailBuffer}},
+                {binding: 3, resource: {buffer: bestDigestBuffer}},
+                {binding: 4, resource: {buffer: bestInfoBuffer}}
             ]
         });
 
@@ -361,7 +373,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
         const bestNonceLo = infoArr[1] >>> 0;
         const bestNonceHi = infoArr[2] >>> 0;
-        return { bestWords, bestLeadingZeros: infoArr[0] >>> 0, bestNonceLo, bestNonceHi };
+        return {bestWords, bestLeadingZeros: infoArr[0] >>> 0, bestNonceLo, bestNonceHi};
     }
 
     getRecommendedBatchSize() {
