@@ -230,11 +230,19 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   let prev = atomicMax(&bestInfo.bestLz, lz);
 
   if (lz > prev) {
-    let prevLock = atomicAdd(&bestInfo.bestLock, 1u);
+    var prevLock: u32;
+    var bestLz: u32;
 
-    var cur = atomicLoad(&bestInfo.bestLz);
+    loop {
+      prevLock = atomicAdd(&bestInfo.bestLock, 1u);
 
-    if (prevLock == 0u && cur == lz) {
+      bestLz = atomicLoad(&bestInfo.bestLz);
+      break if (prevLock == 0u || bestLz > lz);
+
+      _ = atomicSub(&bestInfo.bestLock, 1u);
+    }
+
+    if (bestLz == lz) {
       for (var i: u32 = 0u; i < 8u; i = i + 1u) {
         bestDigest[i] = second[i];
       }
