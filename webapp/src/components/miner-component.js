@@ -173,7 +173,9 @@ class BitcoinMiner {
                 await gpu.init();
                 gpu.setChallenge(challengeBuffer);
                 console.log('[Miner] Backend: WebGPU');
-            } catch (_) { gpu = null; }
+            } catch (_) {
+                gpu = null;
+            }
         }
         if (!gpu) {
             console.log('[Miner] Backend: CPU');
@@ -303,7 +305,6 @@ class BitcoinMiner {
     }
 
 
-
     async startPoW(onProgress, onComplete, resumeFromSaved = false, utxo = null) {
         // Validate that we have a UTXO
         if (!utxo) {
@@ -316,7 +317,8 @@ class BitcoinMiner {
         }
 
         // Generate challenge from blockchain data
-        const challenge = this.generateChallenge(utxo.txid, utxo.vout);
+        // const challenge = this.generateChallenge(utxo.txid, utxo.vout);
+        const challenge = "6b9ef3bce777ed876a5d766b01272e46ed1c39b1d8cf7b5923ea3a14da006716:0"; // TODO remove! Test only
 
         // If not resuming from saved, clear any existing completed result
         if (!resumeFromSaved) {
