@@ -71,7 +71,7 @@ export class TransactionManager {
         if (createTransaction) {
             createTransaction.disabled = true;
             createTransaction.classList.add('disabled');
-            createTransaction.innerHTML = '<span>✅ Transaction Created</span>';
+            // Don't change the text here - let the step controller handle button text
         }
     }
 
@@ -126,7 +126,7 @@ export class TransactionManager {
                         console.error('[MiningValidator] ❌ VALIDATION FAILED - Cannot create transaction!');
                         
                         createTransaction.disabled = false;
-                        createTransaction.innerHTML = '<span>Create mining transaction</span>';
+                        createTransaction.innerHTML = '<span>Create Transaction</span>';
                         return;
                     }
 
