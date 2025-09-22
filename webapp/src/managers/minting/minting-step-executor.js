@@ -1,5 +1,6 @@
 // Individual step execution for minting process
 import { signSpellTransaction } from '../../services/bitcoin/signSpellTx.js';
+import { PROVER_CONFIG } from '../../services/prover/config.js';
 
 export class MintingStepExecutor {
     constructor(services, uiManager, appState) {
@@ -181,32 +182,6 @@ export class MintingStepExecutor {
         this.uiManager.setProverStatusTicker(ticker);
 
         try {
-            // ===== COMMENTED OUT: HARDCODED PROVER RESPONSE FOR TESTING =====
-            // console.log('🔧 Using hardcoded prover response for faster testing');
-            // 
-            // // Hardcoded commit and spell transactions for testing
-            // const proverResponse = [
-            //     // Commit transaction hex (from test-commit-signing.js)
-            //     "0200000001df347ce597c56cfa9a6897cda812e2364dfd8a2597cf998c73a8c778b52808ff0200000000ffffffff01c0990700000000002251205a21e4e72abff86b19d0d17631c03d530dbc88d7f0e1122cc61532b32031c19600000000",
-            //     // Spell transaction hex (using working example from payloads)
-            //     "020000000001014cff92e4f350463d29475b6143b987b5e32902f78806f2a5efc72d98ded9dc4c0000000000ffffffff030000000000000000076a0539303737330903000000000000225120a82f29944d65b86ae6b5e5cc75e294ead6c59391a1edc5e016e3498c67fc7bbb2f9a070000000000225120a82f29944d65b86ae6b5e5cc75e294ead6c59391a1edc5e016e3498c67fc7bbb01404ec23be6516c36b36658e28bebf89829b0d7dd7909d84b958e5d6c1516d35fd5c7d7e13dbd7e730b0938e4e59482f13e1cb99cb917ff829d914216a80a6cfc8300000000"
-            // ];
-            // 
-            // this.uiManager.updateStepStatus(3, 'completed');
-            // return proverResponse;
-            // ===== END COMMENTED OUT SECTION =====
-
-            // Get custom prover URL if selected
-            const proverConfig = window.proverSelection ? window.proverSelection.getProverConfig() : { type: 'charms', url: null };
-            
-            // Update prover API URL if custom prover is selected
-            if (proverConfig.type === 'custom' && proverConfig.url) {
-                this.proverApiService.setApiUrl(proverConfig.url);
-                console.log(`[MintingStepExecutor] Using custom prover: ${proverConfig.url}`);
-            } else {
-                console.log(`[MintingStepExecutor] Using official Charms prover`);
-            }
-
             // Make real prover API request with status callback
             const proverResponse = await this.proverApiService.sendToProver(payload, ({ phase, attempt }) => {
                 // Track attempt to drive phases

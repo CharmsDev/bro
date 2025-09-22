@@ -259,8 +259,7 @@ export class WalletEventHandlers {
      * Perform full application reset
      */
     performFullReset() {
-        localStorage.clear();
-
+        // Use AppState.reset() which preserves prover URL but clears everything else
         this.appState.reset();
 
         // Reset managers if available

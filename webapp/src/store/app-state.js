@@ -1,6 +1,5 @@
 export class AppState {
     constructor() {
-        console.log(`[AppState] Constructor starting...`);
         this.wallet = null;
         this.miningResult = null;
         this.utxo = null;
@@ -35,13 +34,10 @@ export class AppState {
         };
 
         // Initialize state from localStorage
-        console.log(`[AppState] Loading initial state from localStorage...`);
         this.currentStep = this.loadCurrentStep();
         this.completedSteps = this.loadCompletedSteps();
-        console.log(`[AppState] Initial state loaded - currentStep: ${this.currentStep}, completedSteps:`, this.completedSteps);
         this.cleanupStaleData();
         this.loadFromStorage();
-        console.log(`[AppState] Constructor completed - Final state: currentStep: ${this.currentStep}, completedSteps:`, this.completedSteps);
     }
 
     on(event, callback) {
@@ -60,7 +56,6 @@ export class AppState {
     loadCurrentStep() {
         const saved = localStorage.getItem('bro_current_step');
         const currentStep = saved ? parseInt(saved) : this.STEPS.WALLET_CREATION;
-        console.log(`[AppState] loadCurrentStep - localStorage value: ${saved}, parsed: ${currentStep}`);
         return currentStep;
     }
 
@@ -71,7 +66,6 @@ export class AppState {
     loadCompletedSteps() {
         const saved = localStorage.getItem('bro_completed_steps');
         const completedSteps = saved ? JSON.parse(saved) : [];
-        console.log(`[AppState] loadCompletedSteps - localStorage value: ${saved}, parsed:`, completedSteps);
         return completedSteps;
     }
 
@@ -80,15 +74,12 @@ export class AppState {
     }
 
     loadFromStorage() {
-        console.log(`[AppState] loadFromStorage starting...`);
         // Load wallet data first - everything depends on having a wallet
         const walletData = localStorage.getItem('bro_wallet_data');
-        console.log(`[AppState] Wallet data in localStorage:`, walletData ? 'found' : 'not found');
         if (walletData) {
             try {
                 const data = JSON.parse(walletData);
                 this.wallet = data;
-                console.log(`[AppState] Wallet loaded successfully:`, data);
             } catch (error) {
                 console.warn('[AppState] Invalid wallet data, resetting state');
                 this.reset();
@@ -96,7 +87,6 @@ export class AppState {
             }
         } else {
             // No wallet means we should be at step 1
-            console.log(`[AppState] No wallet found, setting to step 1`);
             this.currentStep = this.STEPS.WALLET_CREATION;
             this.completedSteps = [];
             this.saveCurrentStep();
@@ -107,11 +97,9 @@ export class AppState {
         // Only load other data if we have a wallet
         // Load UTXO data
         const utxoData = localStorage.getItem('bro_utxo_data');
-        console.log(`[AppState] UTXO data in localStorage:`, utxoData ? 'found' : 'not found');
         if (utxoData) {
             try {
                 this.utxo = JSON.parse(utxoData);
-                console.log(`[AppState] UTXO loaded successfully:`, this.utxo);
             } catch (error) {
                 console.warn('[AppState] Invalid UTXO data, clearing');
                 localStorage.removeItem('bro_utxo_data');
@@ -134,10 +122,13 @@ export class AppState {
         if (broadcastData) {
             try {
                 this.broadcastResult = JSON.parse(broadcastData);
+                console.log('[AppState] Loaded broadcastResult from localStorage:', this.broadcastResult);
             } catch (error) {
                 console.warn('Invalid broadcast data, clearing');
                 localStorage.removeItem('bro_broadcast_data');
             }
+        } else {
+            console.log('[AppState] No broadcast data found in localStorage');
         }
 
         // Load signed transactions
@@ -156,7 +147,6 @@ export class AppState {
         if (proverConfigData) {
             try {
                 this.proverConfig = JSON.parse(proverConfigData);
-                console.log(`[AppState] Prover config loaded:`, this.proverConfig);
             } catch (error) {
                 console.warn('Invalid prover config data, clearing');
                 localStorage.removeItem('bro_prover_config');
@@ -165,23 +155,21 @@ export class AppState {
         }
 
         // Load mining result for transaction creation validation
-        console.log(`[AppState] Loading mining result...`);
         this.loadMiningResult();
-        console.log(`[AppState] Mining result after load:`, this.miningResult);
 
         // Validate state consistency after loading all data
-        console.log(`[AppState] Starting state validation...`);
         this.validateStateConsistency();
-        console.log(`[AppState] State validation completed - currentStep: ${this.currentStep}, completedSteps:`, this.completedSteps);
+        
+        // Force recalculation after all data is loaded
+        console.log('[AppState] Forcing recalculation after data load');
+        this.recalculateCurrentStep();
     }
 
     // Validate that the state is consistent and fix any inconsistencies
     validateStateConsistency() {
-        console.log(`[AppState] validateStateConsistency - wallet: ${!!this.wallet}, utxo: ${!!this.utxo}, miningResult: ${!!this.miningResult}`);
         
         // If we don't have a wallet, we should be at step 1 with no completed steps
         if (!this.wallet) {
-            console.log(`[AppState] No wallet found, setting to step 1`);
             this.currentStep = this.STEPS.WALLET_CREATION;
             this.completedSteps = [];
             this.saveCurrentStep();
@@ -191,7 +179,6 @@ export class AppState {
 
         // If we have a wallet but no UTXO, we should stay at step 1 until UTXO is found
         if (this.wallet && !this.utxo) {
-            console.log(`[AppState] Wallet found but no UTXO, staying at step 1 until UTXO is found`);
             this.currentStep = this.STEPS.WALLET_CREATION;
             this.completedSteps = [this.STEPS.WALLET_CREATION];
             this.saveCurrentStep();
@@ -203,10 +190,8 @@ export class AppState {
         if (this.wallet && this.utxo && !this.miningResult) {
             // If Step 2 (MINING) is already completed, don't force back to step 2
             if (this.completedSteps.includes(this.STEPS.MINING)) {
-                console.log(`[AppState] Wallet and UTXO found, no mining result, but Step 2 already completed - proceeding to recalculate`);
                 // Continue to recalculateCurrentStep to determine correct next step
             } else {
-                console.log(`[AppState] Wallet and UTXO found but no mining result and Step 2 not completed, staying at step 2`);
                 this.currentStep = this.STEPS.MINING;
                 if (!this.completedSteps.includes(this.STEPS.WALLET_CREATION)) {
                     this.completedSteps.push(this.STEPS.WALLET_CREATION);
@@ -218,12 +203,18 @@ export class AppState {
         }
 
         // Continue with normal state progression based on what data we have
-        console.log(`[AppState] All basic data found, proceeding to recalculateCurrentStep`);
         this.recalculateCurrentStep();
     }
 
     // Recalculate current step based on available data
     recalculateCurrentStep() {
+        console.log('[AppState] recalculateCurrentStep - checking data:', {
+            wallet: !!this.wallet,
+            transaction: !!this.transaction,
+            broadcastResult: !!this.broadcastResult,
+            signedTransactions: !!this.signedTransactions
+        });
+
         let calculatedStep = this.STEPS.WALLET_CREATION;
         let calculatedCompleted = [];
 
@@ -232,78 +223,58 @@ export class AppState {
             calculatedStep = this.STEPS.MINING;
         }
 
-        // Check if mining is complete - either we have miningResult OR we have a reward calculated
-        const hasMiningReward = this.miningReward > 0;
-        console.log(`[AppState] recalculateCurrentStep - miningResult:`, !!this.miningResult, 'miningReward:', this.miningReward, 'hasMiningReward:', hasMiningReward);
-        
-        if (this.miningResult || hasMiningReward) {
+        // Check if mining is complete - check for best mining result in localStorage
+        const bestHash = localStorage.getItem('bestHash11');
+        const bestNonce = localStorage.getItem('bestNonce11');
+        if (bestHash && bestNonce) {
             calculatedCompleted.push(this.STEPS.MINING);
             calculatedStep = this.STEPS.TRANSACTION_CREATION;
-            
-            // If we have mining reward but no miningResult, try to reconstruct it
-            if (!this.miningResult && hasMiningReward && window.BitcoinMiner) {
-                try {
-                    const miner = new window.BitcoinMiner();
-                    const progress = miner.loadMiningProgress();
-                    if (progress && progress.bestHash && progress.bestNonce) {
-                        this.miningResult = {
-                            bestHash: progress.bestHash,
-                            bestNonce: progress.bestNonce,
-                            difficulty: progress.difficulty || 20,
-                            timestamp: Date.now()
-                        };
-                        // Save it to localStorage for future loads
-                        localStorage.setItem('miningResult', JSON.stringify(this.miningResult));
-                        console.log(`[AppState] Reconstructed miningResult from BitcoinMiner:`, this.miningResult);
-                    }
-                } catch (error) {
-                    console.warn('[AppState] Failed to reconstruct miningResult:', error);
-                }
-            }
+            console.log('[AppState] Mining complete, advancing to TRANSACTION_CREATION');
         }
 
         if (this.transaction) {
             calculatedCompleted.push(this.STEPS.TRANSACTION_CREATION);
             calculatedStep = this.STEPS.BROADCAST;
+            console.log('[AppState] Transaction exists, advancing to BROADCAST');
         }
 
         if (this.broadcastResult) {
             calculatedCompleted.push(this.STEPS.BROADCAST);
             calculatedStep = this.STEPS.CLAIM_TOKENS;
+            console.log('[AppState] broadcastResult found, setting step to CLAIM_TOKENS (5)');
             
             // Check if we have signed transactions (Step 5 completion indicator)
             if (this.signedTransactions) {
                 calculatedCompleted.push(this.STEPS.CLAIM_TOKENS);
                 calculatedStep = this.STEPS.VISIT_WALLET;
+                console.log('[AppState] signedTransactions found, setting step to VISIT_WALLET (6)');
             }
         }
 
+        console.log('[AppState] Calculated step:', calculatedStep, 'Calculated completed:', calculatedCompleted);
+        console.log('[AppState] Current step:', this.currentStep, 'Current completed:', this.completedSteps);
+
         // Only update if there's a discrepancy
-        console.log(`[AppState] recalculateCurrentStep - Current: ${this.currentStep}, Calculated: ${calculatedStep}`);
-        console.log(`[AppState] recalculateCurrentStep - Current completed:`, this.completedSteps, 'Calculated completed:', calculatedCompleted);
-        
         if (this.currentStep !== calculatedStep || 
             JSON.stringify(this.completedSteps.sort()) !== JSON.stringify(calculatedCompleted.sort())) {
-            console.log(`[AppState] State discrepancy found, updating state`);
+            console.log('[AppState] Updating state - from step', this.currentStep, 'to step', calculatedStep);
             this.currentStep = calculatedStep;
             this.completedSteps = calculatedCompleted;
             this.saveCurrentStep();
             this.saveCompletedSteps();
             console.log(`[AppState] State updated - currentStep: ${this.currentStep}, completedSteps:`, this.completedSteps);
         } else {
-            console.log(`[AppState] No state changes needed`);
+            console.log('[AppState] No state update needed');
         }
     }
 
     loadMiningResult() {
         // First try to load from localStorage directly
         const storedResult = localStorage.getItem('miningResult');
-        console.log(`[AppState] Loading mining result from localStorage:`, storedResult ? 'found' : 'not found');
         if (storedResult) {
             try {
                 const result = JSON.parse(storedResult);
                 this.miningResult = result;
-                console.log(`[AppState] Mining result loaded:`, result);
                 if (!this.isStepCompleted(this.STEPS.MINING)) {
                     this.completeStep(this.STEPS.MINING);
                 }
@@ -388,10 +359,10 @@ export class AppState {
     }
 
     completeMining(result) {
-        this.miningResult = result;
-        // Save mining result to localStorage immediately
-        localStorage.setItem('miningResult', JSON.stringify(result));
-        console.log(`[AppState] Mining result saved to localStorage:`, result);
+        // DO NOT save miningResult - only use current11 for nonce storage
+        // this.miningResult = result;
+        // localStorage.setItem('miningResult', JSON.stringify(result));
+        console.log(`[AppState] Mining completed - using current11 for nonce storage only:`, result);
         this.completeStep(this.STEPS.MINING);
         this.emit('miningCompleted', result);
 
@@ -442,21 +413,15 @@ export class AppState {
     }
 
     completeBroadcast(result) {
-        // Backward compatibility: treat as Step 4 broadcast completion
-        this.completeMiningBroadcast(result);
-    }
-
-    // Step 4: Mining transaction broadcast completed -> advance to Step 5
-    completeMiningBroadcast(result) {
+        // Step 4: Mining transaction broadcast completed -> advance to Step 5
         this.broadcastResult = result;
         // Save broadcast result to localStorage
         localStorage.setItem('bro_broadcast_data', JSON.stringify(result));
 
-        // Step 4 broadcast completion should advance to Step 5
+        // Complete Step 4 and advance to Step 5
         this.completeStep(this.STEPS.BROADCAST);
         this.setCurrentStep(this.STEPS.CLAIM_TOKENS);
         this.emit('transactionBroadcast', result);
-
     }
 
     // Step 5: Commit/Spell broadcast completed -> advance to Step 6
@@ -469,13 +434,9 @@ export class AppState {
         console.log('[AppState] Before completeStep - currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
         // Complete Step 5 and advance to Step 6
         this.completeStep(this.STEPS.CLAIM_TOKENS);
-        console.log('[AppState] After completeStep - currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
-        
         this.setCurrentStep(this.STEPS.VISIT_WALLET);
-        console.log('[AppState] After setCurrentStep - currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
-        
+        console.log('[AppState] After completeStep - currentStep:', this.currentStep, 'completedSteps:', this.completedSteps);
         this.emit('transactionBroadcast', result);
-
     }
 
     canStartMining() {
@@ -483,16 +444,12 @@ export class AppState {
     }
 
     canCreateTransaction() {
-        // Check if we have a completed mining result
-        if (this.miningResult !== null && this.utxo !== null) {
-            return true;
-        }
-
-        // If no completed result, check if we have mining progress with a best result
+        // Check if we have mining progress with a best result (best hash + best nonce)
         if (this.utxo !== null && window.BitcoinMiner) {
             const miner = new window.BitcoinMiner();
             const miningProgress = miner.loadMiningProgress();
-            if (miningProgress && miningProgress.bestHash && miningProgress.bestNonce) {
+            // Check if we have best hash and best nonce - required for transaction creation
+            if (miningProgress && miningProgress.bestHash && miningProgress.bestNonce > 0) {
                 return true;
             }
         }
@@ -506,7 +463,8 @@ export class AppState {
 
     // Getter to calculate the reward from the mining result
     get miningReward() {
-        // First try from miningResult
+        // Only calculate reward if we have a completed miningResult
+        // Reward cannot exist without mining being completed first
         if (this.miningResult && this.miningResult.bestHash && this.miningResult.bestNonce) {
             try {
                 if (window.calculateRewardInfo) {
@@ -516,19 +474,7 @@ export class AppState {
             } catch (_) {}
         }
 
-        // Fallback: try to get mining data from BitcoinMiner directly
-        if (window.BitcoinMiner) {
-            try {
-                const miner = new window.BitcoinMiner();
-                const progress = miner.loadMiningProgress();
-                if (progress && progress.bestHash && progress.bestNonce && window.calculateRewardInfo) {
-                    const rewardInfo = window.calculateRewardInfo(progress.bestNonce, progress.bestHash);
-                    console.log(`[AppState] miningReward fallback - nonce: ${progress.bestNonce}, hash: ${progress.bestHash}, reward: ${rewardInfo.rawAmount}`);
-                    return Number(rewardInfo.rawAmount);
-                }
-            } catch (_) {}
-        }
-
+        // No fallback to progress - reward only exists after mining completion
         return 0;
     }
 
@@ -546,7 +492,7 @@ export class AppState {
     }
 
     /**
-     * Clean up stale data from localStorage to prevent deployment issues
+     * Clean up stale data from localStorage based on age only
      */
     cleanupStaleData() {
         try {
@@ -556,13 +502,8 @@ export class AppState {
                 const staleThreshold = 24 * 60 * 60 * 1000; // 24 hours
                 const now = Date.now();
 
-                // Check if data is older than threshold or contains known problematic txids
-                const staleTxids = [
-                    '4f5fc22d074d1743688f48866c22d1d805b30377dea9542945e3e9d9360cbb9e', // Known stale txid
-                ];
-
-                const isStale = staleTxids.includes(parsed.txid) ||
-                    (parsed.timestamp && (now - parsed.timestamp) > staleThreshold);
+                // Only check if data is older than threshold
+                const isStale = parsed.timestamp && (now - parsed.timestamp) > staleThreshold;
 
                 if (isStale) {
                     this.reset();
@@ -575,17 +516,45 @@ export class AppState {
     }
 
     reset() {
-        // Clear localStorage
+        // Preserve prover URL before clearing
+        const currentProverUrl = this.proverConfig?.customProverUrl || '';
+        const isCustomMode = this.proverConfig?.isCustomProverMode || false;
+        
+        // Clear ALL localStorage except prover URL
         localStorage.removeItem('bro_current_step');
         localStorage.removeItem('bro_completed_steps');
         localStorage.removeItem('bro_wallet_data');
         localStorage.removeItem('bro_transaction_data');
         localStorage.removeItem('bro_broadcast_data');
         localStorage.removeItem('bro_signed_transactions');
-        localStorage.removeItem('bro_prover_config');
-        // Clear mining data
+        localStorage.removeItem('bro_utxo_data');
+        localStorage.removeItem('bro_utxo_display_data');
+        // Clear mining data - simple nonce clearing
+        console.log('[AppState.reset] Clearing current11...');
+        localStorage.removeItem('current11');
+        localStorage.removeItem('bestHash11');
+        localStorage.removeItem('bestNonce11');
+        localStorage.removeItem('bestZeros11');
+        localStorage.removeItem('currentNonce');
         localStorage.removeItem('miningProgress');
         localStorage.removeItem('miningResult');
+        // Clear wallet service data
+        localStorage.removeItem('charmsWallet');
+        // Clear prover config (will be recreated with preserved URL)
+        localStorage.removeItem('bro_prover_config');
+
+        // Additionally clear any miner-managed persistence to avoid stale nonces
+        try {
+            if (window && window.BitcoinMiner) {
+                const miner = new window.BitcoinMiner();
+                console.log('[AppState.reset] Clearing miner persistence...');
+                miner.clearMiningProgress();
+                miner.clearMiningResult();
+                console.log('[AppState.reset] Miner persistence cleared');
+            }
+        } catch (error) { 
+            console.warn('[AppState.reset] Error clearing miner persistence:', error);
+        }
 
         // Reset state
         this.wallet = null;
@@ -596,7 +565,11 @@ export class AppState {
         this.signedTransactions = null;
         this.currentStep = 1;
         this.completedSteps = [];
-        this.proverConfig = { isCustomProverMode: false, customProverUrl: '' };
+        // Preserve only the prover URL, reset the rest
+        this.proverConfig = { 
+            isCustomProverMode: isCustomMode, 
+            customProverUrl: currentProverUrl 
+        };
         this.stopMonitoring();
 
         this.emit('stepChanged', {
@@ -608,16 +581,21 @@ export class AppState {
 
     partialReset() {
         console.log('[AppState] partialReset starting...');
-        // Clear localStorage except wallet data
+        // Clear ALL minting-related localStorage data
+        // PRESERVE: bro_wallet_data and bro_prover_config (not removed)
         localStorage.removeItem('bro_current_step');
         localStorage.removeItem('bro_completed_steps');
-        localStorage.removeItem('bro_transaction_data');
-        localStorage.removeItem('bro_broadcast_data');
-        localStorage.removeItem('bro_signed_transactions');
-        localStorage.removeItem('bro_utxo_data');
-        // Clear mining data
-        localStorage.removeItem('miningProgress');
-        localStorage.removeItem('miningResult');
+        try {
+            if (window && window.BitcoinMiner) {
+                const miner = new window.BitcoinMiner();
+                console.log('[AppState.partialReset] Clearing miner persistence...');
+                miner.clearMiningProgress();
+                miner.clearMiningResult();
+                console.log('[AppState.partialReset] Miner persistence cleared');
+            }
+        } catch (error) { 
+            console.warn('[AppState.partialReset] Error clearing miner persistence:', error);
+        }
 
         // Reset state but keep wallet and prover config
         const currentWallet = this.wallet; // Preserve wallet
