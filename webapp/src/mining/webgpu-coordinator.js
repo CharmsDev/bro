@@ -1,8 +1,16 @@
 // WebGPU coordination and processing utilities
 
+import { MiningValidator } from '../utils/mining-validator.js';
+import { CPUMiner } from './cpu-miner.js';
+import { MiningHashAnalyzer } from './mining-hash-analyzer.js';
+
 export class WebGPUCoordinator {
     constructor() {
         this.wordsPerHash = 8;
+        // Temporary validation components for CPU vs GPU comparison
+        this.cpuMiner = new CPUMiner();
+        this.hashAnalyzer = new MiningHashAnalyzer();
+        this.validationEnabled = true; // Set to false to disable validation
     }
 
     // Initialize WebGPU miner if available and supported
@@ -57,6 +65,11 @@ export class WebGPUCoordinator {
             state.bestLeadingZeros = bestLz;
             state.currentHash = state.bestHash;
             
+            // 🔍 TEMPORARY VALIDATION: Compare GPU vs CPU nonce calculation
+            if (this.validationEnabled) {
+                await this.validateGpuVsCpu(state.challenge, bestNonce, hex, bestLz);
+            }
+            
             if (onProgress) {
                 const progressReport = hashAnalyzer.createWebGPUProgressReport(state, state.bestHash, bestLz, true);
                 onProgress(progressReport);
@@ -75,7 +88,58 @@ export class WebGPUCoordinator {
     }
 
     // Check if progress should be saved based on interval
+    // Apply same logic as CPU mining: save every saveInterval nonces
     shouldSaveProgress(currentNonce, lastSavedNonce, saveInterval) {
         return (currentNonce - lastSavedNonce) >= saveInterval;
     }
+
+    // 🔍 TEMPORARY VALIDATION: Compare GPU vs CPU nonce calculation
+    async validateGpuVsCpu(challenge, nonce, gpuHash, gpuLeadingZeros) {
+        try {
+            console.log('\n🔍 ===== GPU vs CPU VALIDATION =====');
+            console.log(`Challenge: ${challenge}`);
+            console.log(`Nonce: ${nonce.toString()}`);
+            console.log(`GPU Hash: ${gpuHash}`);
+            console.log(`GPU Leading Zeros: ${gpuLeadingZeros} bits`);
+            
+            // Method 1: CPU Miner calculation (same as GPU should use)
+            const challengeBuffer = new TextEncoder().encode(challenge);
+            const cpuHash = await this.cpuMiner.step(challengeBuffer, Number(nonce));
+            const cpuLeadingZeros = this.hashAnalyzer.countLeadingZeroBits(cpuHash);
+            
+            console.log(`CPU Hash: ${cpuHash}`);
+            console.log(`CPU Leading Zeros: ${cpuLeadingZeros} bits`);
+            
+            // Method 2: MiningValidator calculation (contract validation)
+            const validatorResult = MiningValidator.validateNonce(challenge, Number(nonce), 0);
+            const validatorHash = validatorResult.details?.computedHash || 'ERROR';
+            const validatorLeadingZeros = validatorResult.details?.leadingZeroBits || 0;
+            
+            console.log(`Validator Hash: ${validatorHash}`);
+            console.log(`Validator Leading Zeros: ${validatorLeadingZeros} bits`);
+            
+            // Compare all three methods
+            const gpuCpuMatch = gpuHash.toLowerCase() === cpuHash.toLowerCase();
+            const cpuValidatorMatch = cpuHash.toLowerCase() === validatorHash.toLowerCase();
+            const allMatch = gpuCpuMatch && cpuValidatorMatch;
+            
+            console.log('\n📊 COMPARISON RESULTS:');
+            console.log(`GPU ↔ CPU Match: ${gpuCpuMatch ? '✅ YES' : '❌ NO'}`);
+            console.log(`CPU ↔ Validator Match: ${cpuValidatorMatch ? '✅ YES' : '❌ NO'}`);
+            console.log(`All Methods Match: ${allMatch ? '✅ YES' : '❌ NO'}`);
+            
+            if (!allMatch) {
+                console.log('\n⚠️  MISMATCH DETECTED! Different calculation methods producing different results!');
+                console.log('This indicates a bug in one of the implementations.');
+            } else {
+                console.log('\n🎉 PERFECT MATCH! All calculation methods agree.');
+            }
+            
+            console.log('=====================================\n');
+            
+        } catch (error) {
+            console.error('❌ Validation error:', error);
+        }
+    }
+
 }
