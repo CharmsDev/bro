@@ -245,7 +245,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         atomicStore(&bestInfo.bestNonceHi, nonce_hi);
       }
 
-      let _ = atomicSub(&bestLock, 1u);
+      _ = atomicSub(&bestLock, 1u);
     }
   }
 }`;
