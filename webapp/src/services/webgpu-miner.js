@@ -32,10 +32,8 @@ struct Params { startLo: u32, startHi: u32, count: u32, challengeLen: u32, tailL
 @group(0) @binding(1) var<storage, read> block0Words: array<u32>; // 16 u32 words (first 64 bytes of challenge)
 @group(0) @binding(2) var<storage, read> tailBytes: array<u32>;  // each entry is a byte (0..255) as u32, length=tailLen
 @group(0) @binding(3) var<storage, read_write> bestDigest: array<u32>; // 8 u32 words
-struct BestInfo { bestLz: atomic<u32>, bestNonceLo: atomic<u32>, bestNonceHi: atomic<u32> };
+struct BestInfo { bestLz: atomic<u32>, bestNonceLo: atomic<u32>, bestNonceHi: atomic<u32>, bestLock: atomic<u32> };
 @group(0) @binding(4) var<storage, read_write> bestInfo: BestInfo;
-
-var<storage, read_write> bestLock: atomic<u32>;
 
 fn rotr(x: u32, n: u32) -> u32 { return (x >> n) | (x << (32u - n)); }
 // 64-bit helpers (two u32 words, lo and hi)
@@ -235,7 +233,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (lz > prev) {
     let maybeCur = atomicMax(&bestInfo.bestLz, lz);
     if (lz == maybeCur) {
-      let prevLock = atomicAdd(&bestLock, 1u);
+      let prevLock = atomicAdd(&bestInfo.bestLock, 1u);
 
       if (prevLock == 0u) {
         for (var i: u32 = 0u; i < 8u; i = i + 1u) {
@@ -245,7 +243,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         atomicStore(&bestInfo.bestNonceHi, nonce_hi);
       }
 
-      _ = atomicSub(&bestLock, 1u);
+      _ = atomicSub(&bestInfo.bestLock, 1u);
     }
   }
 }`;
@@ -311,7 +309,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
         });
         const bestInfoBuffer = this.device.createBuffer({
-            size: 12,
+            size: 16,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
         });
 
@@ -327,7 +325,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         this.queue.writeBuffer(uniformBuffer, 0, uniformData.buffer);
 
         // reset best info (lz, lo, hi)
-        const zeroInfo = new Uint32Array([0, 0, 0]);
+        const zeroInfo = new Uint32Array([0, 0, 0, 0]);
         this.queue.writeBuffer(bestInfoBuffer, 0, zeroInfo.buffer);
 
         const bindGroup = this.device.createBindGroup({
