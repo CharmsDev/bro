@@ -1,15 +1,26 @@
 export class WebGPUMiner {
   constructor() {
-    this.device = null; this.queue = null; this.adapter = null; this.pipeline = null;
+    this.device = null;
+    this.queue = null;
+    this.adapter = null;
+    this.pipeline = null;
     this.supported = typeof navigator !== 'undefined' && 'gpu' in navigator;
-    this.challengeBuffer = null; this.challengeLen = 0;
+    this.challengeBuffer = null;
+    this.challengeLen = 0;
     this.workgroupSize = 512; // bajará a 256 si no se puede
-    this._uniformBuffer = null; this._bestDigestBuffer = null; this._bestInfoBuffer = null;
-    this._readDigest = null; this._readInfo = null; this._bindGroup = null;
-    this._startLo = 0; this._startHi = 0;
+    this._uniformBuffer = null;
+    this._bestDigestBuffer = null;
+    this._bestInfoBuffer = null;
+    this._readDigest = null;
+    this._readInfo = null;
+    this._bindGroup = null;
+    this._startLo = 0;
+    this._startHi = 0;
   }
 
-  isSupported(){ return this.supported; }
+  isSupported() {
+    return this.supported;
+  }
 
   async init() {
     if (!this.isSupported()) throw new Error('WebGPU not supported');
@@ -38,7 +49,8 @@ struct Params {
 struct BestInfo { 
   bestLz: atomic<u32>, 
   bestNonceLo: atomic<u32>, 
-  bestNonceHi: atomic<u32> 
+  bestNonceHi: atomic<u32>,
+  bestLock: atomic<u32> 
 };
 @group(0) @binding(3) var<storage, read_write> bestInfo: BestInfo;
 
@@ -153,28 +165,57 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   }
 
   let prev = atomicMax(&bestInfo.bestLz, lz);
-  if(lz > prev && lz == atomicLoad(&bestInfo.bestLz)){
-    for(var i:u32=0u;i<8u;i=i+1u){ bestDigest[i]=second[i]; }
-    atomicStore(&bestInfo.bestNonceLo, nlo);
-    atomicStore(&bestInfo.bestNonceHi, nhi);
+  if (lz > prev) {
+    var prevLock: u32;
+    var bestLz: u32;
+
+    loop {
+      prevLock = atomicAdd(&bestInfo.bestLock, 1u);
+
+      bestLz = atomicLoad(&bestInfo.bestLz);
+      if (prevLock == 0u || bestLz > lz) { break; }
+
+      _ = atomicSub(&bestInfo.bestLock, 1u);
+    }
+
+    if (bestLz == lz) {
+      for(var i:u32=0u;i<8u;i=i+1u){ bestDigest[i]=second[i]; }
+      atomicStore(&bestInfo.bestNonceLo, nlo);
+      atomicStore(&bestInfo.bestNonceHi, nhi);
+    }
+
+    _ = atomicSub(&bestInfo.bestLock, 1u);
   }
 }`;
-    const module = this.device.createShaderModule({ code: shaderCode });
-    this.pipeline = this.device.createComputePipeline({ layout: 'auto', compute: { module, entryPoint: 'main' } });
+    const module = this.device.createShaderModule({code: shaderCode});
+    this.pipeline = this.device.createComputePipeline({layout: 'auto', compute: {module, entryPoint: 'main'}});
 
-    this._uniformBuffer = this.device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-    this._bestDigestBuffer = this.device.createBuffer({ size: 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
-    this._bestInfoBuffer = this.device.createBuffer({ size: 12, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
-    this._readDigest = this.device.createBuffer({ size: 32, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
-    this._readInfo = this.device.createBuffer({ size: 12, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+    this._uniformBuffer = this.device.createBuffer({size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST});
+    this._bestDigestBuffer = this.device.createBuffer({
+      size: 32,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
+    });
+    this._bestInfoBuffer = this.device.createBuffer({
+      size: 16,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
+    });
+    this._readDigest = this.device.createBuffer({size: 32, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ});
+    this._readInfo = this.device.createBuffer({size: 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ});
 
     this._bindGroup = this.device.createBindGroup({
       layout: this.pipeline.getBindGroupLayout(0),
       entries: [
-        { binding: 0, resource: { buffer: this._uniformBuffer } },
-        { binding: 1, resource: { buffer: this.challengeBuffer ?? this.device.createBuffer({size:4, usage: GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST}) } },
-        { binding: 2, resource: { buffer: this._bestDigestBuffer } },
-        { binding: 3, resource: { buffer: this._bestInfoBuffer } }
+        {binding: 0, resource: {buffer: this._uniformBuffer}},
+        {
+          binding: 1, resource: {
+            buffer: this.challengeBuffer ?? this.device.createBuffer({
+              size: 4,
+              usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+            })
+          }
+        },
+        {binding: 2, resource: {buffer: this._bestDigestBuffer}},
+        {binding: 3, resource: {buffer: this._bestInfoBuffer}}
       ]
     });
   }
@@ -183,7 +224,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (!this.device) await this.init();
     this.challengeLen = challengeBytes.length >>> 0;
     const u32 = new Uint32Array(this.challengeLen);
-    for (let i=0;i<this.challengeLen;i++) u32[i] = challengeBytes[i];
+    for (let i = 0; i < this.challengeLen; i++) u32[i] = challengeBytes[i];
 
     this.challengeBuffer?.destroy?.();
     this.challengeBuffer = this.device.createBuffer({
@@ -194,29 +235,30 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     this._bindGroup = this.device.createBindGroup({
       layout: this.pipeline.getBindGroupLayout(0),
       entries: [
-        { binding: 0, resource: { buffer: this._uniformBuffer } },
-        { binding: 1, resource: { buffer: this.challengeBuffer } },
-        { binding: 2, resource: { buffer: this._bestDigestBuffer } },
-        { binding: 3, resource: { buffer: this._bestInfoBuffer } }
+        {binding: 0, resource: {buffer: this._uniformBuffer}},
+        {binding: 1, resource: {buffer: this.challengeBuffer}},
+        {binding: 2, resource: {buffer: this._bestDigestBuffer}},
+        {binding: 3, resource: {buffer: this._bestInfoBuffer}}
       ]
     });
   }
 
-  setStartNonceForBatch(startNonceBigInt){
+  setStartNonceForBatch(startNonceBigInt) {
     const lo = Number(startNonceBigInt & 0xFFFFFFFFn) >>> 0;
     const hi = Number((startNonceBigInt >> 32n) & 0xFFFFFFFFn) >>> 0;
-    this._startLo = lo; this._startHi = hi;
+    this._startLo = lo;
+    this._startHi = hi;
   }
 
-  async computeBatch(startNonceBigInt, count){
+  async computeBatch(startNonceBigInt, count) {
     if (!this.device) await this.init();
     this.setStartNonceForBatch(startNonceBigInt);
 
-    const uniformData = new Uint32Array([ this._startLo>>>0, this._startHi>>>0, count>>>0, this.challengeLen>>>0, 0, 0 ]);
+    const uniformData = new Uint32Array([this._startLo >>> 0, this._startHi >>> 0, count >>> 0, this.challengeLen >>> 0, 0, 0]);
     this.queue.writeBuffer(this._uniformBuffer, 0, uniformData);
 
     this.queue.writeBuffer(this._bestDigestBuffer, 0, new Uint8Array(32));
-    this.queue.writeBuffer(this._bestInfoBuffer, 0, new Uint32Array([0,0,0]));
+    this.queue.writeBuffer(this._bestInfoBuffer, 0, new Uint32Array([0, 0, 0, 0]));
 
     const enc = this.device.createCommandEncoder();
     const pass = enc.beginComputePass();
@@ -227,33 +269,38 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     pass.end();
 
     enc.copyBufferToBuffer(this._bestDigestBuffer, 0, this._readDigest, 0, 32);
-    enc.copyBufferToBuffer(this._bestInfoBuffer, 0, this._readInfo, 0, 12);
+    enc.copyBufferToBuffer(this._bestInfoBuffer, 0, this._readInfo, 0, 16);
     this.queue.submit([enc.finish()]);
 
     await this._readDigest.mapAsync(GPUMapMode.READ);
-    const bestWords = new Uint32Array(this._readDigest.getMappedRange()).slice(); this._readDigest.unmap();
+    const bestWords = new Uint32Array(this._readDigest.getMappedRange()).slice();
+    this._readDigest.unmap();
     await this._readInfo.mapAsync(GPUMapMode.READ);
-    const infoArr = new Uint32Array(this._readInfo.getMappedRange()).slice(); this._readInfo.unmap();
+    const infoArr = new Uint32Array(this._readInfo.getMappedRange()).slice();
+    this._readInfo.unmap();
 
     return {
       bestWords,
-      bestLeadingZeros: infoArr[0]>>>0,
-      bestNonceLo: infoArr[1]>>>0,
-      bestNonceHi: infoArr[2]>>>0
+      bestLeadingZeros: infoArr[0] >>> 0,
+      bestNonceLo: infoArr[1] >>> 0,
+      bestNonceHi: infoArr[2] >>> 0
     };
   }
 
-  getRecommendedBatchSize(){
+  getRecommendedBatchSize() {
     const lim = this.device?.limits;
     const maxGroups = lim?.maxComputeWorkgroupsPerDimension ?? 65535;
     const wg = this.workgroupSize || 256;
     return wg * maxGroups;
   }
 
-  destroy(){
+  destroy() {
     this.challengeBuffer?.destroy?.();
-    this._uniformBuffer?.destroy?.(); this._bestDigestBuffer?.destroy?.();
-    this._bestInfoBuffer?.destroy?.(); this._readDigest?.destroy?.(); this._readInfo?.destroy?.();
+    this._uniformBuffer?.destroy?.();
+    this._bestDigestBuffer?.destroy?.();
+    this._bestInfoBuffer?.destroy?.();
+    this._readDigest?.destroy?.();
+    this._readInfo?.destroy?.();
     this.device = null;
   }
 }
