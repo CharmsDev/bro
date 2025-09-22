@@ -1,12 +1,20 @@
 export class ProverSelection {
     constructor(domElements, appState) {
+        console.log(`[ProverSelection] Constructor called`);
         this.dom = domElements;
         this.appState = appState;
         
         // Load configuration from AppState
         const savedConfig = this.appState.getProverConfig();
+        console.log(`[ProverSelection] Loaded config from AppState:`, savedConfig);
+        
         this.isCustomProverMode = savedConfig.isCustomProverMode;
         this.customProverUrl = savedConfig.customProverUrl;
+        
+        console.log(`[ProverSelection] Initial state set:`, {
+            isCustomProverMode: this.isCustomProverMode,
+            customProverUrl: this.customProverUrl
+        });
         
         this.initializeEventListeners();
         
@@ -103,6 +111,12 @@ export class ProverSelection {
             console.log('[ProverSelection] Custom prover URL set:', this.customProverUrl);
         }
         
+        console.log('[ProverSelection] URL changed, current state:', {
+            isCustomProverMode: this.isCustomProverMode,
+            customProverUrl: this.customProverUrl,
+            isValid: this.isValidUrl(this.customProverUrl)
+        });
+        
         // Save configuration to AppState whenever URL changes
         this.saveConfiguration();
     }
@@ -118,17 +132,27 @@ export class ProverSelection {
 
     // Get the current prover configuration
     getProverConfig() {
+        console.log(`[ProverSelection] getProverConfig called with state:`, {
+            isCustomProverMode: this.isCustomProverMode,
+            customProverUrl: this.customProverUrl,
+            urlIsValid: this.customProverUrl ? this.isValidUrl(this.customProverUrl) : false
+        });
+        
         if (this.isCustomProverMode && this.customProverUrl && this.isValidUrl(this.customProverUrl)) {
-            return {
+            const config = {
                 type: 'custom',
                 url: this.customProverUrl
             };
+            console.log(`[ProverSelection] Returning custom prover config:`, config);
+            return config;
         }
         
-        return {
+        const config = {
             type: 'charms',
             url: null // Will use environment variable
         };
+        console.log(`[ProverSelection] Returning Charms prover config:`, config);
+        return config;
     }
 
     // Check if current configuration is valid
