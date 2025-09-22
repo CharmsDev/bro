@@ -287,7 +287,7 @@
 
                 <div class="transaction-controls">
                     <button id="createTransaction" class="btn-base btn-purple" disabled>
-                        <span>Create mining transaction</span>
+                        <span>Create Transaction</span>
                     </button>
                 </div>
 
@@ -356,6 +356,39 @@
                     back, chillax, and let Bitcoin handle it.</p>
 
                 <div class="claim-controls">
+                    <!-- Prover Selection -->
+                    <div class="prover-selection">
+                        <div class="prover-option active" id="charmsProverOption">
+                            <div class="prover-icon">🛡️</div>
+                            <div class="prover-content">
+                                <span class="prover-title">Charms Proving Service</span>
+                                <span class="prover-description">
+                                    Reliable service guaranteed to produce correct Charms proofs. Operated by Charms Inc.
+                                <br>
+                                Transactions eligible for Broyalty leaderboard and whitelist.
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="custom-prover-toggle" id="customProverToggle">
+                            <span>Click here to use your own prover</span>
+                        </div>
+                        
+                        <div class="custom-prover-section" id="customProverSection" style="display: none;">
+                            <div class="custom-prover-input">
+                                <label for="customProverUrl">Custom Prover URL:</label>
+                                <input type="url" id="customProverUrl" placeholder="https://your-prover-api.com" />
+                            </div>
+                            <div class="prover-disclaimer">
+                                <p>⚠️ Use at your own risk. Always verify the resulting transactions before signing: you can lose your BTC and your mined BRO tokens.
+                                    <br>
+                                    Custom prover transactions are NOT eligible for Broyalty leaderboard or whitelist positions.
+                                </p>
+
+                            </div>
+                        </div>
+                    </div>
+
                     <button id="claimTokensBtn" class="btn-base btn-secondary disabled">
                         <span>Start Minting $BRO</span>
                     </button>

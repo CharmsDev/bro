@@ -1,3 +1,5 @@
+import { MiningValidator } from '../utils/mining-validator.js';
+
 export class TransactionManager {
     constructor(domElements, stepController, appState, txBuilder, walletVisitManager = null) {
         this.dom = domElements;
@@ -69,9 +71,10 @@ export class TransactionManager {
         if (createTransaction) {
             createTransaction.disabled = true;
             createTransaction.classList.add('disabled');
-            createTransaction.innerHTML = '<span>✅ Transaction Created</span>';
+            // Don't change the text here - let the step controller handle button text
         }
     }
+
 
     setupCreateTransactionButton() {
         const createTransaction = this.dom.get('createTransaction');
@@ -90,12 +93,13 @@ export class TransactionManager {
                     const wallet = new CharmsWallet();
                     const changeAddress = await wallet.generateChangeAddress(this.appState.wallet.seedPhrase);
 
-                    // Get mining result - either completed result or best from progress
-                    let miningData = this.appState.miningResult;
-                    if (!miningData && window.BitcoinMiner) {
+                    // Get mining result - use best hash and best nonce from progress
+                    let miningData = null;
+                    if (window.BitcoinMiner) {
                         const miner = new window.BitcoinMiner();
                         const miningProgress = miner.loadMiningProgress();
-                        if (miningProgress && miningProgress.bestHash && miningProgress.bestNonce) {
+                        // Use best hash and best nonce for transaction creation
+                        if (miningProgress && miningProgress.bestHash && miningProgress.bestNonce > 0) {
                             miningData = {
                                 nonce: miningProgress.bestNonce,
                                 hash: miningProgress.bestHash,
@@ -105,6 +109,28 @@ export class TransactionManager {
                             };
                         }
                     }
+
+
+                    // 🔍 VALIDATE MINING RESULT BEFORE CREATING TRANSACTION
+                    console.log('[TransactionManager] Validating mining result before transaction creation...');
+                    
+                    const challengeUtxo = `${this.appState.utxo.txid}:${this.appState.utxo.vout}`;
+                    const validationResult = MiningValidator.validateNonce(
+                        challengeUtxo,
+                        miningData.bestNonce,
+                        miningData.bestLeadingZeros
+                    );
+                    const isValid = validationResult.valid;
+
+                    if (!isValid) {
+                        console.error('[MiningValidator] ❌ VALIDATION FAILED - Cannot create transaction!');
+                        
+                        createTransaction.disabled = false;
+                        createTransaction.innerHTML = '<span>Create Transaction</span>';
+                        return;
+                    }
+
+                    console.log('[MiningValidator] ✅ Mining result is VALID - proceeding with transaction creation');
 
                     const unsignedTx = await this.txBuilder.createValidatedTransaction(
                         this.appState.utxo,
@@ -183,9 +209,11 @@ export class TransactionManager {
         }
     }
 
+
     reset() {
         // Hide transaction display
         this.dom.hide('transactionDisplay');
+        
 
         // Reset create transaction button
         const createTransaction = this.dom.get('createTransaction');

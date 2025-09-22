@@ -61,6 +61,7 @@ export class StepController {
         // Ensure completedSteps is an array to prevent TypeError
         const safeCompletedSteps = Array.isArray(completedSteps) ? completedSteps : [];
         
+        
         for (let step = 1; step <= 6; step++) {
             const isCompleted = safeCompletedSteps.includes(step);
             const isActive = step === currentStep;
@@ -112,6 +113,25 @@ export class StepController {
                     return;
                 }
 
+                // Special case for transaction creation button - disable if transaction already exists
+                if (buttonId === 'createTransaction') {
+                    const hasTransaction = !!(this.appState && this.appState.transaction);
+                    if (hasTransaction) {
+                        this.disableButton(button);
+                        return;
+                    }
+                }
+
+                // Special case for minting button - enable if broadcast completed
+                if (buttonId === 'claimTokensBtn') {
+                    const hasBroadcast = !!(this.appState && this.appState.broadcastResult);
+                    if (hasBroadcast && step === 5) {
+                        this.enableButton(button);
+                        return;
+                    } else {
+                    }
+                }
+
                 if ((canAccess && !isCompleted) || this.disableLocks) {
                     this.enableButton(button);
                 } else {
@@ -160,19 +180,31 @@ export class StepController {
             }
         }
 
-        // Show mining display if mining completed OR if there's mining progress
+        // Show mining display if there's mining progress (prioritize currentNonce over old results)
+        if (window.BitcoinMiner) {
+            const miner = new window.BitcoinMiner();
+            const miningProgress = miner.loadMiningProgress();
+            if (miningProgress && miningProgress.nonce > 0) {
+                this.dom.show('miningDisplay');
+                
+                // If we have best hash and best nonce, enable Step 3 (Create Transaction)
+                if (miningProgress.bestHash && miningProgress.bestNonce > 0) {
+                    setTimeout(() => {
+                        this.updateStepState(this.STEPS.TRANSACTION_CREATION, false, false, true);
+                    }, 100);
+                }
+                
+                // Show current progress, not old completed result
+                return;
+            }
+        }
+        
+        // Only show completed result if no current progress
         if (state.hasMiningResult) {
             this.dom.show('miningDisplay');
             const successMessage = this.dom.get('successMessage');
             if (successMessage) {
                 successMessage.style.display = 'block';
-            }
-        } else if (window.BitcoinMiner) {
-            // Check for mining progress (Stop & Claim scenario)
-            const miner = new window.BitcoinMiner();
-            const miningProgress = miner.loadMiningProgress();
-            if (miningProgress) {
-                this.dom.show('miningDisplay');
             }
         }
 

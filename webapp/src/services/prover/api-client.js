@@ -31,7 +31,23 @@ export class ProverApiClient {
                     try { onStatus({ phase: 'start', attempt }); } catch {}
                 }
 
-                const response = await fetch(this.apiUrl, {
+                // Decide URL at call time: check what's actually in the input box
+                let urlToUse = this.apiUrl; // default from environment
+                
+                // Check the actual input field value
+                const customProverUrlInput = document.getElementById('customProverUrl');
+                if (customProverUrlInput && customProverUrlInput.value.trim()) {
+                    const inputUrl = customProverUrlInput.value.trim();
+                    // Always use the custom URL, even if it's invalid
+                    urlToUse = inputUrl;
+                    try {
+                        new URL(inputUrl);
+                    } catch {
+                    }
+                } else {
+                }
+
+                const response = await fetch(urlToUse, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

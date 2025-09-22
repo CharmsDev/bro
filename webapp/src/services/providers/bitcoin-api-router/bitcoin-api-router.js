@@ -11,7 +11,6 @@ export default class BitcoinApiRouter {
     this.quicknode = new QuickNodeClient();
     this.mempool = new MempoolClient();
     this.network = environmentConfig.getNetwork();
-    console.log(`[BitcoinApiRouter] Initialized with QuickNode primary + mempool.space fallback (${this.network})`);
   }
 
   /**
@@ -19,17 +18,13 @@ export default class BitcoinApiRouter {
    */
   async _executeWithFallback(primaryMethod, fallbackMethod, methodName) {
     try {
-      console.log(`[BitcoinApiRouter] Trying ${methodName} via QuickNode...`);
       const result = await primaryMethod();
-      console.log(`[BitcoinApiRouter] ${methodName} succeeded via QuickNode`);
       return result;
     } catch (error) {
       console.warn(`[BitcoinApiRouter] QuickNode ${methodName} failed: ${error.message}`);
-      console.log(`[BitcoinApiRouter] Falling back to mempool.space for ${methodName}...`);
       
       try {
         const result = await fallbackMethod();
-        console.log(`[BitcoinApiRouter] ${methodName} succeeded via mempool.space fallback`);
         return result;
       } catch (fallbackError) {
         console.error(`[BitcoinApiRouter] Both QuickNode and mempool.space failed for ${methodName}`);

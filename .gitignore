@@ -37,6 +37,7 @@ tests/wasm/*.wasm
 tests/wasm/*.json
 tests/mining
 tests/payloads
+tests/check-nonce
 
 # Other
 bro-token/src/wasm/bro-token.wasm

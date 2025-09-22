@@ -8,7 +8,10 @@ export class ProverApiService {
         this.apiClient = new ProverApiClient();
     }
 
-
+    // Allow callers to override the prover API URL (used when user provides custom URL)
+    setApiUrl(url) {
+        this.apiClient.setApiUrl(url);
+    }
 
     async generatePayload(miningData, proofData, walletData) {
         return this.payloadGenerator.generatePayload(miningData, proofData, walletData);
