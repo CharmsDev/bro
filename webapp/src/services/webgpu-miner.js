@@ -237,7 +237,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       prevLock = atomicAdd(&bestInfo.bestLock, 1u);
 
       bestLz = atomicLoad(&bestInfo.bestLz);
-      break if (prevLock == 0u || bestLz > lz);
+      if (prevLock == 0u || bestLz > lz) { break; }
 
       _ = atomicSub(&bestInfo.bestLock, 1u);
     }
