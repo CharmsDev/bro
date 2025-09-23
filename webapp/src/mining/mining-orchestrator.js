@@ -162,6 +162,10 @@ class BitcoinMiner {
     }
     
     async processWebGPUStep(gpu, onProgress) {
+        // FIXED: Capture values BEFORE processing to detect changes
+        const previousBestHash = this.bestHash;
+        const previousBestNonce = this.bestNonce;
+        
         await this.webgpuCoordinator.processBatch(
             gpu, 
             this, 
@@ -172,9 +176,18 @@ class BitcoinMiner {
         
         // Save progress periodically - GPU mining uses different interval due to speed
         // Save every 100,000,000 nonces for GPU (vs 10,000 for CPU) due to much faster processing
-        if (this.webgpuCoordinator.shouldSaveProgress(this.currentNonce, this.gpuLastSavedNonce, this.gpuSaveInterval)) {
+        const shouldSavePeriodically = this.webgpuCoordinator.shouldSaveProgress(this.currentNonce, this.gpuLastSavedNonce, this.gpuSaveInterval);
+        
+        // CRITICAL FIX: Also save immediately if we found a new best hash/nonce
+        const hasNewBest = (previousBestHash !== this.bestHash || previousBestNonce !== this.bestNonce) && this.bestHash && this.bestNonce > 0;
+        
+        if (shouldSavePeriodically || hasNewBest) {
             this.saveMiningProgress();
             this.gpuLastSavedNonce = this.currentNonce;
+            
+            if (hasNewBest) {
+                console.log(`[GPU Mining] SAVED new best immediately - Hash: ${this.bestHash.substring(0,10)}..., Nonce: ${this.bestNonce}`);
+            }
         }
     }
     

@@ -61,11 +61,16 @@ export class StepController {
         // Ensure completedSteps is an array to prevent TypeError
         const safeCompletedSteps = Array.isArray(completedSteps) ? completedSteps : [];
         
+        console.log('[StepController] updateAllSteps called - currentStep:', currentStep, 'completedSteps:', safeCompletedSteps);
         
         for (let step = 1; step <= 6; step++) {
             const isCompleted = safeCompletedSteps.includes(step);
             const isActive = step === currentStep;
             const canAccess = this.disableLocks ? true : step <= currentStep;
+
+            if (step === 3) {
+                console.log('[StepController] Step 3 - isCompleted:', isCompleted, 'isActive:', isActive, 'canAccess:', canAccess);
+            }
 
             this.updateStepState(step, isCompleted, isActive, canAccess);
         }
@@ -113,7 +118,6 @@ export class StepController {
                     return;
                 }
 
-                // Special case for transaction creation button - disable if transaction already exists
                 if (buttonId === 'createTransaction') {
                     const hasTransaction = !!(this.appState && this.appState.transaction);
                     if (hasTransaction) {
@@ -133,8 +137,14 @@ export class StepController {
                 }
 
                 if ((canAccess && !isCompleted) || this.disableLocks) {
+                    if (buttonId === 'createTransaction') {
+                        console.log('[StepController] Enabling createTransaction button');
+                    }
                     this.enableButton(button);
                 } else {
+                    if (buttonId === 'createTransaction') {
+                        console.log('[StepController] Disabling createTransaction button - canAccess:', canAccess, 'isCompleted:', isCompleted);
+                    }
                     this.disableButton(button);
                 }
             }

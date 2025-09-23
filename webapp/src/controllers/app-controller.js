@@ -1,5 +1,6 @@
 import { DOMElements } from '../managers/dom-elements.js';
 import { StepController } from '../managers/step-controller.js';
+// SimpleStepManager removed - using atomic steps instead
 import { WalletManager } from '../managers/wallet/wallet-manager.js';
 import { MiningManager } from '../managers/mining-manager.js';
 import { TransactionManager } from '../managers/transaction-manager.js';

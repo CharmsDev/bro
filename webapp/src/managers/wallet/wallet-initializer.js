@@ -47,7 +47,9 @@ export class WalletInitializer {
      * Handle wallet errors by clearing and resetting UI
      */
     handleWalletError() {
-        this.wallet.clearWallet();
+        if (this.wallet && typeof this.wallet.clearWallet === 'function') {
+            this.wallet.clearWallet();
+        }
         this.dom.show('walletControls');
         this.dom.hide('seedPhraseBox');
         this.dom.hide('addressMonitoringBox');

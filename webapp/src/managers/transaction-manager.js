@@ -189,10 +189,19 @@ export class TransactionManager {
 
                     this.appState.completeTransactionCreation(transactionData);
 
-                    // Disable create transaction button permanently and update text
                     createTransaction.disabled = true;
                     createTransaction.classList.add('disabled');
                     createTransaction.innerHTML = '<span>✅ Transaction Created</span>';
+                    
+                    const miningManager = window.appController?.getModule('miningManager');
+                    if (miningManager && miningManager.updateButtonText) {
+                        miningManager.updateButtonText();
+                    }
+
+                    if (this.stepController && this.stepController.updateAllSteps) {
+                        const state = this.appState.getState();
+                        this.stepController.updateAllSteps(state.currentStep, state.completedSteps);
+                    }
 
                 } catch (error) {
                     console.error('Error creating transaction:', error);

@@ -367,6 +367,15 @@ export class MiningManager {
         this.setupStartMiningButton();
         this.setupStopMiningButton();
         this.setupMiningModeSelector();
+        this.setupAppStateListeners();
+    }
+
+    setupAppStateListeners() {
+        // Listen for transaction creation to disable mining button
+        this.appState.on('transactionCreated', (transaction) => {
+            console.log('[MiningManager] Transaction created, disabling mining button');
+            this.updateButtonText(); // This will disable the button since this.appState.transaction now exists
+        });
     }
 
     setupMiningModeSelector() {
@@ -406,11 +415,7 @@ export class MiningManager {
                 const stopMining = this.dom.get('stopMining');
                 if (stopMining) {
                     stopMining.style.display = 'inline-block';
-                    stopMining.classList.remove('disabled');
-                    stopMining.style.pointerEvents = 'auto';
-                    stopMining.disabled = false;
                 }
-                this.dom.hide('successMessage');
 
                 if (shouldResume) {
                     this.dom.setText('status', 'Resuming...');
@@ -452,6 +457,11 @@ export class MiningManager {
                 }
 
                 const utxo = this.appState.utxo;
+                
+                // ATOMIC: Disable Step 3 when mining actually starts
+                console.log('[MiningManager] Starting PoW - Disabling Step 3');
+                this.appState.disableStep3();
+                
                 await this.miner.startPoW(
                     (progress) => this.updateMiningProgress(progress),
                     (result) => this.completeMining(result),
@@ -477,6 +487,14 @@ export class MiningManager {
                 const startMining = this.dom.get('startMining');
                 if (startMining) startMining.style.display = 'inline-block';
                 stopMining.style.display = 'none';
+
+                const miningProgress = this.miner.loadMiningProgress();
+                const hasValidResults = miningProgress && miningProgress.bestHash && miningProgress.bestNonce > 0;
+                
+                if (hasValidResults) {
+                    console.log('[MiningManager] Stop Mining - Enabling Step 3 with valid results');
+                    this.appState.enableStep3();
+                }
 
                 this.updateButtonText();
             });
@@ -573,32 +591,57 @@ export class MiningManager {
 
     updateButtonText() {
         const startMining = this.dom.get('startMining');
+        const stopMining = this.dom.get('stopMining');
         if (!startMining) return;
 
         const buttonSpan = startMining.querySelector('span');
         if (!buttonSpan) return;
 
-        // Disable mining if transaction exists
         if (this.appState.transaction) {
             buttonSpan.textContent = 'Mining Disabled';
             startMining.disabled = true;
             startMining.classList.add('disabled');
             startMining.style.pointerEvents = 'none';
             startMining.style.opacity = '0.5';
+            if (stopMining) {
+                stopMining.style.display = 'none';
+            }
             return;
         }
 
         const hasSavedProgress = this.miner && this.miner.loadMiningProgress();
+        const miningProgress = hasSavedProgress ? this.miner.loadMiningProgress() : null;
+        const hasValidResults = miningProgress && miningProgress.bestHash && miningProgress.bestNonce > 0;
         
         if (this.miner && this.miner.isRunning) {
             buttonSpan.textContent = 'Mining...';
+            startMining.style.display = 'none';
+            
+            if (stopMining) {
+                stopMining.style.display = 'inline-block';
+                const stopSpan = stopMining.querySelector('span');
+                if (stopSpan && hasValidResults) {
+                    stopSpan.textContent = 'Stop Mining and Claim Tokens';
+                } else if (stopSpan) {
+                    stopSpan.textContent = 'Stop Mining';
+                }
+            }
+            return;
+        }
+        
+        if (stopMining) {
+            stopMining.style.display = 'none';
+        }
+        startMining.style.display = 'inline-block';
+
+        if (hasValidResults) {
+            buttonSpan.textContent = 'Continue Mining';
         } else if (hasSavedProgress) {
             buttonSpan.textContent = 'Continue Mining';
         } else {
             buttonSpan.textContent = 'Start Mining';
         }
 
-        // Toggle disabled state based on readiness
         const canMine = this.appState.canStartMining();
         if (canMine) {
             startMining.disabled = false;
