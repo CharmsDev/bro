@@ -33,15 +33,19 @@ class BitcoinTxBuilder {
             const chainNode = accountNode.derive(0); // receiving chain
             const addressNode = chainNode.derive(0); // Use index 0 for the main receiving address
 
-            // Get the private key and x-only public key
+            // Extract private key and x-only public key from address node
             const privateKey = addressNode.privateKey;
             const xOnlyPubkey = Buffer.from(addressNode.publicKey.slice(1, 33));
 
-            // Create PSBT for proper Taproot signing
+            console.log('[TxBuilder] DEBUG - UTXO received:', utxo);
+            console.log('[TxBuilder] DEBUG - UTXO keys:', Object.keys(utxo));
+            console.log('[TxBuilder] DEBUG - UTXO address:', utxo.address);
+
+            // Initialize PSBT for Taproot transaction
             const psbt = new bitcoin.Psbt({ network });
 
-            // Add input with proper Taproot witness UTXO
-            // Convert TXID from hex string to Buffer (bitcoinjs-lib handles endianness)
+            // Add input with Taproot witness UTXO
+            // Convert TXID to Buffer with little-endian format
             const txidBuffer = Buffer.from(utxo.txid, 'hex').reverse(); // Reverse for little-endian
 
             psbt.addInput({
@@ -89,7 +93,7 @@ class BitcoinTxBuilder {
             // Get the PSBT hex directly (no need to finalize or extract)
             const psbtHex = psbt.toHex();
 
-            // Create a transaction object for compatibility
+            // Create a transaction object
             const tx = {
                 getId: () => bitcoin.crypto.sha256(bitcoin.crypto.sha256(Buffer.from(psbtHex, 'hex'))).reverse().toString('hex'),
                 toHex: () => psbtHex,
@@ -97,7 +101,7 @@ class BitcoinTxBuilder {
             };
 
 
-            // Add compatibility methods for existing code
+            // Add helper methods
             tx.calculateTxId = function () {
                 return Promise.resolve(this.getId());
             };

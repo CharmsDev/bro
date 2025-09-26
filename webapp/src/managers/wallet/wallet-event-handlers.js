@@ -25,8 +25,7 @@ export class WalletEventHandlers {
         this.setupImportCancelButton();
         this.setupCopyAddressButton();
         this.setupShowSeedButton();
-        this.setupCopySeedButton();
-        this.setupCopyDirectSeedButton();
+        this.setupCopySeedButton(); // Ahora maneja todos los botones de copiar seed
         this.setupResetWalletButton();
     }
 
@@ -48,7 +47,7 @@ export class WalletEventHandlers {
                     await this.wallet.storeWallet(seedPhrase, address);
                     const walletData = { seedPhrase, address };
 
-                    this.appState.completeWalletCreation(walletData);
+                    this.appState.walletDomain.completeWalletCreation(walletData);
                 } catch (error) {
                     console.error('❌ Error creating wallet. Please try again.');
                 }
@@ -133,7 +132,7 @@ export class WalletEventHandlers {
             const walletData = { seedPhrase: normalizedSeedPhrase, address };
 
             // Complete wallet creation and show imported wallet info
-            this.appState.completeWalletCreation(walletData);
+            this.appState.walletDomain.completeWalletCreation(walletData);
             uiController.showImportedWalletInfo(walletData);
 
         } catch (error) {
@@ -196,49 +195,71 @@ export class WalletEventHandlers {
     }
 
     /**
-     * Copy seed phrase button handler
+     * Copy seed phrase button handler - Maneja todos los botones de copiar seed
      */
     setupCopySeedButton() {
-        const copySeedBtn = this.dom.get('copySeedBtn');
-        if (copySeedBtn) {
-            copySeedBtn.addEventListener('click', async () => {
-                const currentWallet = this.appState.wallet;
-                if (currentWallet && this.wallet) {
-                    try {
-                        await this.wallet.copyToClipboard(currentWallet.seedPhrase);
-                        copySeedBtn.textContent = 'Copied!';
+        // Lista de IDs de botones que copian la seed phrase
+        const buttonIds = ['copySeedBtn', 'copyDirectSeedBtn'];
+        
+        buttonIds.forEach(buttonId => {
+            const button = this.dom.get(buttonId);
+            if (button) {
+                button.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    console.log(`[WalletEventHandlers] Copy seed button clicked: ${buttonId}`);
+                    
+                    const currentWallet = this.appState.walletDomain.wallet;
+                    if (currentWallet && currentWallet.seedPhrase && this.wallet) {
+                        try {
+                            console.log('[WalletEventHandlers] Copying seed phrase to clipboard...');
+                            await this.wallet.copyToClipboard(currentWallet.seedPhrase);
+                            
+                            // Visual feedback - cambiar texto del botón
+                            const originalText = button.textContent;
+                            button.textContent = '✅ Copied!';
+                            button.style.backgroundColor = '#28a745';
+                            button.style.color = 'white';
+                            
+                            setTimeout(() => {
+                                button.textContent = originalText;
+                                button.style.backgroundColor = '';
+                                button.style.color = '';
+                            }, 2000);
+                            
+                            console.log('[WalletEventHandlers] Seed phrase copied successfully');
+                        } catch (error) {
+                            console.error('[WalletEventHandlers] Error copying to clipboard:', error);
+                            
+                            // Visual feedback de error
+                            const originalText = button.textContent;
+                            button.textContent = '❌ Error';
+                            button.style.backgroundColor = '#dc3545';
+                            button.style.color = 'white';
+                            
+                            setTimeout(() => {
+                                button.textContent = originalText;
+                                button.style.backgroundColor = '';
+                                button.style.color = '';
+                            }, 2000);
+                        }
+                    } else {
+                        console.warn('[WalletEventHandlers] No wallet or seed phrase available for copying');
+                        
+                        // Visual feedback - no wallet
+                        const originalText = button.textContent;
+                        button.textContent = '⚠️ No Wallet';
+                        button.style.backgroundColor = '#ffc107';
+                        button.style.color = 'black';
+                        
                         setTimeout(() => {
-                            copySeedBtn.textContent = 'Copy Seed Phrase';
+                            button.textContent = originalText;
+                            button.style.backgroundColor = '';
+                            button.style.color = '';
                         }, 2000);
-                    } catch (error) {
-                        // Silently handle clipboard errors
                     }
-                }
-            });
-        }
-    }
-
-    /**
-     * Copy seed phrase directly to clipboard button handler
-     */
-    setupCopyDirectSeedButton() {
-        const copyDirectSeedBtn = this.dom.get('copyDirectSeedBtn');
-        if (copyDirectSeedBtn) {
-            copyDirectSeedBtn.addEventListener('click', async () => {
-                const currentWallet = this.appState.wallet;
-                if (currentWallet && this.wallet) {
-                    try {
-                        await this.wallet.copyToClipboard(currentWallet.seedPhrase);
-                        copyDirectSeedBtn.textContent = 'Copied!';
-                        setTimeout(() => {
-                            copyDirectSeedBtn.textContent = 'Copy Seed Phrase';
-                        }, 2000);
-                    } catch (error) {
-                        // Silently handle clipboard errors
-                    }
-                }
-            });
-        }
+                });
+            }
+        });
     }
 
     /**
@@ -247,8 +268,12 @@ export class WalletEventHandlers {
     setupResetWalletButton() {
         const resetWalletBtn = this.dom.get('resetWalletBtn');
         if (resetWalletBtn) {
-            resetWalletBtn.addEventListener('click', () => {
+            resetWalletBtn.addEventListener('click', (event) => {
+                event.preventDefault(); // Prevenir recarga de página
+                event.stopPropagation(); // Prevenir propagación del evento
+                
                 if (confirm('⚠️ This will permanently delete your current wallet and all data. Are you sure?')) {
+                    console.log('🔄 [WalletEventHandlers] Starting full reset...');
                     this.performFullReset();
                 }
             });
@@ -256,40 +281,49 @@ export class WalletEventHandlers {
     }
 
     /**
-     * Perform full application reset
+     * Perform full application reset - SIN RECARGA DE PÁGINA
      */
     performFullReset() {
-        // Use AppState.reset() which preserves prover URL but clears everything else
-        this.appState.reset();
-
-        // Reset managers if available
-        if (this.miningManager) {
-            this.miningManager.reset();
+        try {
+            console.log('🔄 [WalletEventHandlers] Executing complete reset...');
+            
+            // SOLO llamar al reset del AppState - él se encarga de todo
+            this.appState.reset();
+            
+            console.log('✅ [WalletEventHandlers] Complete reset finished');
+            
+            // Forzar actualización de UI sin recargar página
+            this.forceUIUpdate();
+            
+        } catch (error) {
+            console.error('❌ [WalletEventHandlers] Reset failed:', error);
+            throw error;
         }
+    }
 
-        if (this.transactionManager) {
-            this.transactionManager.reset();
-        }
-
-        // Reset broadcast component
-        const broadcastComponent = window.broadcastComponent;
-        if (broadcastComponent) {
-            broadcastComponent.disableBroadcasting();
-        }
-
-        // Reset UI via the dedicated UI controller to avoid duplicated logic
-        const walletManager = window.walletManager;
-        if (walletManager && walletManager.uiController) {
-            walletManager.uiController.resetToInitialState();
-        } else {
-            // Fallback: minimally hide/show key sections if UI controller is not available
-            this.dom.show('walletControls');
-            this.dom.hide('seedPhraseBox');
-            this.dom.hide('addressMonitoringBox');
-            this.dom.hide('importWalletForm');
-            this.dom.hide('fundingMonitoring');
-            this.dom.hide('utxoFoundDisplay');
-        }
-
+    /**
+     * Forzar actualización de UI después del reset
+     */
+    forceUIUpdate() {
+        console.log('🎨 [WalletEventHandlers] Forcing UI update after reset...');
+        
+        // Ocultar elementos que deberían estar ocultos después del reset
+        this.dom.hide('seedPhraseBox');
+        this.dom.hide('addressMonitoringBox');
+        this.dom.hide('importWalletForm');
+        this.dom.hide('fundingMonitoring');
+        this.dom.hide('utxoFoundDisplay');
+        this.dom.hide('miningDisplay');
+        
+        // Mostrar solo los controles de wallet inicial
+        this.dom.show('walletControls');
+        
+        // Resetear textos de botones si es necesario
+        const createBtn = this.dom.get('createWalletBtn');
+        const importBtn = this.dom.get('importWalletBtn');
+        if (createBtn) createBtn.style.display = 'inline-block';
+        if (importBtn) importBtn.style.display = 'inline-block';
+        
+        console.log('✅ [WalletEventHandlers] UI update completed');
     }
 }

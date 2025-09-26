@@ -131,5 +131,3 @@ export function getExplorerUrl(txid) {
     return environmentConfig.getExplorerUrl(txid);
 }
 
-// Legacy export for backward compatibility
-export const broadcastTransactions = broadcastPackage;

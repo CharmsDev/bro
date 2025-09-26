@@ -106,10 +106,6 @@ class EnvironmentConfig {
     getDisableStepLocks() {
         return this.config.ui.disableStepLocks === true;
     }
-
-    getProverApiUrl() {
-        return this.config.prover.apiUrl;
-    }
 }
 
 export const environmentConfig = new EnvironmentConfig();

@@ -11,11 +11,10 @@ export async function signSpellTransaction(
         if (!signedCommitTxHex) throw new Error('Signed commit transaction hex is required');
 
 
-        // Use static imports like commit transaction
-        const bitcoin = await import('bitcoinjs-lib');
-        const { BIP32Factory } = await import('bip32');
-        const bip39 = await import('bip39');
-        const ecc = await import('tiny-secp256k1');
+        // Use global libraries for better performance
+        const bitcoin = window.bitcoinjs;
+        const { BIP32Factory } = window.bip32;
+        const ecc = window.tinysecp256k1;
 
         // Initialize ECC library
         bitcoin.initEccLib(ecc);

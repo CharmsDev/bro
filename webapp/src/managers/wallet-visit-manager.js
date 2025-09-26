@@ -36,7 +36,7 @@ export class WalletVisitManager {
     }
 
     handleWalletVisit() {
-        const currentWallet = this.appState.wallet;
+        const currentWallet = this.appState.walletDomain.wallet;
         if (!currentWallet || !currentWallet.seedPhrase) {
             console.error('❌ No wallet found. Please create a wallet first.');
             return;
@@ -58,7 +58,7 @@ export class WalletVisitManager {
     }
 
     handleMintMore() {
-        const currentWallet = this.appState.wallet;
+        const currentWallet = this.appState.walletDomain.wallet;
         if (!currentWallet || !currentWallet.seedPhrase) {
             console.error('❌ No wallet found. Please create a wallet first.');
             return;
@@ -118,22 +118,36 @@ export class WalletVisitManager {
     }
 
     enableWalletVisitStep() {
+        console.log('[WalletVisitManager] 🎯 Enabling Step 6 - Wallet Visit');
+        
         const visitWalletBtn = this.dom.get('visitWalletBtn');
         const mintMoreBtn = this.dom.get('mintMoreBtn');
 
         if (visitWalletBtn) {
             visitWalletBtn.classList.remove('disabled');
             visitWalletBtn.style.pointerEvents = 'auto';
+            console.log('[WalletVisitManager] ✅ Visit wallet button enabled');
+        } else {
+            console.log('[WalletVisitManager] ❌ Visit wallet button not found');
         }
 
         if (mintMoreBtn) {
             mintMoreBtn.classList.remove('disabled');
             mintMoreBtn.style.pointerEvents = 'auto';
+            console.log('[WalletVisitManager] ✅ Mint more button enabled');
+        } else {
+            console.log('[WalletVisitManager] ❌ Mint more button not found');
         }
 
         const walletVisitSection = document.querySelector('.wallet-visit-section');
         if (walletVisitSection) {
+            // Remove disabled class and add active class
+            walletVisitSection.classList.remove('disabled');
             walletVisitSection.classList.add('active');
+            console.log('[WalletVisitManager] ✅ Step 6 section activated - removed "disabled", added "active"');
+            console.log('[WalletVisitManager] 📋 Section classes:', walletVisitSection.className);
+        } else {
+            console.log('[WalletVisitManager] ❌ .wallet-visit-section not found in DOM');
         }
 
         if (!visitWalletBtn) {
@@ -228,10 +242,14 @@ export class WalletVisitManager {
 
         // Reset step titles to default state
         // IMPORTANT: provide current step data, otherwise all steps become non-active
-        const state = (this.appState && typeof this.appState.getState === 'function')
-            ? this.appState.getState()
-            : { currentStep: this.appState?.currentStep || 1, completedSteps: this.appState?.completedSteps || [] };
-        this.stepController.updateAllSteps(state.currentStep, state.completedSteps);
+        if (this.stepController && typeof this.stepController.updateAllSteps === 'function') {
+            const state = (this.appState && typeof this.appState.getState === 'function')
+                ? this.appState.getState()
+                : { currentStep: this.appState?.currentStep || 1, completedSteps: this.appState?.completedSteps || [] };
+            this.stepController.updateAllSteps(state.currentStep, state.completedSteps);
+        } else {
+            console.log('[WalletVisitManager] StepController not available, skipping step UI update');
+        }
 
         // Scroll to Step 1 (wallet section)
         const walletSection = document.querySelector('.wallet-section');

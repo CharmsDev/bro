@@ -10,35 +10,31 @@ export class WalletFundingMonitor {
 
     /**
      * Start monitoring for funding on the current wallet address
+     * SOLO funciona en Step 1 - se para automáticamente cuando encuentra UTXO
      */
-    startFundingMonitoring() {
-        if (!this.appState.wallet || !this.txBuilder) {
+    async startFundingMonitoring() {
+        // Verificaciones básicas
+        if (!this.appState.walletDomain.hasWallet() || !this.txBuilder) {
             console.error('Cannot start funding monitoring: missing wallet or txBuilder');
+            console.error('- hasWallet():', this.appState.walletDomain.hasWallet());
+            console.error('- txBuilder:', this.txBuilder);
+            return;
+        }
+        
+        console.log('[WalletFundingMonitor] ✅ Starting UTXO monitoring for address:', this.appState.walletDomain.wallet.address);
+
+        // Si ya tenemos UTXO, no monitoreamos - mostramos el UTXO existente
+        if (this.appState.walletDomain.hasUtxo()) {
+            this.uiController.showUtxoFound(this.appState.walletDomain.utxo);
             return;
         }
 
-        // Do not start monitoring if the flow is already completed or we already have tx/broadcast data
-        const steps = this.appState.STEPS;
-        const isCompletedFlow = this.appState.isStepCompleted(steps.BROADCAST)
-            || this.appState.isStepCompleted(steps.CLAIM_TOKENS)
-            || this.appState.isStepCompleted(steps.VISIT_WALLET)
-            || !!this.appState.transaction
-            || !!this.appState.broadcastResult;
-        if (isCompletedFlow) {
+        // Si ya estamos en Step 2 o superior, no monitoreamos
+        if (this.appState.stepCoordinator.getCurrentStep() > 1) {
             return;
         }
 
-        // Check if we already have a UTXO - if so, don't monitor again
-        if (this.appState.utxo) {
-            // UTXO already exists, ensure we're on Step 2 or later
-            if (!this.appState.isStepCompleted(this.appState.STEPS.WALLET_CREATION)) {
-                this.appState.completeStep(this.appState.STEPS.WALLET_CREATION);
-            }
-            this.uiController.showUtxoFound(this.appState.utxo);
-            return;
-        }
-
-        const currentWallet = this.appState.wallet;
+        const currentWallet = this.appState.walletDomain.wallet;
         
         // Ensure we're using the primary address (index 0) for monitoring
         const monitoringAddress = currentWallet.addresses ? currentWallet.addresses[0].address : currentWallet.address;
@@ -53,33 +49,35 @@ export class WalletFundingMonitor {
             (error) => this.handleMonitoringError(error)
         );
 
-        this.appState.startMonitoring(stopFunction);
+        // Validar que stopFunction es realmente una función
+        if (typeof stopFunction === 'function') {
+            console.log('[FundingMonitor] Valid stop function received, storing in wallet domain');
+            this.appState.walletDomain.startMonitoring(stopFunction);
+        } else {
+            console.warn('[FundingMonitor] Invalid stop function received:', typeof stopFunction);
+            // Crear una función dummy para evitar errores
+            this.appState.walletDomain.startMonitoring(() => {
+                console.log('[FundingMonitor] Dummy stop function called');
+            });
+        }
     }
 
     /**
-     * Handle UTXO found callback
+     * Handle UTXO found callback - SIMPLE: guarda UTXO y avanza a Step 2
      */
     handleUtxoFound(utxo) {
-        // 1. Stop monitoring immediately
-        this.appState.stopMonitoring();
+        console.log('✅ [FundingMonitor] UTXO found - advancing to Step 2:', utxo);
         
-        // 2. Save UTXO to localStorage
-        try {
-            localStorage.setItem('bro_utxo_data', JSON.stringify(utxo));
-        } catch (error) {
-            console.error('❌ [FundingMonitor] Failed to save UTXO to localStorage:', error);
-        }
+        // 1. Stop monitoring (ya no necesitamos monitorear)
+        this.appState.walletDomain.stopMonitoring();
         
-        // 3. Complete Step 1 and advance to Step 2
-        this.appState.completeStep(this.appState.STEPS.WALLET_CREATION);
+        // 2. Guardar UTXO en el dominio (automáticamente se persiste)
+        this.appState.walletDomain.completeFunding(utxo);
         
-        // 4. Update app state with UTXO
-        this.appState.utxo = utxo;
-        
-        // 5. Show UTXO in UI
+        // 3. Mostrar UTXO en UI
         this.uiController.showUtxoFound(utxo);
         
-        // 6. Emit events for UI updates
+        // 4. Emitir evento - el DomainCoordinator manejará la transición de steps
         this.appState.emit('utxoFound', utxo);
     }
 

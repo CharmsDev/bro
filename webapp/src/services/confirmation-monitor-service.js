@@ -286,7 +286,7 @@ export class ConfirmationMonitorService {
         this.consecutiveErrors = 0;
     }
 
-    // Get transaction data from API (legacy method for backward compatibility)
+    // Get transaction data from API
     async getTxData(txid) {
         return await this._fetchTxDataWithTimeout(txid);
     }

@@ -1,29 +1,35 @@
 
+// Generates prover API payloads from mining and proof data
 import { PROVER_CONFIG } from './config.js';
-import BitcoinApiRouter from '../providers/bitcoin-api-router/index.js';
 import { PayloadUtils } from './payload-utils.js';
 import { TemplateLoader } from './template-loader.js';
 import { PayloadValidator } from './payload-validator.js';
+import QuickNodeClient from '../providers/quicknode/client.js';
 
-
+// Handles payload generation for prover API requests
 export class PayloadGenerator {
     constructor() {
-        this.client = new BitcoinApiRouter();
         this.templateLoader = new TemplateLoader();
+        this.quickNodeClient = new QuickNodeClient();
     }
 
     async generatePayload(miningData, proofData, walletData) {
+        console.log('[PayloadGenerator] Starting payload generation...');
         try {
+            console.log('[PayloadGenerator] Loading template...');
             const template = await this.templateLoader.loadTemplate();
+            console.log('[PayloadGenerator] Template loaded, generating core payload...');
             const payload = await this._generatePayloadCore(miningData, proofData, walletData, template);
+            console.log('[PayloadGenerator] Core payload generated, validating...');
             PayloadValidator.validatePayload(payload);
-            // Payload ready
+            console.log('[PayloadGenerator] ✅ Payload generation completed successfully');
 
             // await this._offerPayloadDownload(payload);
 
             return payload;
         } catch (error) {
             console.error('❌ Payload generation failed:', error);
+            console.error('❌ Error stack:', error.stack);
             throw error;
         }
     }
@@ -69,7 +75,15 @@ export class PayloadGenerator {
     }
 
     async _generatePayloadCore(miningData, proofData, walletData, template) {
+        console.log('[PayloadGenerator] _generatePayloadCore starting with:', {
+            miningData,
+            proofData,
+            walletData,
+            templateKeys: Object.keys(template || {})
+        });
+        
         let reward = (typeof miningData?.reward === 'number' && isFinite(miningData.reward)) ? miningData.reward : 0;
+        console.log('[PayloadGenerator] Initial reward:', reward);
 
         // Fallback 1: AppState.miningReward
         if (!reward) {
@@ -143,7 +157,7 @@ export class PayloadGenerator {
 
         this._updatePayloadWithProofData(payload, proofData, mining);
 
-        await this._updateOptionalFields(payload, mining, miningData, template);
+        await this._updateOptionalFields(payload, mining, miningData, template, walletData);
 
         return payload;
     }
@@ -175,7 +189,7 @@ export class PayloadGenerator {
         }
     }
 
-    async _updateOptionalFields(payload, mining, storedTx, template) {
+    async _updateOptionalFields(payload, mining, storedTx, template, walletData) {
         let miningTxHex = null;
         try {
             miningTxHex = mining.txHex || await this.quickNodeClient.getRawTransaction(mining.txid, false);
@@ -207,7 +221,7 @@ export class PayloadGenerator {
         }
 
         if ('change_address' in template) {
-            const resolvedAddress = PayloadUtils.resolveWalletAddress({});
+            const resolvedAddress = PayloadUtils.resolveWalletAddress(walletData);
             payload.change_address = resolvedAddress;
         } else {
             delete payload.change_address;

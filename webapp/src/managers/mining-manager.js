@@ -1,5 +1,9 @@
+// REFACTORED Mining Manager - Clean separation of responsibilities
+// Coordinates mining UI and user interactions
+// Handles mining button events, progress display, and mode selection
 import { calculateRewardInfo, leadingZeros } from '../mining/reward-calculator.js';
-
+import { MiningValidator } from '../mining/mining-validator.js';
+import { UIHelper } from './shared/UIHelper.js';
 export class MiningManager {
     constructor(domElements, stepController, appState, miner) {
         this.dom = domElements;
@@ -8,6 +12,7 @@ export class MiningManager {
         this.miner = miner;
     }
 
+    // Format hash string with highlighted leading zeros
     formatHashWithLeadingZeros(hash) {
         if (!hash || hash === 'Calculating...' || hash === 'Waiting to start...' || hash === 'No best hash yet...' || hash === 'Searching for best hash...') {
             return hash;
@@ -44,6 +49,7 @@ export class MiningManager {
     }
 
 
+    // Update hash display element with formatting and animation
     updateHashDisplay(elementId, hash, isNewBest = false) {
         const element = document.getElementById(elementId);
         if (!element) return;
@@ -62,17 +68,17 @@ export class MiningManager {
         }
     }
 
+    // Initialize mining manager and setup event listeners
     initialize() {
         this.setupEventListeners();
         this.checkExistingMiningState();
         this.updateButtonText();
 
-        if (!this.appState.canStartMining()) {
-            this.stepController.initializeMiningStep();
-        }
+        // Mining step initialization now handled by StepCoordinator
         const startBtn = this.dom.get('startMining');
     }
 
+    // Reset mining UI to initial state
     reset() {
         // Hide mining display
         this.dom.hide('miningDisplay');
@@ -106,6 +112,7 @@ export class MiningManager {
 
     }
 
+    // Check for existing mining progress and restore UI state
     checkExistingMiningState() {
         if (!this.miner) {
             return;
@@ -127,6 +134,7 @@ export class MiningManager {
         // Only use current nonce storage
     }
 
+    // Restore UI for completed mining results
     restoreCompletedMining(result) {
         this.dom.show('miningDisplay');
 
@@ -134,21 +142,45 @@ export class MiningManager {
         const status = this.dom.get('status');
         if (status) status.className = 'stat-value success';
 
-        this.dom.setText('nonce', result.nonce.toLocaleString());
-        this.updateHashDisplay('currentHash', result.hash);
-        this.updateHashDisplay('bestHash', result.bestHash || result.hash);
-        this.dom.setText('bestNonce', (result.bestNonce || result.nonce).toLocaleString());
+        this.dom.setText('nonce', (result.current || result.nonce || 0).toLocaleString());
+        this.updateHashDisplay('currentHash', result.hash || '');
+        this.updateHashDisplay('bestHash', result.bestHash || result.hash || '');
+        this.dom.setText('bestNonce', (result.bestNonce || result.nonce || 0).toLocaleString());
         this.dom.setText('bestLeadingZeros', result.bestLeadingZeros || 0);
 
         // Show success box without redundant nonce/hash lines
         this.dom.show('successMessage');
 
         // Calculate and display token reward for restored state
-        this.displayTokenReward(result.nonce, result.hash);
+        this.displayTokenReward(result.bestNonce || result.nonce || 0, result.bestHash || result.hash || '');
 
-        this.appState.completeMining(result);
+        this.appState.miningDomain.completeMining(result);
     }
 
+    // Permanently disable mining when Step 3 creates transaction
+    permanentlyDisableMining() {
+        const startMining = this.dom.get('startMining');
+        const stopMining = this.dom.get('stopMining');
+        
+        if (startMining) {
+            const buttonSpan = startMining.querySelector('span');
+            if (buttonSpan) buttonSpan.textContent = 'Mining Disabled';
+            
+            startMining.disabled = true;
+            startMining.classList.add('disabled');
+            startMining.style.pointerEvents = 'none';
+            startMining.style.opacity = '0.5';
+            startMining.style.display = 'inline-block';
+        }
+        
+        if (stopMining) {
+            stopMining.style.display = 'none';
+        }
+        
+        console.log('[MiningManager] Mining permanently disabled - transaction created');
+    }
+
+    // Show mining UI in disabled state
     showMiningDisabled() {
         // Show disabled mining display
         this.dom.show('miningDisplay');
@@ -200,6 +232,7 @@ export class MiningManager {
 
     }
 
+    // Show mining UI in disabled state with existing data
     showMiningDisabledWithData(miningData) {
         // Show mining display in disabled state
         this.dom.show('miningDisplay');
@@ -249,13 +282,14 @@ export class MiningManager {
 
     }
 
+    // Offer resume option for saved mining progress
     offerResumeOption(progress) {
         // Show saved progress without auto-starting
         this.restoreProgressState(progress);
     }
 
+    // Restore UI state from saved mining progress
     restoreProgressState(progress) {
-
         // Show saved progress without starting
         this.dom.show('miningDisplay');
 
@@ -330,6 +364,7 @@ export class MiningManager {
         this.updateButtonText();
     }
 
+    // Resume mining from saved progress
     async resumeMining(progress) {
         this.dom.show('miningDisplay');
 
@@ -363,6 +398,7 @@ export class MiningManager {
         );
     }
 
+    // Setup all mining-related event listeners
     setupEventListeners() {
         this.setupStartMiningButton();
         this.setupStopMiningButton();
@@ -370,14 +406,86 @@ export class MiningManager {
         this.setupAppStateListeners();
     }
 
+    // Setup application state event listeners
     setupAppStateListeners() {
+        // Listen for Step 2 being permanently disabled by Step 3
+        this.appState.on('step2Disabled', () => {
+            console.log('[MiningManager] Step 2 permanently disabled by Step 3');
+            this.permanentlyDisableMining();
+        });
+
         // Listen for transaction creation to disable mining button
         this.appState.on('transactionCreated', (transaction) => {
             console.log('[MiningManager] Transaction created, disabling mining button');
             this.updateButtonText(); // This will disable the button since this.appState.transaction now exists
         });
+
+        // Listen for Step 2 events via eventBus
+        this.appState.on('stepChanged', (data) => {
+            if (data.step === 2 && data.enabled) {
+                console.log('[MiningManager] Step 2 enabled, updating mining button');
+                UIHelper.enableMiningButton();
+                UIHelper.updateStepController();
+            }
+        });
+
+        this.appState.on('stepCompleted', (data) => {
+            if (data.step === 2) {
+                console.log('[MiningManager] Step 2 completed, enabling transaction button');
+                UIHelper.enableTransactionButton();
+                UIHelper.updateStepController();
+            }
+        });
+
+        // Listen for UI restoration events from hydration
+        this.appState.on('uiRestorationNeeded', (data) => {
+            console.log('[MiningManager] UI restoration needed, restoring mining UI');
+            this.restoreUIFromHydratedState(data);
+        });
     }
 
+    // Restore UI from hydrated state after browser refresh
+    restoreUIFromHydratedState(data) {
+        const { stepData, currentStep, completedSteps } = data;
+        
+        // Update step controller first
+        UIHelper.updateStepController();
+        
+        // Restore Step 2 mining UI
+        if (stepData.step2) {
+            if (stepData.step2.hasResult || stepData.step2.hasProgress) {
+                // Show mining display with existing data
+                if (stepData.step2.hasResult) {
+                    console.log('[MiningManager] DEBUG - Restoring completed mining with result:', this.appState.miningDomain.miningResult);
+                    this.restoreCompletedMining(this.appState.miningDomain.miningResult);
+                } else if (stepData.step2.hasProgress) {
+                    this.restoreProgressState(this.appState.miningDomain.miningProgress);
+                }
+            }
+            
+            // Simple logic: Use currentStep as source of truth
+            if (currentStep >= 4) {
+                console.log('[MiningManager] currentStep >= 4 - permanently disabling mining');
+                this.permanentlyDisableMining();
+            } else if (currentStep === 2 || currentStep === 3) {
+                // Check if mining is currently running
+                const isMiningRunning = this.miner && this.miner.isRunning;
+                if (isMiningRunning) {
+                    console.log('[MiningManager] currentStep 2/3 but mining running - showing stop button');
+                    this.showStopMiningButton();
+                } else {
+                    console.log('[MiningManager] currentStep 2/3 and mining not running - enabling start button');
+                    UIHelper.enableMiningButton();
+                }
+            }
+        }
+        
+        // Note: stepChanged events for hydration are now emitted by StateHydrator
+        // This eliminates duplication and centralizes hydration logic
+    }
+
+
+    // Setup mining mode selector (CPU/GPU) event handlers
     setupMiningModeSelector() {
         const modeBoxes = document.querySelectorAll('.mining-mode-box');
         if (modeBoxes.length === 0 || !this.miner) return;
@@ -401,81 +509,131 @@ export class MiningManager {
         });
     }
 
+    // Setup start mining button event handler
+    /**
+     * Get selected mining mode from UI
+     */
+    getSelectedMiningMode() {
+        // Mining mode is selected via .mining-mode-box elements, not radio buttons
+        const activeBox = document.querySelector('.mining-mode-box.active');
+        if (activeBox && activeBox.dataset.mode) {
+            const mode = activeBox.dataset.mode;
+            // Convert 'webgpu' to 'gpu' for consistency
+            return mode === 'webgpu' ? 'gpu' : mode;
+        }
+        
+        // Default fallback
+        return 'cpu';
+    }
+
+    /**
+     * MAIN FUNCTION: Start Bitcoin Mining Process
+     * Extracted from setupStartMiningButton for better organization
+     */
+    async startMining() {
+        const selectedMode = this.getSelectedMiningMode();
+        const miningResult = await this.miner.loadMiningResult();
+        const miningProgress = await this.miner.loadMiningProgress();
+        const shouldResume = miningProgress && !miningResult;
+
+        this.dom.show('miningDisplay');
+        
+        const startMining = this.dom.get('startMining');
+        const stopMining = this.dom.get('stopMining');
+        if (startMining) startMining.style.display = 'none';
+        if (stopMining) stopMining.style.display = 'inline-block';
+
+        if (shouldResume) {
+            // Resume mining from saved progress
+            this.dom.setText('status', 'Resuming...');
+            const status = this.dom.get('status');
+            if (status) status.className = 'stat-value mining';
+
+            this.dom.setText('nonce', miningProgress.nonce.toLocaleString());
+            if (miningProgress.hash) {
+                this.updateHashDisplay('currentHash', miningProgress.hash);
+                this.dom.setText('currentLeadingZeros', this.miner.hashAnalyzer.countLeadingZeroBits(miningProgress.hash));
+            } else {
+                this.updateHashDisplay('currentHash', 'Resuming...');
+                this.dom.setText('currentLeadingZeros', '0');
+            }
+
+            if (miningProgress.bestHash) {
+                this.updateHashDisplay('bestHash', miningProgress.bestHash);
+                this.dom.setText('bestNonce', miningProgress.bestNonce.toLocaleString());
+                this.dom.setText('bestLeadingZeros', miningProgress.bestLeadingZeros);
+            } else {
+                this.updateHashDisplay('bestHash', 'Searching for best hash...');
+                this.dom.setText('bestNonce', '0');
+                this.dom.setText('bestLeadingZeros', '0');
+            }
+        } else {
+            // Start fresh mining
+            this.dom.setText('status', 'Mining...');
+            const status = this.dom.get('status');
+            if (status) status.className = 'stat-value mining';
+            this.dom.setText('nonce', '0');
+            this.updateHashDisplay('currentHash', 'Calculating...');
+            this.dom.setText('currentLeadingZeros', '0');
+            this.updateHashDisplay('bestHash', 'Searching for best hash...');
+            this.dom.setText('bestNonce', '0');
+            this.dom.setText('bestLeadingZeros', '0');
+
+            this.dom.setText('tokenReward', '-');
+            this.dom.setText('proofOfWork', '-');
+        }
+
+        const utxo = this.appState.walletDomain.utxo;
+        
+        // Step management now handled automatically by StepCoordinator
+        console.log('[MiningManager] Starting PoW - Step management handled automatically');
+        
+        // Emit event to disable Step 3 while mining
+        this.appState.emit('miningStarted', {
+            shouldResume: shouldResume,
+            utxo: utxo
+        });
+        
+        // Set mining mode before starting
+        this.miner.mode = selectedMode;
+        
+        await this.miner.startPoW(
+            (progress) => this.updateMiningProgress(progress),
+            (result) => this.completeMining(result),
+            shouldResume,
+            utxo
+        );
+    }
+
+    /**
+     * Setup Start Mining button - CLEAN AND SIMPLE
+     * Now delegates to the main startMining() function
+     */
     setupStartMiningButton() {
         const startMining = this.dom.get('startMining');
         if (startMining) {
             startMining.addEventListener('click', async () => {
-                const miningResult = this.miner.loadMiningResult();
-                const miningProgress = this.miner.loadMiningProgress();
-                const shouldResume = miningProgress && !miningResult;
-
-                this.dom.show('miningDisplay');
-                startMining.style.display = 'none';
-                
-                const stopMining = this.dom.get('stopMining');
-                if (stopMining) {
-                    stopMining.style.display = 'inline-block';
+                console.log('[MiningManager] Start Mining button clicked');
+                try {
+                    // DELEGATE to main mining function
+                    await this.startMining();
+                } catch (error) {
+                    console.error('[MiningManager] Mining start failed:', error);
+                    // Reset UI on error
+                    const startBtn = this.dom.get('startMining');
+                    const stopBtn = this.dom.get('stopMining');
+                    if (startBtn) startBtn.style.display = 'inline-block';
+                    if (stopBtn) stopBtn.style.display = 'none';
                 }
-
-                if (shouldResume) {
-                    this.dom.setText('status', 'Resuming...');
-                    const status = this.dom.get('status');
-                    if (status) status.className = 'stat-value mining';
-
-                    this.dom.setText('nonce', miningProgress.nonce.toLocaleString());
-                    if (miningProgress.hash) {
-                        this.updateHashDisplay('currentHash', miningProgress.hash);
-                        this.dom.setText('currentLeadingZeros', this.miner.hashAnalyzer.countLeadingZeroBits(miningProgress.hash));
-                    } else {
-                        this.updateHashDisplay('currentHash', 'Resuming...');
-                        this.dom.setText('currentLeadingZeros', '0');
-                    }
-
-                    if (miningProgress.bestHash) {
-                        this.updateHashDisplay('bestHash', miningProgress.bestHash);
-                        this.dom.setText('bestNonce', miningProgress.bestNonce.toLocaleString());
-                        this.dom.setText('bestLeadingZeros', miningProgress.bestLeadingZeros);
-                    } else {
-                        this.updateHashDisplay('bestHash', 'Searching for best hash...');
-                        this.dom.setText('bestNonce', '0');
-                        this.dom.setText('bestLeadingZeros', '0');
-                    }
-                } else {
-                    // Start fresh mining
-                    this.dom.setText('status', 'Mining...');
-                    const status = this.dom.get('status');
-                    if (status) status.className = 'stat-value mining';
-                    this.dom.setText('nonce', '0');
-                    this.updateHashDisplay('currentHash', 'Calculating...');
-                    this.dom.setText('currentLeadingZeros', '0');
-                    this.updateHashDisplay('bestHash', 'Searching for best hash...');
-                    this.dom.setText('bestNonce', '0');
-                    this.dom.setText('bestLeadingZeros', '0');
-
-                    this.dom.setText('tokenReward', '-');
-                    this.dom.setText('proofOfWork', '-');
-                }
-
-                const utxo = this.appState.utxo;
-                
-                // ATOMIC: Disable Step 3 when mining actually starts
-                console.log('[MiningManager] Starting PoW - Disabling Step 3');
-                this.appState.disableStep3();
-                
-                await this.miner.startPoW(
-                    (progress) => this.updateMiningProgress(progress),
-                    (result) => this.completeMining(result),
-                    shouldResume,
-                    utxo
-                );
             });
         }
     }
 
+    // Setup stop mining button event handler
     setupStopMiningButton() {
         const stopMining = this.dom.get('stopMining');
         if (stopMining) {
-            stopMining.addEventListener('click', () => {
+            stopMining.addEventListener('click', async () => {
                 if (this.miner) {
                     this.miner.stop();
                 }
@@ -488,19 +646,24 @@ export class MiningManager {
                 if (startMining) startMining.style.display = 'inline-block';
                 stopMining.style.display = 'none';
 
-                const miningProgress = this.miner.loadMiningProgress();
+                // Wait for progress to be loaded (async)
+                const miningProgress = await this.miner.loadMiningProgress();
+                
+                // Check if we have valid results for Step 3
                 const hasValidResults = miningProgress && miningProgress.bestHash && miningProgress.bestNonce > 0;
                 
-                if (hasValidResults) {
-                    console.log('[MiningManager] Stop Mining - Enabling Step 3 with valid results');
-                    this.appState.enableStep3();
-                }
+                // Emit single event with all information
+                this.appState.emit('miningStopped', {
+                    hasValidResults: hasValidResults,
+                    miningProgress: miningProgress
+                });
 
                 this.updateButtonText();
             });
         }
     }
 
+    // Update mining progress display with current values
     updateMiningProgress(progress) {
         // Use calculated values from miner
         const currentLeadingZeros = progress.leadingZeroBits;
@@ -548,6 +711,7 @@ export class MiningManager {
         }
     }
 
+    // Handle mining completion and update UI
     completeMining(result) {
         this.dom.setText('status', 'Stopped - Best Result Found!');
         const status = this.dom.get('status');
@@ -576,9 +740,14 @@ export class MiningManager {
 
         this.updateButtonText();
 
-        this.appState.completeMining(result);
+        // Complete mining in the mining domain
+        this.appState.miningDomain.completeMining(result);
+        
+        // Note: miningStopped event is emitted by Stop Mining button handler
+        // No need to emit here to avoid duplicates
     }
 
+    // Calculate and display token reward based on hash quality
     displayTokenReward(nonce, hash) {
         try {
             const rewardInfo = calculateRewardInfo(nonce, hash);
@@ -589,6 +758,7 @@ export class MiningManager {
         }
     }
 
+    // Update mining button text and state based on current conditions
     updateButtonText() {
         const startMining = this.dom.get('startMining');
         const stopMining = this.dom.get('stopMining');
@@ -609,22 +779,11 @@ export class MiningManager {
             return;
         }
 
-        const hasSavedProgress = this.miner && this.miner.loadMiningProgress();
-        const miningProgress = hasSavedProgress ? this.miner.loadMiningProgress() : null;
-        const hasValidResults = miningProgress && miningProgress.bestHash && miningProgress.bestNonce > 0;
-        
         if (this.miner && this.miner.isRunning) {
             buttonSpan.textContent = 'Mining...';
             startMining.style.display = 'none';
-            
             if (stopMining) {
                 stopMining.style.display = 'inline-block';
-                const stopSpan = stopMining.querySelector('span');
-                if (stopSpan && hasValidResults) {
-                    stopSpan.textContent = 'Stop Mining and Claim Tokens';
-                } else if (stopSpan) {
-                    stopSpan.textContent = 'Stop Mining';
-                }
             }
             return;
         }
@@ -634,15 +793,11 @@ export class MiningManager {
         }
         startMining.style.display = 'inline-block';
 
-        if (hasValidResults) {
-            buttonSpan.textContent = 'Continue Mining';
-        } else if (hasSavedProgress) {
-            buttonSpan.textContent = 'Continue Mining';
-        } else {
-            buttonSpan.textContent = 'Start Mining';
-        }
+        // Simple: currentNonce > 0 = Continue, otherwise Start
+        const currentNonce = this.miner ? this.miner.currentNonce : 0;
+        buttonSpan.textContent = currentNonce > 0 ? 'Continue Mining' : 'Start Mining';
 
-        const canMine = this.appState.canStartMining();
+        const canMine = this.appState.walletDomain.hasWallet() && this.appState.walletDomain.hasUtxo() && !this.appState.transactionDomain.hasTransaction();
         if (canMine) {
             startMining.disabled = false;
             startMining.classList.remove('disabled');

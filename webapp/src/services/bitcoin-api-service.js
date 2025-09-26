@@ -107,7 +107,7 @@ export class BitcoinAPIService {
                             txid: largestUtxo.txid,
                             vout: largestUtxo.vout,
                             value: parseInt(largestUtxo.value), // Use 'value' instead of 'amount'
-                            amount: parseInt(largestUtxo.value), // Keep both for compatibility
+                            amount: parseInt(largestUtxo.value),
                             scriptPubKey: '',
                             address: address,
                             confirmations: largestUtxo.confirmations || 0

@@ -171,7 +171,7 @@
     }
 }
 
-/* Legacy classes - keep for backward compatibility but hide */
+/* Unused classes - hidden */
 .faq-item,
 .question,
 .answer {

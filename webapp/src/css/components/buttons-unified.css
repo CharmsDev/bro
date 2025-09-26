@@ -231,7 +231,9 @@
 .claim-btn:disabled,
 .claim-btn.disabled,
 .seed-btn:disabled,
-.seed-btn.disabled {
+.seed-btn.disabled,
+.btn-success:disabled,
+.btn-success.disabled {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
@@ -255,7 +257,9 @@
 .claim-btn:disabled:hover,
 .claim-btn.disabled:hover,
 .seed-btn:disabled:hover,
-.seed-btn.disabled:hover {
+.seed-btn.disabled:hover,
+.btn-success:disabled:hover,
+.btn-success.disabled:hover {
     transform: none !important;
     box-shadow: 0 4px 14px 0 rgba(100, 116, 139, 0.3) !important;
     background: linear-gradient(135deg, #64748b, #475569) !important;

@@ -193,7 +193,7 @@ export class WalletService {
 
             const walletData = {
                 seedPhrase,
-                address: address || addresses[0].address, // Keep backward compatibility
+                address: address || addresses[0].address,
                 addresses: addresses, // New: array of addresses with keys
                 created: new Date().toISOString()
             };
@@ -247,5 +247,5 @@ export class WalletService {
     }
 }
 
-// Export for global compatibility
+// Export globally
 window.CharmsWallet = WalletService;

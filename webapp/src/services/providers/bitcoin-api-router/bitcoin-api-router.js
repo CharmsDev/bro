@@ -89,7 +89,7 @@ export default class BitcoinApiRouter {
           vin: tx.vin,
           vout: tx.vout.map(out => ({
             ...out,
-            value: out.value / 100000000 // sats to BTC for QuickNode compatibility
+            value: out.value / 100000000 // sats to BTC for QuickNode
           })),
           confirmations,
           blockhash: status.block_hash,

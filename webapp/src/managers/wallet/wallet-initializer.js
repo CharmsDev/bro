@@ -35,11 +35,11 @@ export class WalletInitializer {
             await this.wallet.storeWallet(existingWallet.seedPhrase);
             const upgradedWallet = this.wallet.getStoredWallet();
 
-            this.appState.completeWalletCreation(upgradedWallet);
+            this.appState.walletDomain.completeWalletCreation(upgradedWallet);
         } catch (error) {
             console.error('❌ Error upgrading wallet:', error);
             // Fall back to existing wallet data
-            this.appState.completeWalletCreation(existingWallet);
+            this.appState.walletDomain.completeWalletCreation(existingWallet);
         }
     }
 

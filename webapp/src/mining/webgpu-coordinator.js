@@ -1,21 +1,21 @@
-// WebGPU coordination and processing utilities
-
-import { MiningValidator } from '../utils/mining-validator.js';
+// WebGPU mining coordination and batch processing
+import { MiningValidator } from './mining-validator.js';
 import { CPUMiner } from './cpu-miner.js';
 import { MiningHashAnalyzer } from './mining-hash-analyzer.js';
 
+// Coordinates WebGPU mining operations and validation
 export class WebGPUCoordinator {
     constructor() {
         this.wordsPerHash = 8;
-        // Temporary validation components for CPU vs GPU comparison
+        // Validation components for mining verification
         this.cpuMiner = new CPUMiner();
         this.hashAnalyzer = new MiningHashAnalyzer();
-        this.validationEnabled = true; // Set to false to disable validation
+        this.validationEnabled = false; // Disabled for performance optimization
     }
 
     // Initialize WebGPU miner if available and supported
     async initializeWebGPU(mode, challengeBuffer) {
-        const useWebGPU = mode === 'webgpu' && window.WebGPUMiner && new window.WebGPUMiner().isSupported();
+        const useWebGPU = (mode === 'gpu' || mode === 'webgpu') && window.WebGPUMiner && new window.WebGPUMiner().isSupported();
         let gpu = null;
         
         if (useWebGPU) {

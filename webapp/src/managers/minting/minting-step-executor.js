@@ -1,19 +1,19 @@
-// Individual step execution for minting process
-import { signSpellTransaction } from '../../services/bitcoin/signSpellTx.js';
+// Executes individual steps in the BRO token minting process
 import { PROVER_CONFIG } from '../../services/prover/config.js';
 
+// Handles step-by-step execution of the minting workflow
 export class MintingStepExecutor {
     constructor(services, uiManager, appState) {
         this.confirmationMonitor = services.confirmationMonitor;
         this.txProofService = services.txProofService;
-        this.proverApiService = services.proverApiService;
-        this.bitcoinApiService = services.bitcoinApiService;
+        this.payloadGenerator = services.payloadGenerator;
+        this.proverApiClient = services.proverApiClient;
         this.transactionSigner = services.transactionSigner;
         this.uiManager = uiManager;
         this.appState = appState;
     }
 
-    // Step 1: Wait for mining transaction confirmation
+    // Wait for mining transaction confirmation with retry logic
     async executeStep1_waitForConfirmation(miningResult) {
         this.uiManager.updateStepStatus(0, 'active');
 
@@ -76,7 +76,7 @@ export class MintingStepExecutor {
         }
     }
 
-    // Step 2: Generate transaction proof
+    // Generate merkle proof for the mining transaction
     async executeStep2_generateProof(miningResult, confirmationData) {
         this.uiManager.updateStepStatus(1, 'active');
 
@@ -95,7 +95,7 @@ export class MintingStepExecutor {
         }
     }
 
-    // Step 3: Compose prover payload
+    // Compose payload for prover API request
     async executeStep3_composePayload(miningResult, proofData, wallet) {
         this.uiManager.updateStepStatus(2, 'active');
 
@@ -103,17 +103,25 @@ export class MintingStepExecutor {
             const miningData = {
                 txid: miningResult.txid,
                 txHex: miningResult.txHex,
-                inputTxid: miningResult.inputTxid,
-                inputVout: miningResult.inputVout,
-                difficulty: miningResult.difficulty,
                 reward: miningResult.reward,
                 changeAmount: miningResult.changeAmount
             };
 
-            const payload = await this.proverApiService.generatePayload(
+            console.log('[MintingStepExecutor] DEBUG - Composing payload with data:', {
                 miningData,
                 proofData,
-                { address: wallet.address }
+                walletAddress: wallet?.address
+            });
+
+            console.log('[MintingStepExecutor] DEBUG - payloadGenerator:', this.payloadGenerator);
+            console.log('[MintingStepExecutor] DEBUG - generatePayload method exists:', typeof this.payloadGenerator?.generatePayload);
+            console.log('[MintingStepExecutor] DEBUG - PROVER CONFIG:', PROVER_CONFIG);
+            console.log('[MintingStepExecutor] DEBUG - Prover API URL:', PROVER_CONFIG.API_URL);
+
+            const payload = await this.payloadGenerator.generatePayload(
+                miningData,
+                proofData,
+                wallet
             );
 
             this.uiManager.updateStepStatus(2, 'completed');
@@ -124,7 +132,7 @@ export class MintingStepExecutor {
         }
     }
 
-    // Step 4: Prover API request
+    // Send payload to prover API with retry handling
     async executeStep4_proverApiRequest(payload) {
         this.uiManager.updateStepStatus(3, 'active');
         // Show spinner and initialize status ticker
@@ -183,12 +191,30 @@ export class MintingStepExecutor {
 
         try {
             // Make real prover API request with status callback
-            const proverResponse = await this.proverApiService.sendToProver(payload, ({ phase, attempt }) => {
+            const proverResponse = await this.proverApiClient.sendToProver(payload, ({ phase, attempt, statusCode, nextDelayMs }) => {
                 // Track attempt to drive phases
                 if (typeof attempt === 'number') attemptRef = attempt;
-                // Update status message based on phase
-                if (phase === 'retrying' || phase === 'start') {
-                    this.uiManager.updateProverStatus(pickMessage());
+                
+                // Handle different phases
+                if (phase === 'start') {
+                    if (attempt > 1) {
+                        // Pause ticker during retries
+                        clearInterval(ticker);
+                        this.uiManager.updateProverStatus(`Retrying... (Attempt ${attempt})`);
+                    } else {
+                        this.uiManager.updateProverStatus(pickMessage());
+                    }
+                } else if (phase === 'retrying') {
+                    const delaySeconds = Math.round(nextDelayMs / 1000);
+                    if (statusCode === 'NETWORK_ERROR') {
+                        this.uiManager.updateProverStatus(`🌐 Network error. Retrying in ${delaySeconds}s... (Attempt ${attempt})`);
+                    } else {
+                        this.uiManager.updateProverStatus(`⚠️ Server error ${statusCode}. Retrying in ${delaySeconds}s... (Attempt ${attempt})`);
+                    }
+                } else if (phase === 'success') {
+                    if (attempt > 1) {
+                        this.uiManager.updateProverStatus(`✅ Success after ${attempt} attempts`);
+                    }
                 }
             });
             
@@ -202,19 +228,49 @@ export class MintingStepExecutor {
             return proverResponse;
         } catch (error) {
             // Cleanup ticker and keep progress visible with error status
+            clearInterval(ticker);
             if (typeof this.uiManager.setProverStatusTicker === 'function') {
                 this.uiManager.setProverStatusTicker(null);
             }
+            this.uiManager.hideProverSpinner();
             this.uiManager.updateStepStatus(3, 'error');
             throw new Error(`Prover API request failed: ${error.message}`);
         }
     }
 
-    // Step 5: Sign transactions
+    // Sign commit and spell transactions from prover response
     async executeStep5_signTransactions(proverResponse, wallet, miningResult) {
         this.uiManager.updateStepStatus(4, 'active');
 
         try {
+            // Ensure Bitcoin libraries are loaded before signing
+            console.log('[MintingStepExecutor] Checking Bitcoin libraries availability...');
+            
+            // Wait for libraries to be available with timeout
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            while (attempts < maxAttempts) {
+                const bitcoinjs = !!window.bitcoinjs;
+                const bip32 = !!window.bip32;
+                const tinysecp256k1 = !!window.tinysecp256k1;
+                
+                console.log(`[MintingStepExecutor] Attempt ${attempts + 1}: bitcoinjs=${bitcoinjs}, bip32=${bip32}, tinysecp256k1=${tinysecp256k1}`);
+                
+                if (bitcoinjs && bip32 && tinysecp256k1) {
+                    console.log('[MintingStepExecutor] ✅ All Bitcoin libraries are ready!');
+                    break;
+                }
+                
+                if (attempts === maxAttempts - 1) {
+                    throw new Error(`Bitcoin libraries not available after ${maxAttempts} attempts. Missing: ${!bitcoinjs ? 'bitcoinjs ' : ''}${!bip32 ? 'bip32 ' : ''}${!tinysecp256k1 ? 'tinysecp256k1' : ''}`);
+                }
+                
+                console.log('[MintingStepExecutor] Libraries not ready, waiting 500ms...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+            }
+            
             const { signCommitTransaction } = await import('../../services/bitcoin/signCommitTx.js');
             const { signSpellTransaction } = await import('../../services/bitcoin/signSpellTx.js');
 
@@ -244,7 +300,7 @@ export class MintingStepExecutor {
                 }
             ];
 
-            // 🔧 DEBUG: Print signed transaction hex and testmempoolaccept commands
+            // Debug output for transaction validation
             console.log('\n=== SIGNED TRANSACTIONS DEBUG ===');
             console.log('Commit Transaction Hex:');
             console.log(commitResult.signedHex);
@@ -265,8 +321,11 @@ export class MintingStepExecutor {
             };
             localStorage.setItem('bro_signed_transactions', JSON.stringify(signedTxData));
 
-            // CRITICAL: Save signed transactions to AppState for proper state management
-            this.appState.signedTransactions = signedTransactions;
+            // Save signed transactions to application state
+            if (!this.appState.step5) {
+                this.appState.step5 = {};
+            }
+            this.appState.step5.signedTransactions = signedTransactions;
 
             this.uiManager.updateStepStatus(4, 'completed');
             return signedTransactions;
@@ -280,12 +339,12 @@ export class MintingStepExecutor {
         }
     }
 
-    // Step 6: Broadcast transactions (DISABLED FOR DEBUGGING)
+    // Broadcast signed transactions to Bitcoin network
     async executeStep6_broadcastTransactions(signedTransactions) {
         this.uiManager.updateStepStatus(5, 'active');
 
         try {
-            // ✅ REAL BROADCAST ENABLED
+            // Broadcast transaction package to network
             const { broadcastPackage } = await import('../../services/bitcoin/broadcastTx.js');
             const commitTx = signedTransactions.find(tx => tx.type === 'commit');
             const spellTx = signedTransactions.find(tx => tx.type === 'spell');
@@ -295,17 +354,32 @@ export class MintingStepExecutor {
                 (message) => { /* Silent broadcast progress */ }
             );
             
-            // Store broadcast data and mark step 5 as completed
-            const broadcastData = {
+            // Store minting broadcast data in MintingDomain (Step 5 transactions)
+            const mintingData = {
+                commitTxid: result.commitData.txid,
+                spellTxid: result.spellData.txid,
+                status: 'broadcast',
+                timestamp: new Date().toISOString(),
+                commitData: result.commitData,
+                spellData: result.spellData
+            };
+            
+            // Store in MintingDomain for Step 5 summary
+            this.appState.mintingDomain.mintingResult = mintingData;
+            
+            // Also update broadcast domain for Step 4 compatibility
+            this.appState.broadcastDomain.completeBroadcast({
+                txid: result.spellData.txid, // Use spell transaction as main txid
                 commitTxid: result.commitData.txid,
                 spellTxid: result.spellData.txid,
                 status: 'broadcast',
                 timestamp: new Date().toISOString()
-            };
-            localStorage.setItem('bro_broadcast_data', JSON.stringify(broadcastData));
+            });
             
             // Mark step 5 as completed after successful broadcast
             this.uiManager.updateStepStatus(5, 'completed');
+            
+            // Note: currentStep will be updated to 6 by MintingManager.completeStep(5)
             
             return result;
             // return result;

@@ -8,29 +8,10 @@ export class MintingUIManager {
         this._proverStatusInterval = null;
     }
 
-    // FRESH START: Initialize UI when user clicks Step 5 button (coming from Step 4)
-    initializeForFreshStart() {
-        this._createStep5Container();
-
-        // Show the steps container when minting starts (was hidden before)
-        this.showStepsContainer();
-    }
-
-    // PAGE REFRESH: Initialize UI when page reloads with existing broadcast data
-    initializeForPageRefresh() {
-        // Avoid duplicate containers
-        if (document.getElementById('step5-progress')) return;
-
-        this._createStep5Container();
-
-        // Check for existing broadcast data and restore completion status
-        // Note: Container remains hidden by default unless valid broadcast data exists
-        this.checkAndRestoreBroadcastStatus();
-    }
-
-    // DEPRECATED: Keep for backward compatibility, but redirect to fresh start
+    // Initialize UI when Step 5 (minting) is activated
     initializeUI() {
-        this.initializeForFreshStart();
+        this._createStep5Container();
+        this.showStepsContainer();
     }
 
     // Private method to create the base Step 5 container structure
@@ -159,27 +140,6 @@ export class MintingUIManager {
         this._proverStatusInterval = intervalId || null;
     }
 
-    // Check for existing broadcast data and restore completion status
-    checkAndRestoreBroadcastStatus() {
-        const broadcastData = localStorage.getItem('bro_broadcast_data');
-        if (broadcastData) {
-            try {
-                const data = JSON.parse(broadcastData);
-
-                // Only show completion status if we have a valid transaction ID
-                const spellTxid = data.spellTxid || data?.spellData?.txid;
-                if (spellTxid && typeof spellTxid === 'string' && spellTxid !== 'undefined' && spellTxid.length === 64) {
-                    // Show completion status with transaction details
-                    this.showBroadcastCompletionStatus(data);
-                }
-                // For invalid/missing txid or parsing errors: do nothing
-                // Container remains hidden until user clicks Start button
-            } catch (error) {
-                // Parsing error - do nothing, container stays hidden
-            }
-        }
-        // For no stored data: do nothing, container stays hidden
-    }
 
     // Show the steps UI when reloading without valid completion data
     showStepsUIAfterReload() {
@@ -210,51 +170,9 @@ export class MintingUIManager {
 
     // Show broadcast completion status (for page refresh scenarios)
     showBroadcastCompletionStatus(broadcastData) {
-        const step5Container = document.getElementById('step5-progress');
-        if (!step5Container) return;
-
-        // Hide steps list if present
-        const stepsContainer = step5Container.querySelector('.steps-container');
-        if (stepsContainer) stepsContainer.style.display = 'none';
-
-        // Hide Step 5 title when restoring on reload
-        const header = step5Container.querySelector('h3');
-        if (header) header.style.display = 'none';
-
-        // If a success box is already present, avoid adding another
-        const existing = step5Container.querySelector('.step5-success-message');
-        if (existing) return;
-
-        // Get environment config for explorer links
-        import('../../config/environment.js').then(({ environmentConfig }) => {
-            const statusMessage = document.createElement('div');
-            // Use dark broadcast panel style to match Step 4
-            statusMessage.className = 'broadcast-display step5-success-message';
-
-            const spellTxid = broadcastData.spellTxid;
-            const explorerUrl = environmentConfig.getExplorerUrl(spellTxid);
-
-            statusMessage.innerHTML = `
-                <div class="broadcast-details">
-                    <div class="broadcast-item">
-                        <span class="broadcast-label">Status:</span>
-                        <span class="status-value">BRO tokens minted and broadcast</span>
-                    </div>
-                    <div class="broadcast-item">
-                        <span class="broadcast-label">Transaction ID:</span>
-                        <span class="broadcast-value">${spellTxid}</span>
-                    </div>
-                    <div class="broadcast-item">
-                        <span class="broadcast-label">Explorer:</span>
-                        <a href="${explorerUrl}" target="_blank" class="explorer-link">View on Mempool.space</a>
-                    </div>
-                </div>
-            `;
-
-            if (step5Container) {
-                step5Container.appendChild(statusMessage);
-            }
-        });
+        console.log('[MintingUIManager] showBroadcastCompletionStatus() called - NOT showing duplicate summary');
+        // Do nothing - transaction details will be shown only in the Step 5 summary area when Step 6 is activated
+        // This prevents duplicate summaries from appearing
     }
 
     // Update step status in UI
@@ -443,6 +361,7 @@ export class MintingUIManager {
 
     // Show success message
     showSuccess(broadcastResults) {
+        console.log('[MintingUIManager] showSuccess() called - hiding steps and showing completion message');
         const step5Container = document.getElementById('step5-progress');
         if (!step5Container) return;
 
@@ -454,45 +373,24 @@ export class MintingUIManager {
         const header = step5Container.querySelector('h3');
         if (header) header.style.display = 'none';
 
-        // If a success box is already present, avoid adding another
+        // Show simple completion message (no transaction details here)
+        // Transaction details will be shown in the Step 5 summary area when Step 6 is activated
         const existing = step5Container.querySelector('.step5-success-message');
         if (existing) return;
 
-        // Get environment config for explorer links
-        import('../../config/environment.js').then(({ environmentConfig }) => {
-            const successMessage = document.createElement('div');
-            // Use dark broadcast panel style to match Step 4
-            successMessage.className = 'broadcast-display step5-success-message';
+        const successMessage = document.createElement('div');
+        successMessage.className = 'step5-success-message';
+        successMessage.innerHTML = `
+            <div class="success-box">
+                <h4>🎉 Minting Process Completed</h4>
+                <p>Your <span class="highlight">BRO tokens</span> have been successfully minted and broadcast to the Bitcoin network.</p>
+                <p>Transaction details will appear below once <span>Step 6</span> is activated.</p>
+            </div>
+        `;
 
-            const commitTxid = broadcastResults?.commitData?.txid || 'N/A';
-            const spellTxid = broadcastResults?.spellData?.txid || 'N/A';
-            const explorerUrl = environmentConfig.getExplorerUrl(spellTxid);
-
-            successMessage.innerHTML = `
-                <div class="broadcast-details">
-                    <div class="broadcast-item">
-                        <span class="broadcast-label">Status:</span>
-                        <span class="status-value">BRO tokens minted and broadcast</span>
-                    </div>
-                    <div class="broadcast-item">
-                        <span class="broadcast-label">Commit Transaction ID:</span>
-                        <span class="broadcast-value">${commitTxid}</span>
-                    </div>
-                    <div class="broadcast-item">
-                        <span class="broadcast-label">Spell Transaction ID:</span>
-                        <span class="broadcast-value">${spellTxid}</span>
-                    </div>
-                    <div class="broadcast-item">
-                        <span class="broadcast-label">Explorer:</span>
-                        <a href="${explorerUrl}" target="_blank" class="explorer-link">View on Mempool.space</a>
-                    </div>
-                </div>
-            `;
-
-            if (step5Container) {
-                step5Container.appendChild(successMessage);
-            }
-        });
+        if (step5Container) {
+            step5Container.appendChild(successMessage);
+        }
     }
 
     // Show error message
