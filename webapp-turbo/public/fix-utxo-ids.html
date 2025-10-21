@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fix Turbomining UTXO IDs</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1e293b;
+      color: #e2e8f0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #334155;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    .success {
+      color: #10b981;
+      margin: 10px 0;
+    }
+    .error {
+      color: #ef4444;
+      margin: 10px 0;
+    }
+    .info {
+      color: #60a5fa;
+      margin: 10px 0;
+    }
+    pre {
+      background: #1e293b;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Fix Turbomining UTXO IDs</h1>
+    <p>This script will update the spendableOutputs in localStorage with correct utxoId values.</p>
+    
+    <div id="status"></div>
+    
+    <button onclick="checkData()">1. Check Current Data</button>
+    <button onclick="fixData()">2. Fix UTXO IDs</button>
+    <button onclick="verifyData()">3. Verify Fix</button>
+    
+    <div id="output"></div>
+  </div>
+
+  <script>
+    function log(message, type = 'info') {
+      const output = document.getElementById('output');
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = message;
+      output.appendChild(div);
+    }
+
+    function logPre(data) {
+      const output = document.getElementById('output');
+      const pre = document.createElement('pre');
+      pre.textContent = JSON.stringify(data, null, 2);
+      output.appendChild(pre);
+    }
+
+    function clearOutput() {
+      document.getElementById('output').innerHTML = '';
+    }
+
+    function checkData() {
+      clearOutput();
+      log('📋 Checking current turbomining data...', 'info');
+      
+      const data = localStorage.getItem('turbomining');
+      if (!data) {
+        log('❌ No turbomining data found in localStorage', 'error');
+        return;
+      }
+
+      const parsed = JSON.parse(data);
+      log('✅ Found turbomining data:', 'success');
+      log(`   Mining TXID: ${parsed.miningTxid}`, 'info');
+      log(`   Number of outputs: ${parsed.numberOfOutputs}`, 'info');
+      log(`   Spendable outputs: ${parsed.spendableOutputs?.length || 0}`, 'info');
+      
+      if (parsed.spendableOutputs) {
+        log('\n📦 Current spendableOutputs:', 'info');
+        parsed.spendableOutputs.forEach((output, i) => {
+          log(`   Output ${i}: outputIndex=${output.outputIndex}, utxoId=${output.utxoId}`, 'info');
+        });
+      }
+      
+      logPre(parsed);
+    }
+
+    function fixData() {
+      clearOutput();
+      log('🔧 Fixing UTXO IDs...', 'info');
+      
+      const data = localStorage.getItem('turbomining');
+      if (!data) {
+        log('❌ No turbomining data found', 'error');
+        return;
+      }
+
+      const parsed = JSON.parse(data);
+      
+      if (!parsed.miningTxid) {
+        log('❌ No miningTxid found in data', 'error');
+        return;
+      }
+
+      if (!parsed.spendableOutputs || !Array.isArray(parsed.spendableOutputs)) {
+        log('❌ No spendableOutputs array found', 'error');
+        return;
+      }
+
+      log(`\n🎯 Using miningTxid: ${parsed.miningTxid}`, 'info');
+      
+      // Update each spendableOutput with correct utxoId
+      const updated = parsed.spendableOutputs.map(output => {
+        const newUtxoId = `${parsed.miningTxid}:${output.outputIndex}`;
+        log(`   Output ${output.outputIndex}: ${output.utxoId} → ${newUtxoId}`, 'info');
+        return {
+          ...output,
+          utxoId: newUtxoId
+        };
+      });
+
+      // Save back to localStorage
+      parsed.spendableOutputs = updated;
+      localStorage.setItem('turbomining', JSON.stringify(parsed));
+      
+      log('\n✅ UTXO IDs updated successfully!', 'success');
+      log('🔄 Please refresh the page to see changes', 'success');
+    }
+
+    function verifyData() {
+      clearOutput();
+      log('🔍 Verifying fixed data...', 'info');
+      
+      const data = localStorage.getItem('turbomining');
+      if (!data) {
+        log('❌ No turbomining data found', 'error');
+        return;
+      }
+
+      const parsed = JSON.parse(data);
+      
+      log('✅ Verification Results:', 'success');
+      log(`   Mining TXID: ${parsed.miningTxid}`, 'info');
+      
+      let allCorrect = true;
+      parsed.spendableOutputs.forEach((output, i) => {
+        const expectedUtxoId = `${parsed.miningTxid}:${output.outputIndex}`;
+        const isCorrect = output.utxoId === expectedUtxoId;
+        
+        if (isCorrect) {
+          log(`   ✅ Output ${output.outputIndex}: ${output.utxoId}`, 'success');
+        } else {
+          log(`   ❌ Output ${output.outputIndex}: ${output.utxoId} (expected: ${expectedUtxoId})`, 'error');
+          allCorrect = false;
+        }
+      });
+
+      if (allCorrect) {
+        log('\n🎉 All UTXO IDs are correct!', 'success');
+      } else {
+        log('\n⚠️  Some UTXO IDs are still incorrect', 'error');
+      }
+    }
+
+    // Auto-check on load
+    window.onload = () => {
+      checkData();
+    };
+  </script>
+</body>
+</html>

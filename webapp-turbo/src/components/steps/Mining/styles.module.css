@@ -1,0 +1,555 @@
+/* Step3Mining styles */
+.mining-step {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.mining-mode-selection {
+  margin-bottom: 2rem;
+}
+
+.mining-mode-selection h4 {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.mining-mode-selection p {
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+}
+
+.mining-modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.mining-mode {
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mining-mode:hover {
+  border-color: #f7931a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(247, 147, 26, 0.2);
+}
+
+.mining-mode.active {
+  border-color: #f7931a;
+  background: #fff3e0;
+}
+
+.mode-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.mode-info h5 {
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.mode-info p {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.mining-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.mining-btn {
+  min-width: 200px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: #f7931a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #e8851e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(247, 147, 26, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+.btn-secondary.small {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary.small:hover {
+  background: #5a6268;
+}
+
+.mining-status {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mining-status.starting,
+.mining-status.mining {
+  background: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.mining-status.stopping {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.mining-status.stopped {
+  background: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.mining-status.error {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #28a745;
+}
+
+.mining-status.starting .status-indicator,
+.mining-status.mining .status-indicator {
+  background: #ffc107;
+  animation: pulse 1.5s infinite;
+}
+
+.mining-status.error .status-indicator {
+  background: #dc3545;
+}
+
+.status-text {
+  font-weight: 600;
+  color: #495057;
+}
+
+.mining-display {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.mining-stats {
+  margin-bottom: 2rem;
+}
+
+.stat-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.stat-item label {
+  display: block;
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #495057;
+}
+
+.hash-display {
+  margin-bottom: 2rem;
+}
+
+.hash-section {
+  margin-bottom: 1.5rem;
+}
+
+.hash-section label {
+  display: block;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.hash-value {
+  background: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 12px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.hash-value.best {
+  background: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.leading-zeros {
+  color: #28a745;
+  font-weight: 700;
+}
+
+.hash-remainder {
+  color: #6c757d;
+}
+
+.best-hash-section {
+  background: white;
+  border: 2px solid #28a745;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.best-hash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.best-hash-header label {
+  color: #155724;
+  font-weight: 700;
+  margin: 0;
+}
+
+.best-stats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #155724;
+}
+
+.reward-display {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.reward-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.reward-header h5 {
+  color: #1976d2;
+  margin: 0;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.9rem;
+}
+
+.btn-link:hover {
+  color: #1565c0;
+}
+
+.reward-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.reward-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reward-item label {
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.reward-value {
+  font-weight: 700;
+  color: #1976d2;
+}
+
+.reward-amount {
+  font-size: 1.2rem;
+}
+
+.token {
+  color: #f7931a;
+}
+
+.reward-details {
+  background: white;
+  border: 1px solid #bbdefb;
+  border-radius: 6px;
+  padding: 1rem;
+  font-size: 0.9rem;
+}
+
+.formula,
+.calculation {
+  margin-bottom: 0.5rem;
+  color: #1976d2;
+}
+
+.mining-animation {
+  text-align: center;
+  padding: 2rem;
+}
+
+.mining-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.mining-dots span {
+  width: 12px;
+  height: 12px;
+  background: #f7931a;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.mining-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.mining-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.mining-animation p {
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.mining-success {
+  background: #d4edda;
+  border: 2px solid #28a745;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.success-message h4 {
+  color: #155724;
+  margin-bottom: 1rem;
+}
+
+.success-message p {
+  color: #155724;
+  margin-bottom: 1rem;
+}
+
+.batch-info {
+  background: white;
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.batch-info h5 {
+  color: #155724;
+  margin-bottom: 1rem;
+}
+
+.batch-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.batch-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.batch-item label {
+  font-weight: 600;
+  color: #155724;
+}
+
+.batch-item span {
+  color: #155724;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+}
+
+.step-actions {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.info-box {
+  background: #e8f5e8;
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.info-box h5 {
+  color: #155724;
+  margin-bottom: 1rem;
+}
+
+.info-box p {
+  color: #155724;
+  margin-bottom: 1rem;
+}
+
+.info-box ul {
+  color: #155724;
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.info-box li {
+  margin-bottom: 0.5rem;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mining-modes {
+    grid-template-columns: 1fr;
+  }
+  
+  .mining-mode {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .mining-controls {
+    flex-direction: column;
+  }
+  
+  .stat-group {
+    grid-template-columns: 1fr;
+  }
+  
+  .best-hash-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .best-stats {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .reward-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .batch-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .batch-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

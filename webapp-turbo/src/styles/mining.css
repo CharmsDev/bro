@@ -1,0 +1,382 @@
+/* ===================================
+   MINING SECTION STYLES
+   =================================== */
+
+/* Mining Section */
+.mining-section {
+    max-width: 820px;
+    margin: 3rem auto;
+    padding: 2.5rem;
+    background: linear-gradient(to bottom right, #1e293b, #0f172a);
+    border: 1px solid #334155;
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.mining-section:hover {
+    border-color: #d1850a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(209, 133, 10, 0.1);
+}
+
+.mining-description {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+/* Mining Controls Layout */
+.mining-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
+}
+
+/* Mining Mode Selector */
+.mining-mode-boxes {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.mining-mode-box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    width: 320px;
+    height: 100px;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 2px solid rgba(71, 85, 105, 0.4);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+    gap: 16px;
+}
+
+/* Hover Effects */
+.mining-mode-box:hover {
+    border-color: rgba(2, 106, 163, 0.6);
+    background: rgba(15, 23, 42, 0.9);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(2, 106, 163, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Active State */
+.mining-mode-box.active {
+    border-color: #026aa3;
+    background: rgba(2, 106, 163, 0.15);
+    box-shadow: 
+        0 0 0 1px rgba(2, 106, 163, 0.4),
+        0 8px 25px rgba(2, 106, 163, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.mining-mode-box.active .mode-title {
+    color: #64b4ff;
+    text-shadow: 0 0 8px rgba(100, 180, 255, 0.6);
+}
+
+.mining-mode-box.active .mode-description {
+    color: #a0c4ff;
+    opacity: 1;
+}
+
+/* Icon and Text Styling */
+.mode-icon {
+    width: 55px;
+    height: 55px;
+    display: block;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+    filter: brightness(0) invert(1);
+    flex-shrink: 0;
+}
+
+.mode-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.mode-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    line-height: 1.2;
+}
+
+.mode-description {
+    font-size: 12px;
+    font-weight: 400;
+    color: #94a3b8;
+    line-height: 1.4;
+    margin: 0;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    opacity: 0.9;
+}
+
+/* Mining Start Section */
+.mining-start-section {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Hash Display Styles */
+.hash-display { 
+    margin-bottom: 2rem; 
+}
+
+.hash-section { 
+    margin-bottom: 1.5rem; 
+}
+
+.best-hash-section {
+    background: linear-gradient(to right, rgba(209, 133, 10, 0.1), rgba(245, 158, 11, 0.05));
+    border: 1px solid rgba(209, 133, 10, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+/* Enhanced Hash Value Styles */
+.hash-value {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    word-break: break-all;
+    padding: 0.75rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    color: #e2e8f0;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.hash-value .leading-zeros {
+    color: #d1850a;
+    font-weight: 700;
+    font-size: 1.1em;
+    text-shadow: 0 0 8px rgba(209, 133, 10, 0.5);
+    animation: celebrate-zeros 2s ease-in-out;
+}
+
+.hash-value .hash-remainder { 
+    color: #94a3b8; 
+}
+
+/* New Best Hash Animation */
+.hash-value.new-best-found {
+    animation: new-best-celebration 2s ease-in-out;
+    border: 2px solid #d1850a;
+    box-shadow:
+        0 0 20px rgba(209, 133, 10, 0.6),
+        0 0 40px rgba(209, 133, 10, 0.3),
+        inset 0 0 20px rgba(209, 133, 10, 0.1);
+}
+
+/* Celebration animation for new best hash */
+@keyframes new-best-celebration {
+    0% { transform: scale(1); box-shadow: 0 0 20px rgba(209, 133, 10, 0.6); }
+    15% { transform: scale(1.08); box-shadow: 0 0 40px rgba(209, 133, 10, 0.9), 0 0 80px rgba(209, 133, 10, 0.6); }
+    30% { transform: scale(1.12); box-shadow: 0 0 60px rgba(209, 133, 10, 1), 0 0 120px rgba(209, 133, 10, 0.7); }
+    45% { transform: scale(1.06); box-shadow: 0 0 50px rgba(209, 133, 10, 0.9), 0 0 100px rgba(209, 133, 10, 0.6); }
+    60% { transform: scale(1.1); box-shadow: 0 0 55px rgba(209, 133, 10, 1), 0 0 110px rgba(209, 133, 10, 0.7); }
+    75% { transform: scale(1.04); box-shadow: 0 0 45px rgba(209, 133, 10, 0.8), 0 0 90px rgba(209, 133, 10, 0.5); }
+    90% { transform: scale(1.02); box-shadow: 0 0 35px rgba(209, 133, 10, 0.7), 0 0 70px rgba(209, 133, 10, 0.4); }
+    100% { transform: scale(1); box-shadow: 0 0 20px rgba(209, 133, 10, 0.6); }
+}
+
+/* Special animation for the leading zeros when new best is found */
+@keyframes celebrate-zeros {
+    0% { font-size: 1.1em; text-shadow: 0 0 8px rgba(209, 133, 10, 0.5); }
+    25% { font-size: 1.3em; text-shadow: 0 0 15px rgba(209, 133, 10, 0.9), 0 0 25px rgba(209, 133, 10, 0.5); }
+    50% { font-size: 1.4em; text-shadow: 0 0 20px rgba(209, 133, 10, 1), 0 0 35px rgba(209, 133, 10, 0.7); }
+    75% { font-size: 1.3em; text-shadow: 0 0 15px rgba(209, 133, 10, 0.9), 0 0 25px rgba(209, 133, 10, 0.5); }
+    100% { font-size: 1.1em; text-shadow: 0 0 8px rgba(209, 133, 10, 0.5); }
+}
+
+.best-hash-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 0.5rem; 
+}
+
+.best-stats { 
+    display: flex; 
+    gap: 1rem; 
+    font-size: 0.9rem; 
+}
+
+.best-stat { 
+    color: #94a3b8; 
+}
+
+.best-value { 
+    color: #d1850a; 
+    font-weight: 600; 
+}
+
+.best-value.highlight {
+    background: linear-gradient(to right, #d1850a, #f59e0b);
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent; 
+    background-clip: text;
+    font-size: 1.1em; 
+    font-weight: 700;
+}
+
+/* Mining Animation */
+.mining-animation {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.mining-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.mining-dots span {
+    width: 12px;
+    height: 12px;
+    background: #d1850a;
+    border-radius: 50%;
+    animation: mining-bounce 1.4s infinite ease-in-out both;
+}
+
+.mining-dots span:nth-child(1) { animation-delay: -0.32s; }
+.mining-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes mining-bounce {
+    0%, 80%, 100% { 
+        transform: scale(0);
+    } 40% { 
+        transform: scale(1);
+    }
+}
+
+/* Mining Stats Grid */
+.mining-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    border-color: #d1850a;
+    transform: translateY(-2px);
+}
+
+.stat-label {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    display: block;
+    color: #e2e8f0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Success Message */
+.mining-success-box {
+    background: linear-gradient(to right, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.mining-success-box h4 {
+    color: #10b981;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .mining-section {
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+
+    .mining-mode-boxes {
+        flex-direction: column;
+        gap: 16px;
+        align-items: center;
+    }
+    
+    .mining-mode-box {
+        width: 300px;
+        height: 90px;
+        padding: 16px;
+        gap: 12px;
+    }
+    
+    .mode-icon {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .mode-title {
+        font-size: 16px;
+    }
+    
+    .mode-description {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    .mining-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .hash-value {
+        font-size: 0.8rem;
+    }
+}

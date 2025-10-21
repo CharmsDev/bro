@@ -1,0 +1,380 @@
+/* Step2BatchConfig styles */
+.batch-config {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.batch-selection {
+  margin-bottom: 2rem;
+}
+
+.batch-selection h4 {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.batch-selection p {
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+}
+
+.batch-size-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.batch-size-btn {
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.batch-size-btn:hover:not(:disabled) {
+  border-color: #f7931a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(247, 147, 26, 0.2);
+}
+
+.batch-size-btn.active {
+  border-color: #f7931a;
+  background: #fff3e0;
+}
+
+.batch-size-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.batch-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+
+.batch-cost {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.batch-size-btn.custom .batch-number {
+  font-size: 1.2rem;
+}
+
+.custom-input-section {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.custom-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.custom-quantity-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.custom-quantity-input:focus {
+  outline: none;
+  border-color: #f7931a;
+  box-shadow: 0 0 0 3px rgba(247, 147, 26, 0.1);
+}
+
+.btn-primary.small {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  min-width: auto;
+}
+
+.btn-secondary.small {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary.small:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.selection-summary {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.summary-item label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.summary-value {
+  font-weight: 700;
+  color: #1976d2;
+}
+
+.utxo-monitoring {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.monitoring-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.monitoring-header h4 {
+  color: #495057;
+  margin: 0;
+}
+
+.monitoring-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.funding-status {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.funding-status.monitoring {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+}
+
+.funding-status.insufficient {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+.funding-status.sufficient {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.funding-status.error {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+.status-monitoring {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.monitoring-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #f7931a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.status-insufficient span,
+.status-error span {
+  color: #721c24;
+  font-weight: 600;
+}
+
+.status-sufficient span {
+  color: #155724;
+  font-weight: 600;
+}
+
+.status-monitoring span {
+  color: #856404;
+  font-weight: 600;
+}
+
+.funding-status p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+}
+
+.funding-address {
+  margin-top: 1rem;
+}
+
+.funding-address label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.funding-address code {
+  background: #e9ecef;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+  display: block;
+}
+
+.utxos-list {
+  margin-top: 1rem;
+}
+
+.utxos-list h5 {
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.utxos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.utxo-item {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.utxo-id {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.utxo-value {
+  font-weight: 700;
+  color: #28a745;
+  margin-bottom: 0.25rem;
+}
+
+.utxo-confirmations {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+.recommendations {
+  background: #e8f5e8;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.recommendations h5 {
+  color: #155724;
+  margin-bottom: 0.5rem;
+}
+
+.recommendations p {
+  color: #155724;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.step-actions {
+  text-align: center;
+}
+
+.btn-primary {
+  background: #f7931a;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #e8851e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(247, 147, 26, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .batch-size-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 0.75rem;
+  }
+  
+  .monitoring-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .monitoring-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .summary-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .utxos-grid {
+    grid-template-columns: 1fr;
+  }
+}
