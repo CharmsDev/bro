@@ -1,0 +1,20 @@
+/* Box Section Styles */
+
+.box-section {
+  transition: all 0.3s ease;
+}
+
+.box-section:hover {
+  border-color: rgb(168, 85, 247);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+}
+
+.box-content {
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .box-section {
+    padding: 1rem;
+  }
+}
