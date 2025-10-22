@@ -82,17 +82,26 @@ class BitcoinTxBuilder {
             const { getFeeEstimator } = await import('../bitcoin/fee-estimator.js');
             const feeEstimator = getFeeEstimator();
             
-            // Estimate fee: 1 input + (1 OP_RETURN + N spendable outputs + 1 change)
+            // First, estimate fee WITHOUT change output
             const numInputs = 1;
-            const numOutputs = 1 + numberOfOutputs + 1; // OP_RETURN + spendable + change
-            const totalFee = await feeEstimator.calculateFee(numInputs, numOutputs);
-            
+            const numOutputsWithoutChange = 1 + numberOfOutputs; // OP_RETURN + spendable outputs
+            const feeWithoutChange = await feeEstimator.calculateFee(numInputs, numOutputsWithoutChange);
             
             const totalOutputValue = numberOfOutputs * fixedAmount;
-            const changeAmount = utxo.amount - totalFee - totalOutputValue;
-
-            // Add change output if there's remaining value
-            if (changeAmount > 546) { // Dust limit
+            let changeAmountWithoutChange = utxo.amount - feeWithoutChange - totalOutputValue;
+            
+            // If change is above dust limit, recalculate fee WITH change output
+            let totalFee = feeWithoutChange;
+            let changeAmount = changeAmountWithoutChange;
+            
+            if (changeAmountWithoutChange > 546) {
+                // Recalculate with change output included
+                const numOutputsWithChange = numOutputsWithoutChange + 1;
+                const feeWithChange = await feeEstimator.calculateFee(numInputs, numOutputsWithChange);
+                totalFee = feeWithChange;
+                changeAmount = utxo.amount - feeWithChange - totalOutputValue;
+                
+                // Add change output
                 psbt.addOutput({
                     address: walletKeys.address,
                     value: changeAmount,

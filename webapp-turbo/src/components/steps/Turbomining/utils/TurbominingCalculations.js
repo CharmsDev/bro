@@ -1,6 +1,13 @@
-export const calculateTotalCost = (outputs, costPerOutput = 333, feePerOutput = 7) => {
+export const calculateTotalCost = (outputs, costPerOutput = 333, feePerOutput = 500) => {
   if (!outputs || outputs <= 0) return 0;
-  return outputs * (costPerOutput + feePerOutput);
+  // More realistic fee estimation based on actual transaction structure:
+  // - 1 input (58 vbytes) + 1 OP_RETURN (43 bytes) + overhead (10 bytes) ≈ 111 vbytes base
+  // - Each output adds ~43 bytes
+  // - At 8 sat/vB: base = 888 sats, per output = 344 sats
+  const baseFee = 900; // Base transaction overhead (input + OP_RETURN + overhead)
+  const feePerOutputEstimate = 350; // Fee contribution per output (43 bytes × ~8 sat/vB)
+  const estimatedFee = baseFee + (outputs * feePerOutputEstimate);
+  return (outputs * costPerOutput) + estimatedFee;
 };
 
 export const selectUtxosForCost = (availableUtxos, targetCost) => {
@@ -70,6 +77,6 @@ export const getAvailableUtxos = (walletUtxos) => {
 export const TURBOMINING_CONSTANTS = {
   OUTPUT_OPTIONS: [2, 4, 8, 16, 32, 64, 128, 256],
   COST_PER_OUTPUT: 333, // satoshis (Taproot dust limit 330 + 3 extra)
-  FEE_PER_OUTPUT: 7,    // satoshis
+  FEE_PER_OUTPUT: 350,  // satoshis (realistic fee per output: ~43 bytes × 8 sat/vB)
   MIN_CHANGE_OUTPUT: 546 // dust limit
 };

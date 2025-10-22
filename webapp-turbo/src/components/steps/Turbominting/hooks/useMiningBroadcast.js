@@ -1,18 +1,24 @@
 /**
  * useMiningBroadcast - Handle mining transaction broadcast and monitoring
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useConfirmationMonitor } from '../../../../hooks/useConfirmationMonitor.js';
 import TurbomintingService from '../../../../services/turbominting/TurbomintingService.js';
+import { getSoundEffects } from '../utils/soundEffects.js';
 
 export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmationInfo) {
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastError, setBroadcastError] = useState(null);
+  const soundPlayedRef = useRef(false);
   
-  // Use confirmation monitor hook
-  const shouldMonitor = turbominingData?.miningTxid && !turbominingData?.miningTxConfirmed;
+  // Extract stable values to prevent unnecessary re-renders
+  const miningTxid = turbominingData?.miningTxid;
+  const miningTxConfirmed = turbominingData?.miningTxConfirmed;
+  
+  // Use confirmation monitor hook - only monitor if we have txid and it's not confirmed
+  const shouldMonitor = Boolean(miningTxid && !miningTxConfirmed);
   const { confirmations, isMonitoring, isConfirmed } = useConfirmationMonitor(
-    turbominingData?.miningTxid,
+    miningTxid,
     shouldMonitor
   );
 
@@ -53,6 +59,13 @@ export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmat
       setConfirmationInfo(info);
       setMiningReady(true);
       TurbomintingService.setMiningConfirmed(info);
+      
+      // Play confirmation sound (only once)
+      if (!soundPlayedRef.current) {
+        soundPlayedRef.current = true;
+        const soundEffects = getSoundEffects();
+        soundEffects.playConfirmationSound();
+      }
     }
   }, [isConfirmed, confirmations]);
 
