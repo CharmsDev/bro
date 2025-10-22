@@ -64,10 +64,9 @@ export function useMining() {
       
       const selectedUtxo = batch.selectedUtxos[0];
       
-      // CRITICAL: Only set challenge if not already set from saved data
-      if (!mining.challenge || !savedData?.challengeUtxo) {
+      // Set challenge if not already loaded from storage
+      if (!mining.challenge) {
         setMiningChallenge(selectedUtxo);
-      } else {
       }
       
       setMiningActive(true);

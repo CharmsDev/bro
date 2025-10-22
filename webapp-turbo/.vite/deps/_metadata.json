@@ -1,0 +1,151 @@
+{
+  "hash": "ca6aa437",
+  "configHash": "bf2b2313",
+  "lockfileHash": "266b4062",
+  "browserHash": "99389221",
+  "optimized": {
+    "buffer": {
+      "src": "../../node_modules/buffer/index.js",
+      "file": "buffer.js",
+      "fileHash": "cdb7af0b",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "e751c61b",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "c4f87574",
+      "needsInterop": true
+    },
+    "bitcoinjs-lib": {
+      "src": "../../node_modules/bitcoinjs-lib/src/index.js",
+      "file": "bitcoinjs-lib.js",
+      "fileHash": "475971f3",
+      "needsInterop": true
+    },
+    "bip39": {
+      "src": "../../node_modules/bip39/src/index.js",
+      "file": "bip39.js",
+      "fileHash": "6c1f096f",
+      "needsInterop": true
+    },
+    "@bitcoinerlab/secp256k1": {
+      "src": "../../node_modules/@bitcoinerlab/secp256k1/dist/index.js",
+      "file": "@bitcoinerlab_secp256k1.js",
+      "fileHash": "2a9d4989",
+      "needsInterop": true
+    },
+    "bip32": {
+      "src": "../../node_modules/bip32/src/esm/index.js",
+      "file": "bip32.js",
+      "fileHash": "40526710",
+      "needsInterop": false
+    },
+    "ecpair": {
+      "src": "../../node_modules/ecpair/src/esm/index.js",
+      "file": "ecpair.js",
+      "fileHash": "2c1a2947",
+      "needsInterop": false
+    },
+    "crypto-js": {
+      "src": "../../node_modules/crypto-js/index.js",
+      "file": "crypto-js.js",
+      "fileHash": "612d9584",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "8e4e900f",
+      "needsInterop": false
+    },
+    "zustand": {
+      "src": "../../node_modules/zustand/esm/index.mjs",
+      "file": "zustand.js",
+      "fileHash": "aa1f32f8",
+      "needsInterop": false
+    },
+    "zustand/middleware": {
+      "src": "../../node_modules/zustand/esm/middleware.mjs",
+      "file": "zustand_middleware.js",
+      "fileHash": "ad190f75",
+      "needsInterop": false
+    },
+    "@scure/btc-signer": {
+      "src": "../../node_modules/@scure/btc-signer/esm/index.js",
+      "file": "@scure_btc-signer.js",
+      "fileHash": "bc458453",
+      "needsInterop": false
+    },
+    "@scure/base": {
+      "src": "../../node_modules/@scure/base/lib/esm/index.js",
+      "file": "@scure_base.js",
+      "fileHash": "80c3aa1b",
+      "needsInterop": false
+    },
+    "@scure/bip39": {
+      "src": "../../node_modules/@scure/bip39/esm/index.js",
+      "file": "@scure_bip39.js",
+      "fileHash": "05268719",
+      "needsInterop": false
+    },
+    "@scure/bip32": {
+      "src": "../../node_modules/@scure/bip32/lib/esm/index.js",
+      "file": "@scure_bip32.js",
+      "fileHash": "a91548bc",
+      "needsInterop": false
+    },
+    "tiny-secp256k1": {
+      "src": "../../node_modules/tiny-secp256k1/lib/index.js",
+      "file": "tiny-secp256k1.js",
+      "fileHash": "8dcd1a62",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-VKGU4GBS": {
+      "file": "chunk-VKGU4GBS.js"
+    },
+    "chunk-YEGEUSQR": {
+      "file": "chunk-YEGEUSQR.js"
+    },
+    "chunk-7JZAKNLV": {
+      "file": "chunk-7JZAKNLV.js"
+    },
+    "chunk-TUY6E2CP": {
+      "file": "chunk-TUY6E2CP.js"
+    },
+    "chunk-M5X4UG5M": {
+      "file": "chunk-M5X4UG5M.js"
+    },
+    "chunk-4ROKUOYT": {
+      "file": "chunk-4ROKUOYT.js"
+    },
+    "chunk-PLBP254U": {
+      "file": "chunk-PLBP254U.js"
+    },
+    "chunk-KHBBPVKB": {
+      "file": "chunk-KHBBPVKB.js"
+    },
+    "chunk-KVHNYKD5": {
+      "file": "chunk-KVHNYKD5.js"
+    },
+    "chunk-KMNSGEX4": {
+      "file": "chunk-KMNSGEX4.js"
+    },
+    "chunk-QKKLAZRI": {
+      "file": "chunk-QKKLAZRI.js"
+    },
+    "chunk-2MDE53YM": {
+      "file": "chunk-2MDE53YM.js"
+    },
+    "chunk-2TUXWMP5": {
+      "file": "chunk-2TUXWMP5.js"
+    }
+  }
+}
