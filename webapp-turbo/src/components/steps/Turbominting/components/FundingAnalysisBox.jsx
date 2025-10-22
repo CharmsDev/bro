@@ -155,15 +155,7 @@ export function FundingAnalysisBox({ turbominingData, walletAddress, fundingAnal
         ) : funding.error ? (
           <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-4">
             <p className="text-red-400 font-semibold mb-2">❌ Analysis failed</p>
-            <p className="text-slate-400 text-sm mb-3">{funding.error}</p>
-            <div className="flex gap-2">
-              <button
-                onClick={funding.analyzeFunding}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-semibold transition-colors"
-              >
-                Retry
-              </button>
-            </div>
+            <p className="text-slate-400 text-sm">{funding.error}</p>
           </div>
         ) : null}
 

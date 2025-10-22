@@ -33,6 +33,7 @@ export class UtxoMonitorService {
 
             return formattedUtxos;
         } catch (error) {
+            console.error('[UtxoMonitor] Error fetching UTXOs:', error);
             return [];
         }
     }

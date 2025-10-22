@@ -71,7 +71,7 @@ export default class QuickNodeClient {
 
   // Blockbook add-on methods for address operations
   // Get UTXOs for a specific address
-  async getAddressUtxos(address, options = { confirmed: true }) {
+  async getAddressUtxos(address, options = { confirmed: false }) {
     const result = await this.rpc('bb_getUTXOs', [address, options]);
     return result;
   }

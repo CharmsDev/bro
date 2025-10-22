@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { formatSatoshis } from '../../../../utils/formatters.js';
 
-export function CostSummary({ selectedOutputs, miningTxCost, walletUtxos }) {
+export function CostSummary({ selectedOutputs, miningTxCost, walletUtxos, isLocked = false }) {
   const MINTING_COST_PER_OUTPUT = 5000;
   
   const calculations = useMemo(() => {
@@ -88,68 +88,72 @@ export function CostSummary({ selectedOutputs, miningTxCost, walletUtxos }) {
         </div>
       </div>
 
-      {/* Wallet Balance & Minting Capacity */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {/* Available Balance */}
-        <div className={`rounded-lg p-3 border ${
-          calculations.hasEnoughForAll 
-            ? 'bg-emerald-900/20 border-emerald-600/50' 
-            : 'bg-yellow-900/20 border-yellow-600/50'
-        }`}>
-          <div className={`text-xs mb-1 ${
-            calculations.hasEnoughForAll ? 'text-emerald-400' : 'text-yellow-400'
-          }`}>
-            💰 Available in Wallet
-          </div>
-          <div className={`text-xl font-bold ${
-            calculations.hasEnoughForAll ? 'text-emerald-300' : 'text-yellow-300'
-          }`}>
-            {formatSatoshis(calculations.availableSats)}
-          </div>
-        </div>
-
-        {/* Can Mint Now */}
-        <div className="bg-blue-900/20 border border-blue-600/50 rounded-lg p-3">
-          <div className="text-blue-400 text-xs mb-1">✅ Can Mint Now</div>
-          <div className="text-xl font-bold text-blue-300">
-            {calculations.outputsCanMint} {calculations.outputsCanMint === 1 ? 'output' : 'outputs'}
-          </div>
-        </div>
-
-        {/* Reserved for Future */}
-        {calculations.outputsForFuture > 0 && (
-          <div className="bg-purple-900/20 border border-purple-600/50 rounded-lg p-3">
-            <div className="text-purple-400 text-xs mb-1">⏳ Reserved for Future</div>
-            <div className="text-xl font-bold text-purple-300">
-              {calculations.outputsForFuture} {calculations.outputsForFuture === 1 ? 'output' : 'outputs'}
+      {/* Wallet Balance & Minting Capacity - Hide when locked */}
+      {!isLocked && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Available Balance */}
+            <div className={`rounded-lg p-3 border ${
+              calculations.hasEnoughForAll 
+                ? 'bg-emerald-900/20 border-emerald-600/50' 
+                : 'bg-yellow-900/20 border-yellow-600/50'
+            }`}>
+              <div className={`text-xs mb-1 ${
+                calculations.hasEnoughForAll ? 'text-emerald-400' : 'text-yellow-400'
+              }`}>
+                💰 Available in Wallet
+              </div>
+              <div className={`text-xl font-bold ${
+                calculations.hasEnoughForAll ? 'text-emerald-300' : 'text-yellow-300'
+              }`}>
+                {formatSatoshis(calculations.availableSats)}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* Info Message */}
-      {!calculations.hasEnoughForAll && (
-        <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-600/50 rounded-lg">
-          <div className="text-yellow-300 text-sm flex items-start gap-2">
-            <span className="text-lg">⚠️</span>
-            <div>
-              <strong>Partial Minting:</strong> You can mint {calculations.outputsCanMint} output{calculations.outputsCanMint !== 1 ? 's' : ''} now. 
-              The remaining {calculations.outputsForFuture} output{calculations.outputsForFuture !== 1 ? 's' : ''} will be reserved 
-              in the mining transaction and can be minted later when you add more funds to your wallet.
+            {/* Can Mint Now */}
+            <div className="bg-blue-900/20 border border-blue-600/50 rounded-lg p-3">
+              <div className="text-blue-400 text-xs mb-1">✅ Can Mint Now</div>
+              <div className="text-xl font-bold text-blue-300">
+                {calculations.outputsCanMint} {calculations.outputsCanMint === 1 ? 'output' : 'outputs'}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {calculations.hasEnoughForAll && (
-        <div className="mt-4 p-3 bg-emerald-900/20 border border-emerald-600/50 rounded-lg">
-          <div className="text-emerald-300 text-sm flex items-start gap-2">
-            <span className="text-lg">✅</span>
-            <div>
-              <strong>Full Capacity:</strong> You have enough funds to mint all {selectedOutputs} outputs immediately!
-            </div>
+            {/* Reserved for Future */}
+            {calculations.outputsForFuture > 0 && (
+              <div className="bg-purple-900/20 border border-purple-600/50 rounded-lg p-3">
+                <div className="text-purple-400 text-xs mb-1">⏳ Reserved for Future</div>
+                <div className="text-xl font-bold text-purple-300">
+                  {calculations.outputsForFuture} {calculations.outputsForFuture === 1 ? 'output' : 'outputs'}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+
+          {/* Info Message */}
+          {!calculations.hasEnoughForAll && (
+            <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-600/50 rounded-lg">
+              <div className="text-yellow-300 text-sm flex items-start gap-2">
+                <span className="text-lg">⚠️</span>
+                <div>
+                  <strong>Partial Minting:</strong> You can mint {calculations.outputsCanMint} output{calculations.outputsCanMint !== 1 ? 's' : ''} now. 
+                  The remaining {calculations.outputsForFuture} output{calculations.outputsForFuture !== 1 ? 's' : ''} will be reserved 
+                  in the mining transaction and can be minted later when you add more funds to your wallet.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {calculations.hasEnoughForAll && (
+            <div className="mt-4 p-3 bg-emerald-900/20 border border-emerald-600/50 rounded-lg">
+              <div className="text-emerald-300 text-sm flex items-start gap-2">
+                <span className="text-lg">✅</span>
+                <div>
+                  <strong>Full Capacity:</strong> You have enough funds to mint all {selectedOutputs} outputs immediately!
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

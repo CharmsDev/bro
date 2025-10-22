@@ -23,14 +23,17 @@ export function PageLayout({
   const navigate = useNavigate();
   const { error, clearError, wallet, mining, batch, isWalletReady } = useStore();
   const [turbominingTxReady, setTurbominingTxReady] = useState(false);
+  const [mintingLoopComplete, setMintingLoopComplete] = useState(false);
   
   // Monitor turbomining transaction generation
   useEffect(() => {
     if (currentKey === 'turbomining') {
       const checkTurbominingTx = () => {
         const turbominingData = TurbominingModule.load();
+        // Ready if: has signedTxHex OR has miningTxid (already broadcast)
         const hasSignedTx = turbominingData?.signedTxHex && turbominingData?.signedTxHex.length > 0;
-        setTurbominingTxReady(hasSignedTx);
+        const hasBroadcast = turbominingData?.miningTxid && turbominingData?.miningTxid.length > 0;
+        setTurbominingTxReady(hasSignedTx || hasBroadcast);
       };
       
       // Check immediately
@@ -38,6 +41,23 @@ export function PageLayout({
       
       // Check every 500ms for updates
       const interval = setInterval(checkTurbominingTx, 500);
+      return () => clearInterval(interval);
+    }
+  }, [currentKey]);
+
+  // Monitor minting loop completion
+  useEffect(() => {
+    if (currentKey === 'turbominting') {
+      const checkMintingComplete = () => {
+        const isComplete = TurbomintingService.isMintingLoopComplete();
+        setMintingLoopComplete(isComplete);
+      };
+      
+      // Check immediately
+      checkMintingComplete();
+      
+      // Check every 1s for updates
+      const interval = setInterval(checkMintingComplete, 1000);
       return () => clearInterval(interval);
     }
   }, [currentKey]);
@@ -303,7 +323,7 @@ export function PageLayout({
 
             {/* Continue Button or Mint More - Right */}
             <div className="flex-1 flex justify-end">
-              {currentKey === 'turbominting' ? (
+              {currentKey === 'turbominting' && mintingLoopComplete ? (
                 <button
                   onClick={() => {
                     const success = TurbomintingService.resetForMintMore();

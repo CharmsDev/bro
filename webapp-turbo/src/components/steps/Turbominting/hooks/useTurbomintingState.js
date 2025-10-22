@@ -17,7 +17,13 @@ export function useTurbomintingState() {
       try {
         // Load turbomining data from Step 3
         const turbominingData = TurbominingModule.load();
-        if (!turbominingData?.miningData || !turbominingData?.spendableOutputs?.length) {
+        
+        // Validate: needs either miningData OR miningTxid (if already broadcast)
+        const hasMiningData = turbominingData?.miningData;
+        const hasBroadcast = turbominingData?.miningTxid;
+        const hasSpendableOutputs = turbominingData?.spendableOutputs?.length > 0;
+        
+        if ((!hasMiningData && !hasBroadcast) || !hasSpendableOutputs) {
           setError('No turbomining data found. Please complete Step 3 (Turbomining) first.');
           return;
         }

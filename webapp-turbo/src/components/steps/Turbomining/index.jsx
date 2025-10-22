@@ -283,6 +283,7 @@ export function Turbomining() {
           selectedOutputs={selectedOutputs}
           miningTxCost={getTotalCost(selectedOutputs)}
           walletUtxos={walletUtxos}
+          isLocked={isLocked}
         />
       )}
 

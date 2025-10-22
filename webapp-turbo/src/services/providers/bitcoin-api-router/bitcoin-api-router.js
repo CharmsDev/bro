@@ -117,6 +117,7 @@ export default class BitcoinApiRouter {
     return await this._executeWithFallback(
       async () => {
         const res = await this.quicknode.getAddressUtxos(address, options);
+        
         // QuickNode sometimes returns {result:null} with HTTP 200. Treat that as error to trigger fallback.
         if (res == null) {
           throw new Error('QuickNode getAddressUtxos null result');

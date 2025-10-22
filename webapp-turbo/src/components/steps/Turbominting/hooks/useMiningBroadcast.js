@@ -2,12 +2,19 @@
  * useMiningBroadcast - Handle mining transaction broadcast and monitoring
  */
 import { useState, useEffect } from 'react';
+import { useConfirmationMonitor } from '../../../../hooks/useConfirmationMonitor.js';
 import TurbomintingService from '../../../../services/turbominting/TurbomintingService.js';
 
 export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmationInfo) {
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastError, setBroadcastError] = useState(null);
-  const [isMonitoring, setIsMonitoring] = useState(false);
+  
+  // Use confirmation monitor hook
+  const shouldMonitor = turbominingData?.miningTxid && !turbominingData?.miningTxConfirmed;
+  const { confirmations, isMonitoring, isConfirmed } = useConfirmationMonitor(
+    turbominingData?.miningTxid,
+    shouldMonitor
+  );
 
   // Auto-broadcast mining transaction on load
   useEffect(() => {
@@ -22,9 +29,7 @@ export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmat
         
         if (result.success && result.txid) {
           setBroadcastError(null);
-          
-          // Start monitoring confirmations
-          startMonitoring(result.txid);
+          // Monitoring will start automatically via useConfirmationMonitor hook
         } else {
           setBroadcastError(result.error || 'Broadcast failed');
         }
@@ -38,22 +43,18 @@ export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmat
     broadcastMiningTx();
   }, [turbominingData, isBroadcasting]);
 
-  const startMonitoring = (txid) => {
-    setIsMonitoring(true);
-    
-    TurbomintingService.monitorMiningConfirmation(
-      txid,
-      (info) => {
-        setConfirmationInfo(info);
-        setMiningReady(true);
-        setIsMonitoring(false);
-      },
-      (error) => {
-        setBroadcastError(`Monitoring error: ${error.message}`);
-        setIsMonitoring(false);
-      }
-    );
-  };
+  // Handle confirmation
+  useEffect(() => {
+    if (isConfirmed && confirmations >= 1) {
+      const info = {
+        confirmed: true,
+        confirmations: confirmations
+      };
+      setConfirmationInfo(info);
+      setMiningReady(true);
+      TurbomintingService.setMiningConfirmed(info);
+    }
+  }, [isConfirmed, confirmations]);
 
   return {
     isBroadcasting,

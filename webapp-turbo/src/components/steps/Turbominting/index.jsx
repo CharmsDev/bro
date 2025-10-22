@@ -8,6 +8,7 @@ import { MiningTransactionBox } from './components/MiningTransactionBox.jsx';
 import { FundingAnalysisBox } from './components/FundingAnalysisBox.jsx';
 import { FundingBroadcastBox } from './components/FundingBroadcastBox.jsx';
 import { MintingLoopBox } from './components/MintingLoopBox.jsx';
+import TurbomintingService from '../../../services/turbominting/TurbomintingService.js';
 import './styles/index.css';
 
 export function Turbominting() {
@@ -50,6 +51,14 @@ export function Turbominting() {
       funding.createFundingTransaction();
     }
   }, [funding.analysis, funding.transaction, funding.isCreating, fundingAnalysisData.analysis]);
+
+  // Auto-activate fundingReady when funds are sufficient (no funding TX needed)
+  useEffect(() => {
+    if (fundingAnalysisData.analysis?.strategy === 'sufficient_utxos' && !fundingReady) {
+      setFundingReady(true);
+      TurbomintingService.setFundingReady(true);
+    }
+  }, [fundingAnalysisData.analysis?.strategy, fundingReady]);
 
   // Log testmempoolaccept command when funding transaction is created
   // testmempoolaccept command available in funding.transaction.signedHex

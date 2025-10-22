@@ -35,97 +35,6 @@ export function LocalStorageDebugPage() {
     setLastUpdate(Date.now());
   };
 
-  const handleClearAll = () => {
-    if (window.confirm(' Are you sure you want to clear ALL localStorage data? This cannot be undone!')) {
-      localStorage.clear();
-      setLastUpdate(Date.now());
-    }
-  };
-
-  const handleFixFundingUtxos = () => {
-    if (!window.confirm('🔧 Fix Funding UTXOs?\n\nThis will add txid to all resultingUtxos.\n\nRequired for minting loop to work.\n\nContinue?')) {
-      return;
-    }
-
-    try {
-      const broAppData = localStorage.getItem('bro_app');
-      if (!broAppData) {
-        alert('⚠️ No bro_app data found in localStorage');
-        return;
-      }
-
-      const data = JSON.parse(broAppData);
-      
-      if (!data.turbominting?.fundingAnalysis?.resultingUtxos) {
-        alert('⚠️ No turbominting.fundingAnalysis.resultingUtxos found');
-        return;
-      }
-
-      if (!data.turbominting?.fundingTxid) {
-        alert('⚠️ No fundingTxid found. Broadcast funding transaction first.');
-        return;
-      }
-
-      const txid = data.turbominting.fundingTxid;
-      data.turbominting.fundingAnalysis.resultingUtxos = data.turbominting.fundingAnalysis.resultingUtxos.map((utxo, index) => ({
-        ...utxo,
-        txid: txid,
-        vout: utxo.vout !== undefined ? utxo.vout : index
-      }));
-
-      localStorage.setItem('bro_app', JSON.stringify(data));
-      alert(`✅ Added txid to ${data.turbominting.fundingAnalysis.resultingUtxos.length} UTXOs!\n\n🔄 Reloading page...`);
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } catch (error) {
-      alert(`❌ Update failed: ${error.message}`);
-    }
-  };
-
-  const handleFixSpendableOutputs = () => {
-    if (!window.confirm('🔧 Fix Spendable Outputs?\n\nThis will rebuild all spendableOutputs with correct mining txid.\n\nRequired for minting loop to work.\n\nContinue?')) {
-      return;
-    }
-
-    try {
-      const broAppData = localStorage.getItem('bro_app');
-      if (!broAppData) {
-        alert('⚠️ No bro_app data found in localStorage');
-        return;
-      }
-
-      const data = JSON.parse(broAppData);
-      
-      if (!data.turbomining?.spendableOutputs) {
-        alert('⚠️ No turbomining.spendableOutputs found');
-        return;
-      }
-
-      if (!data.turbomining?.miningTxid) {
-        alert('⚠️ No miningTxid found. Broadcast mining transaction first.');
-        return;
-      }
-
-      const miningTxid = data.turbomining.miningTxid;
-      
-      // Rebuild spendableOutputs with correct utxoId
-      data.turbomining.spendableOutputs = data.turbomining.spendableOutputs.map(output => ({
-        ...output,
-        utxoId: `${miningTxid}:${output.outputIndex}`
-      }));
-
-      localStorage.setItem('bro_app', JSON.stringify(data));
-      alert(`✅ Fixed ${data.turbomining.spendableOutputs.length} spendable outputs!\n\nMining TXID: ${miningTxid}\n\n🔄 Reloading page...`);
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } catch (error) {
-      alert(`❌ Update failed: ${error.message}`);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100">
@@ -158,30 +67,6 @@ export function LocalStorageDebugPage() {
               >
                 <span>🔄</span>
                 <span>Refresh</span>
-              </button>
-              
-              <button
-                onClick={handleFixFundingUtxos}
-                className="inline-flex items-center justify-center gap-2 rounded-xl font-semibold px-6 py-3 transition-all duration-200 shadow-sm text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:scale-105 hover:shadow-lg"
-              >
-                <span>🔧</span>
-                <span>Fix Funding UTXOs</span>
-              </button>
-              
-              <button
-                onClick={handleFixSpendableOutputs}
-                className="inline-flex items-center justify-center gap-2 rounded-xl font-semibold px-6 py-3 transition-all duration-200 shadow-sm text-white bg-gradient-to-r from-green-500 to-green-600 hover:scale-105 hover:shadow-lg"
-              >
-                <span>🔧</span>
-                <span>Fix Spendable Outputs</span>
-              </button>
-              
-              <button
-                onClick={handleClearAll}
-                className="inline-flex items-center justify-center gap-2 rounded-xl font-semibold px-6 py-3 transition-all duration-200 shadow-sm text-white bg-red-600 hover:bg-red-700"
-              >
-                <span>🗑️</span>
-                <span>Clear All</span>
               </button>
             </div>
           </div>

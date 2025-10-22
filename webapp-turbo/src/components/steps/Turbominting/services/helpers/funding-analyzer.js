@@ -30,9 +30,8 @@ export function analyzeFundingNeeds(availableUtxos, requiredOutputs) {
   // Filter protected UTXOs (digital assets)
   const usableUtxos = filterProtectedUtxos(availableUtxos);
   
-  // Separate valid (≥5000) and invalid (<5000) UTXOs
+  // Separate valid (≥5000) UTXOs
   const validUtxos = usableUtxos.filter(u => u.value >= MIN_UTXO_VALUE);
-  const invalidUtxos = usableUtxos.filter(u => u.value < MIN_UTXO_VALUE);
   
   // Calculate totals
   const totalValue = usableUtxos.reduce((sum, u) => sum + u.value, 0);
@@ -43,7 +42,7 @@ export function analyzeFundingNeeds(availableUtxos, requiredOutputs) {
   if (validUtxos.length >= requiredOutputs) {
     return {
       needsSplitting: false,
-      strategy: 'sufficient',
+      strategy: 'sufficient_utxos',
       utxosToUse: validUtxos.slice(0, requiredOutputs),
       canAfford: requiredOutputs,
       isPartial: false
@@ -107,8 +106,9 @@ function createFundingPlan(utxos, outputCount, isPartial) {
 
 /**
  * Filter protected UTXOs (digital assets that must not be spent)
+ * Note: 5000 is NOT protected - it's the exact value needed for minting UTXOs
  */
 function filterProtectedUtxos(utxos) {
-  const PROTECTED_VALUES = [546, 333, 330, 1000, 777, 600, 10000, 5000];
+  const PROTECTED_VALUES = [546, 333, 330, 1000, 777, 600, 10000];
   return utxos.filter(utxo => !PROTECTED_VALUES.includes(utxo.value));
 }

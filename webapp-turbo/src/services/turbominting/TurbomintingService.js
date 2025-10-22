@@ -5,7 +5,6 @@
  */
 
 import { broadcastTx } from '../bitcoin/broadcastTx.js';
-import { ConfirmationMonitor } from '../bitcoin/confirmation-monitor.js';
 import CentralStorage from '../../storage/CentralStorage.js';
 
 export class TurbomintingService {
@@ -58,7 +57,7 @@ export class TurbomintingService {
       const result = await broadcastTx(signedTxHex);
       
       if (result.success && result.txid) {
-        // Save to storage
+        // Save to turbominting storage
         const current = CentralStorage.getTurbominting() || {};
         CentralStorage.saveTurbominting({
           ...current,
@@ -66,6 +65,20 @@ export class TurbomintingService {
           explorerUrl: result.explorerUrl,
           miningTxConfirmed: false,
           miningReady: false,
+          timestamp: Date.now()
+        });
+        
+        // CRITICAL: Also save to turbomining storage to maintain lock state AND transaction hex
+        const turbominingData = CentralStorage.getTurbomining() || {};
+        CentralStorage.saveTurbomining({
+          ...turbominingData,
+          miningTxid: result.txid,
+          signedTxHex: signedTxHex,
+          explorerUrl: result.explorerUrl,
+          locked: true,
+          step1Locked: true,
+          step2Locked: true,
+          status: 'broadcast',
           timestamp: Date.now()
         });
         
@@ -311,58 +324,30 @@ export class TurbomintingService {
     }
   }
 
+  /**
+   * Check if minting loop is complete (all outputs processed)
+   * @returns {boolean}
+   */
+  static isMintingLoopComplete() {
+    try {
+      const current = CentralStorage.getTurbominting() || {};
+      const progress = current?.mintingProgress;
+      
+      if (!progress || !progress.total) {
+        return false;
+      }
+      
+      // Loop is complete when completed count equals total
+      return progress.completed === progress.total && progress.total > 0;
+    } catch (error) {
+      return false;
+    }
+  }
+
   // ============================================
   // MONITORING OPERATIONS
   // ============================================
-
-  /**
-   * Start monitoring mining transaction confirmation
-   * @param {string} txid - Transaction ID
-   * @param {function} onConfirmation - Callback when confirmed
-   * @param {function} onError - Callback on error
-   * @returns {ConfirmationMonitor}
-   */
-  static monitorMiningConfirmation(txid, onConfirmation, onError) {
-    const monitor = new ConfirmationMonitor(txid, {
-      onConfirmation: (info) => {
-        // Save confirmation to storage
-        this.setMiningConfirmed(info);
-        // Call user callback
-        if (onConfirmation) onConfirmation(info);
-      },
-      onError: (error) => {
-        if (onError) onError(error);
-      }
-    });
-    
-    monitor.start();
-    return monitor;
-  }
-
-  /**
-   * Start monitoring funding transaction confirmation
-   * @param {string} txid - Transaction ID
-   * @param {function} onConfirmation - Callback when confirmed
-   * @param {function} onError - Callback on error
-   * @returns {Promise<object>}
-   */
-  static async monitorFundingConfirmation(txid, onConfirmation, onError) {
-    try {
-      const monitor = new ConfirmationMonitor();
-      const result = await monitor.waitForConfirmation(txid, 1, 10000);
-      
-      // Save confirmation to storage
-      this.setFundingConfirmed(result);
-      
-      // Call user callback
-      if (onConfirmation) onConfirmation(result);
-      
-      return result;
-    } catch (error) {
-      if (onError) onError(error);
-      throw error;
-    }
-  }
+  // Note: Monitoring is now handled by useConfirmationMonitor hook in components
 
   // ============================================
   // READ OPERATIONS (for convenience)

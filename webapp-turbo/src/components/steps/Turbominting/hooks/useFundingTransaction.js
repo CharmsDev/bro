@@ -34,10 +34,6 @@ export function useFundingTransaction(requiredOutputs) {
     }
   }, [requiredOutputs]);
 
-  const analyzeFunding = useCallback(async () => {
-    return null;
-  }, []);
-
   const createFundingTransaction = useCallback(async () => {
     if (!fundingState.analysis || !fundingState.availableUtxos) {
       throw new Error('Must analyze funding needs first');
@@ -90,13 +86,14 @@ export function useFundingTransaction(requiredOutputs) {
   const setAnalysis = useCallback((analysis, availableUtxos, resultingUtxos) => {
     setFundingState(prev => {
       const utxosChanged = prev.availableUtxos?.length !== availableUtxos?.length;
+      const needsFunding = analysis?.strategy !== 'sufficient_utxos';
       
       return {
         ...prev,
         analysis,
         availableUtxos,
         resultingUtxos,
-        needsFunding: analysis?.strategy !== 'sufficient_utxos',
+        needsFunding,
         // Reset transaction if UTXOs changed - will be recreated by auto-create logic
         transaction: utxosChanged ? null : prev.transaction
       };
@@ -116,7 +113,6 @@ export function useFundingTransaction(requiredOutputs) {
 
   return {
     ...fundingState,
-    analyzeFunding,
     createFundingTransaction,
     setAnalysis,
     reset

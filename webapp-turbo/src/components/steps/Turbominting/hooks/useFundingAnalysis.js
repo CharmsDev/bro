@@ -114,8 +114,7 @@ export function useFundingAnalysis(requiredOutputs) {
   
   return {
     ...state,
-    isScanning,
-    analyzeFunding: () => {} // Dummy function
+    isScanning
   };
 }
 

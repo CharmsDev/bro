@@ -126,27 +126,6 @@ export function TransactionDisplay({ generatedTransaction, isGeneratingTx, txErr
             </div>
           </div>
 
-          {/* Mining Data */}
-          <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
-            <h5 className="text-slate-300 text-lg font-semibold mb-3">Mining Data (OP_RETURN)</h5>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Nonce:</span>
-                <span className="text-slate-300 font-mono">
-                  {miningData.nonce ? Number(miningData.nonce).toLocaleString() : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Hash:</span>
-                <span className="text-slate-300 font-mono text-xs">{miningData.hash || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Base UTXO:</span>
-                <span className="text-slate-300 font-mono text-xs">{miningData.baseUtxoId || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-
           {/* Spendable Outputs */}
           <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
             <h5 className="text-slate-300 text-lg font-semibold mb-3">Spendable Outputs for Prover</h5>
