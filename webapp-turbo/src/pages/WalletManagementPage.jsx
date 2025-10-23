@@ -75,8 +75,8 @@ export function WalletManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="container mx-auto px-6 py-8">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-y-auto main-scroll">
+      <div className="container mx-auto px-6 py-8 pb-16">
         
         {/* Header */}
         <div className="text-center mb-8">
