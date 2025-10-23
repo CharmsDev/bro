@@ -58,6 +58,11 @@ export class OutputProcessor {
     const proofData = await txProofService.getTxProof(turbominingData.miningTxid);
     const txBlockProof = proofData.merkleproof || proofData.proof || "";
     
+    // Validate fundingUtxo has required fields
+    if (!fundingUtxo?.txid) {
+      throw new Error('Funding UTXO is missing txid. Cannot fetch transaction hex.');
+    }
+    
     const bitcoinApi = new BitcoinApiRouter();
     const fundingTxHex = await bitcoinApi.getRawTransaction(fundingUtxo.txid, false);
     

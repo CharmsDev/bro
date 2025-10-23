@@ -46,7 +46,9 @@ export function useOutputProcessor({
       return;
     }
 
-    if (!fundingUtxo) {
+    if (!fundingUtxo || !fundingUtxo.txid) {
+      const error = new Error(`Funding UTXO ${outputIndex} is missing or invalid. Cannot process output.`);
+      failOutput(outputIndex, error);
       if (onComplete) onComplete();
       return;
     }

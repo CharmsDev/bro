@@ -50,22 +50,33 @@ export function analyzeFundingNeeds(availableUtxos, requiredOutputs) {
   }
   
   // CASE 2 & 3: Need funding TX
-  const maxAffordableOutputs = Math.floor((totalValue - BASE_FEE) / MIN_UTXO_VALUE);
+  // Calculate max affordable outputs INCLUDING the fee for each output
+  const maxAffordableOutputs = Math.floor((totalValue - BASE_FEE) / (MIN_UTXO_VALUE + ESTIMATED_FEE_PER_OUTPUT));
   
-  // CASE 3: Insufficient funds - Create partial funding TX
+  // CASE 3: Insufficient funds for ALL required outputs
   if (totalValue < requiredValue || maxAffordableOutputs < requiredOutputs) {
-    const outputsToCreate = Math.min(maxAffordableOutputs, requiredOutputs);
+    // CRITICAL: If we can't create ALL required outputs, DON'T create funding TX
+    // Instead, use existing valid UTXOs (even if less than required)
+    // This allows user to mint with fewer outputs rather than wasting funds on partial funding TX
     
-    if (outputsToCreate === 0) {
+    if (validUtxos.length > 0) {
       return {
         needsSplitting: false,
-        canAfford: 0,
+        strategy: 'use_available_utxos',
+        utxosToUse: validUtxos,
+        canAfford: validUtxos.length,
         isPartial: true,
-        error: 'Insufficient funds to create any outputs'
+        message: `Insufficient funds for ${requiredOutputs} outputs. Using ${validUtxos.length} available UTXOs instead.`
       };
     }
     
-    return createFundingPlan(usableUtxos, outputsToCreate, true);
+    // No valid UTXOs at all
+    return {
+      needsSplitting: false,
+      canAfford: 0,
+      isPartial: true,
+      error: 'Insufficient funds to create any outputs. Please add more funds.'
+    };
   }
   
   // CASE 2: Sufficient funds but need to reorganize UTXOs
