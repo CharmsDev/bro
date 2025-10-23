@@ -52,19 +52,22 @@ export default class BitcoinApiRouter {
   }
 
   async submitPackage(hexes) {
-    return await this._executeWithFallback(
-      () => this.quicknode.submitPackage(hexes),
-      async () => {
-        // Mempool doesn't have package submission, broadcast individually
-        const results = [];
-        for (const hex of hexes) {
-          const txid = await this.mempool.broadcastTransaction(hex);
-          results.push(txid);
-        }
-        return results;
-      },
-      'submitPackage'
-    );
+    try {
+      const result = await this._executeWithFallback(
+        async () => {
+          return await this.quicknode.submitPackage(hexes);
+        },
+        async () => {
+          throw new Error('Package submission requires QuickNode API. Individual broadcast is not safe for CPFP transactions.');
+        },
+        'submitPackage'
+      );
+      
+      return result;
+    } catch (error) {
+      console.error('Package submission error:', error.message);
+      throw error;
+    }
   }
 
   // === TRANSACTION METHODS ===

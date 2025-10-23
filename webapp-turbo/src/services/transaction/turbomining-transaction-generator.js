@@ -137,7 +137,8 @@ export class TurbominingTransactionGenerator {
         reward: Number(transactionData.miningData.reward)
       },
       signedTxHex: transactionData.signedTxHex,
-      miningTxid: transactionData.miningTxid,
+      // Don't set miningTxid here - it will be set after successful broadcast
+      // This prevents confusion between "transaction generated" vs "transaction broadcast"
       timestamp: Date.now(),
       status: 'ready_to_broadcast'
     };

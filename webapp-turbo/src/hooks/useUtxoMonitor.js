@@ -6,7 +6,13 @@ import CentralStorage from '../storage/CentralStorage.js';
 import { TURBOMINING_CONSTANTS } from '../components/steps/Turbomining/utils/TurbominingCalculations.js';
 
 export function useUtxoMonitor() {
-  const { wallet, batch, setUtxos, selectOptimalUtxos, setProcessing, setError, clearError } = useStore();
+  const wallet = useStore((state) => state.wallet);
+  const batch = useStore((state) => state.batch);
+  const setUtxos = useStore((state) => state.setUtxos);
+  const selectOptimalUtxos = useStore((state) => state.selectOptimalUtxos);
+  const setProcessing = useStore((state) => state.setProcessing);
+  const setError = useStore((state) => state.setError);
+  const clearError = useStore((state) => state.clearError);
   const batchRef = useRef(batch);
   const [monitoringStatus, setMonitoringStatus] = useState({
     isMonitoring: false,

@@ -12,22 +12,31 @@ export async function broadcastTx(txHex) {
             throw new Error('Transaction hex is required');
         }
 
-        // Initialize Bitcoin API router (handles all configuration internally)
         const client = new BitcoinApiRouter();
-
-        // Use proxy-enabled client provider method for broadcast
+        const network = environmentConfig.getNetwork();
         const txid = await client.sendRawTransaction(txHex);
 
-        // Post-flight: confirm visibility via getrawtransaction (best-effort)
-        // Skip verification - transaction was successfully broadcast
-        // Verification will fail until transaction is confirmed in a block
+        // Optional verification (best effort)
+        const waitTime = network === 'mainnet' ? 2000 : 1000;
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        
+        try {
+            await client.getMempoolEntry(txid);
+        } catch (verifyError) {
+            // Verification failed but broadcast succeeded - continue
+        }
 
         return {
             txid: txid,
-            success: true
+            success: true,
+            explorerUrl: getExplorerUrl(txid)
         };
     } catch (error) {
-        throw error;
+        console.error('Broadcast failed:', error.message);
+        return {
+            success: false,
+            error: error.message
+        };
     }
 }
 
@@ -38,46 +47,37 @@ export async function broadcastTx(txHex) {
  * @param {Function} logCallback - Optional logging callback function
  * @returns {Promise<Object>} Broadcast results for both transactions
  */
-export async function broadcastTxPackage(signedCommitTx, signedSpellTx, logCallback = () => { }) {
+export async function broadcastTxPackage(signedCommitTx, signedSpellTx, logCallback = console.log) {
+    
     try {
         if (!signedCommitTx || !signedSpellTx) {
-            throw new Error('Please sign the transactions first');
+            const error = 'Please sign the transactions first';
+            console.error('❌ [PACKAGE] Validation failed:', error);
+            throw new Error(error);
         }
 
         const network = environmentConfig.getNetwork();
-
-        logCallback('Starting transaction broadcast process...');
-        logCallback('Broadcasting both transactions as package...');
-        logCallback(`Network: ${network}`);
-        
-        // ============================================================
-        // 🚀 BROADCAST ENABLED - REAL TRANSACTION SUBMISSION
-        // ============================================================
-        
-        const commitHex = signedCommitTx.signedHex;
-        const spellHex = signedSpellTx.signedHex;
-        
-        // Generate bitcoin-cli testmempoolaccept command for debugging
-        const rpcUser = network === 'mainnet' 
-            ? (import.meta.env.VITE_BITCOIN_MAINNET_RPC_USER || 'bitcoinrpc_7x9k3m2p8q')
-            : (import.meta.env.VITE_BITCOIN_TESTNET_RPC_USER || 'bitcoinrpc');
-        const rpcPassword = network === 'mainnet'
-            ? (import.meta.env.VITE_BITCOIN_MAINNET_RPC_PASSWORD || 'A4v9zL2kP8mW3nQ6tR5jX2yF7uB9cH')
-            : (import.meta.env.VITE_BITCOIN_TESTNET_RPC_PASSWORD || 'your_password');
-        const rpcHost = network === 'mainnet'
-            ? (import.meta.env.VITE_BITCOIN_MAINNET_RPC_HOST || 'localhost')
-            : (import.meta.env.VITE_BITCOIN_TESTNET_RPC_HOST || '127.0.0.1');
-        const rpcPort = network === 'mainnet' 
-            ? (import.meta.env.VITE_BITCOIN_MAINNET_RPC_PORT || '8332')
-            : (import.meta.env.VITE_BITCOIN_TESTNET_RPC_PORT || '18332');
-        
-        // ACTUAL BROADCAST
         const client = new BitcoinApiRouter();
-        logCallback(`🚀 Sending package: [commit: ${signedCommitTx.txid.slice(0,8)}..., spell: ${signedSpellTx.txid.slice(0,8)}...]`);
+        
+        // DEBUG: Uncomment to generate bitcoin-cli testmempoolaccept command for manual testing
+        // const rpcUser = network === 'mainnet' 
+        //     ? (import.meta.env.VITE_BITCOIN_MAINNET_RPC_USER || 'bitcoinrpc_7x9k3m2p8q')
+        //     : (import.meta.env.VITE_BITCOIN_TESTNET_RPC_USER || 'bitcoinrpc');
+        // const rpcPassword = network === 'mainnet'
+        //     ? (import.meta.env.VITE_BITCOIN_MAINNET_RPC_PASSWORD || 'A4v9zL2kP8mW3nQ6tR5jX2yF7uB9cH')
+        //     : (import.meta.env.VITE_BITCOIN_TESTNET_RPC_PASSWORD || 'your_password');
+        // const rpcHost = network === 'mainnet'
+        //     ? (import.meta.env.VITE_BITCOIN_MAINNET_RPC_HOST || 'localhost')
+        //     : (import.meta.env.VITE_BITCOIN_TESTNET_RPC_HOST || '127.0.0.1');
+        // const rpcPort = network === 'mainnet' 
+        //     ? (import.meta.env.VITE_BITCOIN_MAINNET_RPC_PORT || '8332')
+        //     : (import.meta.env.VITE_BITCOIN_TESTNET_RPC_PORT || '18332');
+        // const testCommand = `bitcoin-cli -rpcuser=${rpcUser} -rpcpassword=${rpcPassword} -rpcconnect=${rpcHost} -rpcport=${rpcPort} testmempoolaccept '["${signedCommitTx.signedHex}","${signedSpellTx.signedHex}"]'`;
+        // console.log('🔧 [DEBUG] Bitcoin CLI test command:');
+        // console.log(testCommand);
+        // logCallback('🔧 [DEBUG] You can test the package manually with bitcoin-cli testmempoolaccept');
         
         const results = await client.submitPackage([signedCommitTx.signedHex, signedSpellTx.signedHex]);
-        
-        logCallback(`✅ Package broadcast result: ${JSON.stringify(results)}`);
 
         // Handle different possible response structures
         let commitTxid, spellTxid;
@@ -102,16 +102,6 @@ export async function broadcastTxPackage(signedCommitTx, signedSpellTx, logCallb
             
             commitAccepted = !!commitTxid && (resultsArray[0]?.allowed !== false || commitAlreadyInMempool);
             spellAccepted = !!spellTxid && (resultsArray[1]?.allowed !== false || spellAlreadyInMempool);
-            
-            logCallback(`Commit result: ${JSON.stringify(resultsArray[0])}`);
-            logCallback(`Spell result: ${JSON.stringify(resultsArray[1])}`);
-            
-            if (commitAlreadyInMempool) {
-                logCallback(`ℹ️  Commit transaction already in mempool (this is OK)`);
-            }
-            if (spellAlreadyInMempool) {
-                logCallback(`ℹ️  Spell transaction already in mempool (this is OK)`);
-            }
         } else if (results && results.tx_results && Array.isArray(results.tx_results)) {
             const commitResult = results.tx_results[0];
             const spellResult = results.tx_results[1];
@@ -120,34 +110,24 @@ export async function broadcastTxPackage(signedCommitTx, signedSpellTx, logCallb
             spellTxid = spellResult?.txid;
             commitAccepted = commitResult?.allowed === true || !!commitTxid;
             spellAccepted = spellResult?.allowed === true || !!spellTxid;
-            
-            logCallback(`Commit result: ${JSON.stringify(commitResult)}`);
-            logCallback(`Spell result: ${JSON.stringify(spellResult)}`);
-            
-            // Log rejection reasons
-            if (!commitAccepted && commitResult?.['reject-reason']) {
-                logCallback(`⚠️ Commit rejected: ${commitResult['reject-reason']}`);
-            }
-            if (!spellAccepted && spellResult?.['reject-reason']) {
-                logCallback(`⚠️ Spell rejected: ${spellResult['reject-reason']}`);
-            }
         } else {
             throw new Error('Invalid package submission response format');
         }
 
-        // CRITICAL: Verify both transactions were accepted
+        // Verify BOTH transactions were accepted (atomic package)
         if (!commitAccepted || !commitTxid) {
-            throw new Error('Commit transaction was not accepted by the network');
+            throw new Error('Package broadcast failed: Commit transaction was not accepted by the network');
         }
         if (!spellAccepted || !spellTxid) {
-            throw new Error('Spell transaction was not accepted by the network. Commit may have been broadcast alone!');
+            throw new Error('Package broadcast failed: Spell transaction was not accepted by the network');
+        }
+        
+        if (!commitTxid || !spellTxid) {
+            throw new Error('Package broadcast incomplete: Missing transaction ID(s)');
         }
 
-        logCallback(`✅ Package broadcast successful!`);
-        logCallback(`Commit transaction ID: ${commitTxid}`);
-        logCallback(`Spell transaction ID: ${spellTxid}`);
-
         return {
+            success: true,
             commitData: {
                 txid: commitTxid,
                 status: 'broadcast'
@@ -159,8 +139,14 @@ export async function broadcastTxPackage(signedCommitTx, signedSpellTx, logCallb
         };
 
     } catch (err) {
-        logCallback(`Broadcast error: ${err.message}`);
-        throw new Error(`Broadcast error: ${err.message}`);
+        console.error('Package broadcast failed:', err.message);
+        
+        return {
+            success: false,
+            error: err.message,
+            commitData: null,
+            spellData: null
+        };
     }
 }
 

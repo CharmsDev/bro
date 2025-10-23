@@ -6,10 +6,11 @@ import { useConfirmationMonitor } from '../../../../hooks/useConfirmationMonitor
 import TurbomintingService from '../../../../services/turbominting/TurbomintingService.js';
 import { getSoundEffects } from '../utils/soundEffects.js';
 
-export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmationInfo) {
+export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmationInfo, setTurbominingData) {
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastError, setBroadcastError] = useState(null);
   const soundPlayedRef = useRef(false);
+  const broadcastAttemptedRef = useRef(false); // Track if we already tried broadcasting
   
   // Extract stable values to prevent unnecessary re-renders
   const miningTxid = turbominingData?.miningTxid;
@@ -24,23 +25,52 @@ export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmat
 
   // Auto-broadcast mining transaction on load
   useEffect(() => {
-    if (!turbominingData?.signedTxHex || turbominingData.miningTxid || isBroadcasting) {
+    if (!turbominingData?.signedTxHex || turbominingData.miningTxid || isBroadcasting || broadcastAttemptedRef.current) {
       return;
     }
 
+    broadcastAttemptedRef.current = true;
+
     const broadcastMiningTx = async () => {
       setIsBroadcasting(true);
+      
       try {
         const result = await TurbomintingService.broadcastMiningTransaction(turbominingData.signedTxHex);
         
         if (result.success && result.txid) {
           setBroadcastError(null);
-          // Monitoring will start automatically via useConfirmationMonitor hook
+          
+          if (setTurbominingData) {
+            setTurbominingData(prev => ({
+              ...prev,
+              miningTxid: result.txid,
+              explorerUrl: result.explorerUrl,
+              miningTxConfirmed: false,
+              miningReady: false
+            }));
+          }
         } else {
-          setBroadcastError(result.error || 'Broadcast failed');
+          if (!result.txid) {
+            setBroadcastError(result.error || 'Broadcast failed');
+            broadcastAttemptedRef.current = false;
+          } else {
+            setBroadcastError(null);
+            
+            if (setTurbominingData) {
+              setTurbominingData(prev => ({
+                ...prev,
+                miningTxid: result.txid,
+                explorerUrl: result.explorerUrl,
+                miningTxConfirmed: false,
+                miningReady: false
+              }));
+            }
+          }
         }
       } catch (error) {
+        console.error('Broadcast error:', error.message);
         setBroadcastError(error.message);
+        broadcastAttemptedRef.current = false;
       } finally {
         setIsBroadcasting(false);
       }
@@ -60,6 +90,13 @@ export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmat
       setMiningReady(true);
       TurbomintingService.setMiningConfirmed(info);
       
+      // CRITICAL: Update local state to reflect confirmation
+      setTurbominingData(prev => ({
+        ...prev,
+        miningTxConfirmed: true,
+        confirmations: confirmations
+      }));
+      
       // Play confirmation sound (only once)
       if (!soundPlayedRef.current) {
         soundPlayedRef.current = true;
@@ -67,7 +104,7 @@ export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmat
         soundEffects.playConfirmationSound();
       }
     }
-  }, [isConfirmed, confirmations]);
+  }, [isConfirmed, confirmations, setTurbominingData]);
 
   return {
     isBroadcasting,

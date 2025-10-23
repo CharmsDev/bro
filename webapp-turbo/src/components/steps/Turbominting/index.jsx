@@ -58,7 +58,7 @@ export function Turbominting() {
     isBroadcasting,
     broadcastError,
     isMonitoring
-  } = useMiningBroadcast(turbominingData, setMiningReady, setConfirmationInfo);
+  } = useMiningBroadcast(turbominingData, setMiningReady, setConfirmationInfo, setTurbominingData);
 
   const fundingAnalysisData = useFundingAnalysis(turbominingData?.numberOfOutputs || 0);
   const funding = useFundingTransaction(turbominingData?.numberOfOutputs || 0);

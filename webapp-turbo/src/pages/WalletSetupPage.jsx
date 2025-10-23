@@ -7,7 +7,8 @@ import { PageLayout } from '../components/layout/PageLayout.jsx';
 
 export function WalletSetupPage() {
   const navigate = useNavigate();
-  const { wallet, batch } = useStore();
+  const wallet = useStore((state) => state.wallet);
+  const batch = useStore((state) => state.batch);
   const { monitoringStatus } = useUtxoMonitor();
 
   // Check if we have a UTXO (either just found or already saved)

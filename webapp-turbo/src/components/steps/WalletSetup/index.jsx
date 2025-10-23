@@ -12,7 +12,11 @@ import { UtxoMonitoring } from './components/UtxoMonitoring.jsx';
 export function WalletSetup() {
   const navigate = useNavigate();
   const { wallet, isWalletReady, createWallet, importWallet, resetWallet, copyToClipboard } = useWallet();
-  const { isProcessing, error, goToNextStep, batch, loadBatchData } = useStore();
+  const isProcessing = useStore((state) => state.isProcessing);
+  const error = useStore((state) => state.error);
+  const goToNextStep = useStore((state) => state.goToNextStep);
+  const batch = useStore((state) => state.batch);
+  const loadBatchData = useStore((state) => state.loadBatchData);
   const { monitoringStatus, startMonitoring, stopMonitoring, setOnUtxoFoundCallback } = useUtxoMonitor();
   const [showImportForm, setShowImportForm] = useState(false);
   const [isHydrating, setIsHydrating] = useState(true);

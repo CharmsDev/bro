@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { OUTPUT_STATUS } from './constants.js';
+import { environmentConfig } from '../../../../../config/environment.js';
 
 export function TransactionHistory({ outputsProgress }) {
   const [expandedIndex, setExpandedIndex] = useState(null);
@@ -40,7 +41,7 @@ export function TransactionHistory({ outputsProgress }) {
   };
 
   const openInExplorer = (txid) => {
-    const network = import.meta.env.VITE_NETWORK || 'testnet4';
+    const network = environmentConfig.getNetwork();
     const baseUrl = network === 'mainnet' 
       ? 'https://mempool.space/tx/' 
       : 'https://mempool.space/testnet4/tx/';

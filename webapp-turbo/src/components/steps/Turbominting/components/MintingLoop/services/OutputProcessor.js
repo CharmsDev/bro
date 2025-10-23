@@ -107,7 +107,16 @@ export class OutputProcessor {
 
     // SUB-STEP 4: Broadcast Package
     updateSubStep(outputIndex, SUB_STEPS.BROADCAST);
-    const broadcastResult = await broadcastTxPackage(signedCommitTx, signedSpellTx);
+    
+    // Create logging callback for this output
+    const logCallback = () => {}; // Silent callback
+    
+    const broadcastResult = await broadcastTxPackage(signedCommitTx, signedSpellTx, logCallback);
+    
+    // Check if broadcast was successful
+    if (!broadcastResult?.success) {
+      throw new Error(`Broadcast failed: ${broadcastResult?.error || 'Unknown error'}`);
+    }
     
     if (!broadcastResult?.commitData?.txid || !broadcastResult?.spellData?.txid) {
       throw new Error('Broadcast failed: missing transaction IDs');
