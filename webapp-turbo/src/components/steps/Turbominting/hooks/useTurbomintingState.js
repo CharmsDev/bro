@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import TurbominingModule from '../../../../modules/turbomining/TurbominingModule.js';
 import TurbomintingService from '../../../../services/turbominting/TurbomintingService.js';
 
-export function useTurbomintingState() {
+export function useTurbomintingState(setShouldPlaySoundOnInteraction) {
   const [turbominingData, setTurbominingData] = useState(null);
   const [miningReady, setMiningReady] = useState(false);
   const [fundingReady, setFundingReady] = useState(false);
@@ -43,6 +43,12 @@ export function useTurbomintingState() {
         // Restore confirmation state
         if (mergedData.miningTxConfirmed) {
           setConfirmationInfo(mergedData.confirmationInfo);
+          
+          // Signal that sound should play on first user interaction
+          // This allows users to hear the sound when refreshing the page
+          if (setShouldPlaySoundOnInteraction) {
+            setShouldPlaySoundOnInteraction(true);
+          }
         }
 
         // Restore or set readiness flags

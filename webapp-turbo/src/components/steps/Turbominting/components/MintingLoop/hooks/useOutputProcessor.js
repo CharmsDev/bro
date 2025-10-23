@@ -10,6 +10,7 @@ export function useOutputProcessor({
   turbominingData,
   fundingAnalysis,
   walletAddress,
+  outputsProgress,
   startOutput,
   completeOutput,
   failOutput,
@@ -53,6 +54,8 @@ export function useOutputProcessor({
     try {
       startOutput(outputIndex);
 
+      const outputData = outputsProgress[outputIndex];
+
       const result = await OutputProcessor.processOutput({
         outputIndex,
         spendableOutput,
@@ -60,7 +63,8 @@ export function useOutputProcessor({
         turbominingData,
         walletAddress,
         updateSubStep,
-        updateOutputProgress
+        updateOutputProgress,
+        outputData
       });
       
       completeOutput(outputIndex, result);
@@ -90,6 +94,7 @@ export function useOutputProcessor({
     turbominingData,
     fundingAnalysis,
     walletAddress,
+    outputsProgress,
     startOutput,
     completeOutput,
     failOutput,

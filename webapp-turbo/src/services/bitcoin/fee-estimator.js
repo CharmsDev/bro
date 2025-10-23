@@ -37,8 +37,8 @@ export class FeeEstimator {
       
       return feeRate;
     } catch (error) {
-      // Fallback to conservative default
-      const fallbackRate = 10; // 10 sat/vB conservative default
+      // Fallback to low default (suitable for testnet and low-traffic periods)
+      const fallbackRate = 2; // 2 sat/vB default (testnet typical)
       return fallbackRate;
     }
   }
@@ -52,15 +52,15 @@ export class FeeEstimator {
    */
   estimateTxSize(numInputs, numOutputs, hasTaproot = true) {
     // Base transaction overhead
-    let size = 10; // version (4) + locktime (4) + input count (1) + output count (1)
+    let size = 10.5; // version (4) + locktime (4) + input count (1) + output count (1) + marker/flag (0.5)
     
     if (hasTaproot) {
       // Taproot (P2TR) input: ~57.5 vbytes each
       // - Previous outpoint: 36 bytes
       // - Script sig: 1 byte (empty)
       // - Sequence: 4 bytes
-      // - Witness: ~16.5 vbytes (1 signature)
-      size += numInputs * 58;
+      // - Witness: ~16.5 vbytes (1 signature of 64 bytes)
+      size += numInputs * 57.5;
       
       // Taproot (P2TR) output: 43 bytes each
       // - Value: 8 bytes
@@ -70,11 +70,8 @@ export class FeeEstimator {
     } else {
       // Legacy/SegWit estimation (if needed)
       size += numInputs * 68;
-      size += numOutputs * 34;
+      size += numOutputs * 31; // P2WPKH output is ~31 vbytes
     }
-    
-    // Add OP_RETURN output if present (typically 10-50 bytes)
-    // This is accounted for in numOutputs, but OP_RETURN is smaller
     
     return Math.ceil(size);
   }
@@ -100,8 +97,10 @@ export class FeeEstimator {
       
       return fee;
     } catch (error) {
-      // Fallback to conservative estimate
-      const fallbackFee = 1000 + (numOutputs * 100);
+      // Fallback to realistic estimate based on typical sizes
+      // ~58 vbytes per input + ~43 vbytes per output + 10.5 overhead
+      const estimatedSize = 10.5 + (numInputs * 58) + (numOutputs * 43);
+      const fallbackFee = Math.ceil(estimatedSize * 2); // 2 sat/vB fallback
       return fallbackFee;
     }
   }

@@ -4,8 +4,8 @@ import { REQUEST_TEMPLATE } from '../../../../../../services/prover/index.js';
 export class PayloadService {
   /**
    * Compose payload for a single output using the correct template
-   * @param {Object} spendableOutput - Output from turbomining spendableOutputs array
-   * @param {Object} fundingUtxo - UTXO from funding analysis
+   * @param {Object} miningUtxo - Mining UTXO from output object { txid, vout, amount }
+   * @param {Object} fundingUtxo - Funding UTXO from output object { txid, vout, amount }
    * @param {Object} turbominingData - Turbomining data with miningData (nonce, hash, txHex, reward)
    * @param {string} miningTxid - Mining transaction ID
    * @param {string} walletAddress - Wallet address
@@ -13,23 +13,20 @@ export class PayloadService {
    * @param {string} fundingTxHex - Funding transaction hex (required for prev_txs)
    * @returns {Object} Payload for prover
    */
-  static composePayload(spendableOutput, fundingUtxo, turbominingData, miningTxid, walletAddress, txBlockProof, fundingTxHex) {
-    // Validate inputs
-    if (!spendableOutput) throw new Error('Spendable output is required');
+  static composePayload(miningUtxo, fundingUtxo, turbominingData, miningTxid, walletAddress, txBlockProof, fundingTxHex) {
+    if (!miningUtxo) throw new Error('Mining UTXO is required');
     if (!fundingUtxo) throw new Error('Funding UTXO is required');
     if (!turbominingData) throw new Error('Turbomining data is required');
     if (!turbominingData.miningData) throw new Error('Mining data is required in turbominingData');
     if (!miningTxid) throw new Error('Mining TXID is required');
     if (!walletAddress) throw new Error('Wallet address is required');
 
-    // Clone the template
     const payload = JSON.parse(JSON.stringify(REQUEST_TEMPLATE));
 
-    // Fill in the spell section
     payload.spell.private_inputs["$01"].tx = turbominingData.signedTxHex;
     payload.spell.private_inputs["$01"].tx_block_proof = txBlockProof || "";
 
-    payload.spell.ins[0].utxo_id = spendableOutput.utxoId;
+    payload.spell.ins[0].utxo_id = `${miningUtxo.txid}:${miningUtxo.vout}`;
 
     const rewardAmount = turbominingData.miningData.reward;
     

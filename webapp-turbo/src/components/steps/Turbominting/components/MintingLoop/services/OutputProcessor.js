@@ -32,23 +32,24 @@ export class OutputProcessor {
     turbominingData,
     walletAddress,
     updateSubStep,
-    updateOutputProgress
+    updateOutputProgress,
+    outputData
   }) {
-
-    // Set mining and funding UTXOs at start
-    const miningUtxo = {
+    const miningUtxo = outputData?.miningUtxo || {
       txid: turbominingData.miningTxid || turbominingData.txid,
       vout: spendableOutput.outputIndex,
       amount: spendableOutput.value || 333
     };
     
-    const fundingUtxoData = {
+    const fundingUtxoData = outputData?.fundingUtxo || {
       txid: fundingUtxo.txid,
       vout: fundingUtxo.vout,
       amount: fundingUtxo.amount || fundingUtxo.value
     };
     
-    updateOutputProgress(outputIndex, { miningUtxo, fundingUtxo: fundingUtxoData });
+    if (!outputData?.miningUtxo || !outputData?.fundingUtxo) {
+      updateOutputProgress(outputIndex, { miningUtxo, fundingUtxo: fundingUtxoData });
+    }
 
     // SUB-STEP 1: Compose Payload
     updateSubStep(outputIndex, SUB_STEPS.COMPOSE_PAYLOAD);
@@ -65,8 +66,8 @@ export class OutputProcessor {
     }
     
     const payload = PayloadService.composePayload(
-      spendableOutput,
-      fundingUtxo,
+      miningUtxo,
+      fundingUtxoData,
       turbominingData,
       turbominingData.miningTxid,
       walletAddress,

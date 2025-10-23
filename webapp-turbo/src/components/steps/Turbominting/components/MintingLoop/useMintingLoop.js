@@ -99,12 +99,13 @@ export function useMintingLoop(numberOfOutputs) {
     });
   }, [updateOutputProgress]);
 
-  // Reset all progress
   const resetProgress = useCallback(() => {
     const resetProgress = outputsProgress.map(o => ({
       ...o,
-      status: OUTPUT_STATUS.PENDING,
+      status: OUTPUT_STATUS.READY,
       currentSubStep: null,
+      miningUtxo: null,
+      fundingUtxo: null,
       commitTxid: null,
       spellTxid: null,
       error: null
@@ -112,6 +113,7 @@ export function useMintingLoop(numberOfOutputs) {
     
     setOutputsProgress(resetProgress);
     setCurrentOutputIndex(null);
+    setLastProcessedIndex(null);
     setIsProcessing(false);
     
     TurbomintingService.initializeMintingProgress(numberOfOutputs);

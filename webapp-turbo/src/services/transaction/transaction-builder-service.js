@@ -109,15 +109,15 @@ class BitcoinTxBuilder {
             }
 
             return {
-                psbt, // Unsigned PSBT
+                psbt,
                 fee: totalFee,
                 changeAmount: changeAmount > 546 ? changeAmount : 0,
                 totalOutputs: numberOfOutputs,
                 spendableOutputs: Array.from({ length: numberOfOutputs }, (_, i) => ({
                     outputIndex: i + 1,
                     value: fixedAmount,
-                    hasOpReturn: true, // Transaction has OP_RETURN with mining data
-                    utxoId: baseUtxoId // Base UTXO ID for contract validation
+                    hasOpReturn: true,
+                    utxoId: null
                 })),
                 totalCost: totalOutputValue + totalFee,
                 miningData: {

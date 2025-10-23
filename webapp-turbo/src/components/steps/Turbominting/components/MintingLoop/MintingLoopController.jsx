@@ -39,11 +39,11 @@ export function MintingLoopController({
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('progress'); // 'progress' | 'history'
 
-  // Use output processor hook
   const { processOutput } = useOutputProcessor({
     turbominingData,
     fundingAnalysis,
     walletAddress,
+    outputsProgress,
     startOutput,
     completeOutput,
     failOutput,
@@ -166,15 +166,8 @@ export function MintingLoopController({
           </div>
         )}
 
-        {/* RJJ TODO: ELIMINAR TODA LA FUNCIONALIDAD DEL RESET ALL
-            Este botón está oculto temporalmente. 
-            En el futuro, eliminar completamente:
-            - Este botón y su handler
-            - La función resetProgress() en useMintingLoop.js
-            - Cualquier referencia a reset en el minting loop
-            El usuario debe usar "Mint More" en el footer para empezar un nuevo ciclo.
-        */}
-        {false && (completedCount > 0 || failedCount > 0) && (
+        {/* Reset button for testing */}
+        {(completedCount > 0 || failedCount > 0) && (
           <button
             onClick={resetProgress}
             className="px-4 py-2 border border-slate-500 hover:border-slate-400 text-slate-300 rounded-lg text-sm transition-colors"

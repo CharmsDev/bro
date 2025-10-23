@@ -102,7 +102,6 @@ export class TurbominingTransactionGenerator {
       walletKeys
     );
 
-    // Sign transaction
     const signer = new ScureBitcoinTransactionSigner();
     const psbtHex = result.psbt.toHex();
     const signResult = await signer.signPSBTWithPrivateKey(
@@ -112,17 +111,22 @@ export class TurbominingTransactionGenerator {
       walletKeys.xOnlyPubkey
     );
 
+    const updatedSpendableOutputs = result.spendableOutputs.map((output) => ({
+      ...output,
+      utxoId: `${signResult.txid}:${output.outputIndex}`
+    }));
+
     const transactionData = {
       ...result,
       signedTxHex: signResult.signedTxHex,
       txid: signResult.txid,
+      miningTxid: signResult.txid,
       numberOfOutputs: result.totalOutputs,
-      spendableOutputs: result.spendableOutputs,
+      spendableOutputs: updatedSpendableOutputs,
       miningData: result.miningData,
       miningResult
     };
 
-    // Save to localStorage
     const turbominingData = {
       numberOfOutputs: transactionData.numberOfOutputs,
       spendableOutputs: transactionData.spendableOutputs,
@@ -133,6 +137,7 @@ export class TurbominingTransactionGenerator {
         reward: Number(transactionData.miningData.reward)
       },
       signedTxHex: transactionData.signedTxHex,
+      miningTxid: transactionData.miningTxid,
       timestamp: Date.now(),
       status: 'ready_to_broadcast'
     };

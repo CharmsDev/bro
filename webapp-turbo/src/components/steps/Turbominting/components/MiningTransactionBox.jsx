@@ -54,7 +54,7 @@ export function MiningTransactionBox({
               {turbominingData.miningTxid}
             </p>
             
-            {/* Two Buttons Side by Side */}
+            {/* Buttons */}
             <div className="flex gap-2">
               {turbominingData.miningTxConfirmed ? (
                 <button

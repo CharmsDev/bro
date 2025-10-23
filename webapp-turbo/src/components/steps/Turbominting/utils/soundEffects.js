@@ -17,19 +17,21 @@ class SoundEffects {
   }
 
   /**
-   * Play a pleasant "success" chime sound
-   * Similar to notification bells - bright and cheerful
+   * Play a sparkly confirmation sound inspired by Mempool.space
+   * Bright, bubbly, and cheerful with multiple overlapping tones
    */
   playConfirmationSound() {
     try {
       const ctx = this.initAudioContext();
       const now = ctx.currentTime;
 
-      // Create three notes for a pleasant chime (C major chord arpeggio)
+      // Create multiple overlapping notes for a rich, sparkly effect
       const notes = [
-        { freq: 523.25, time: 0.0, duration: 0.3 },    // C5
-        { freq: 659.25, time: 0.1, duration: 0.3 },    // E5
-        { freq: 783.99, time: 0.2, duration: 0.4 }     // G5
+        { freq: 880, time: 0.0, duration: 0.12, gain: 0.12 },    // A5
+        { freq: 1046.5, time: 0.04, duration: 0.14, gain: 0.15 }, // C6
+        { freq: 1318.5, time: 0.08, duration: 0.16, gain: 0.18 }, // E6
+        { freq: 1568, time: 0.12, duration: 0.18, gain: 0.14 },   // G6
+        { freq: 1760, time: 0.16, duration: 0.22, gain: 0.10 }    // A6
       ];
 
       notes.forEach(note => {
@@ -44,10 +46,10 @@ class SoundEffects {
         oscillator.type = 'sine';
         oscillator.frequency.value = note.freq;
 
-        // Envelope: quick attack, gentle decay
+        // Envelope: instant attack, exponential decay for sparkly effect
         gainNode.gain.setValueAtTime(0, now + note.time);
-        gainNode.gain.linearRampToValueAtTime(0.3, now + note.time + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
+        gainNode.gain.linearRampToValueAtTime(note.gain, now + note.time + 0.003);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.duration);
 
         // Start and stop
         oscillator.start(now + note.time);

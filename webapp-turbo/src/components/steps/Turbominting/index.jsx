@@ -9,10 +9,38 @@ import { FundingAnalysisBox } from './components/FundingAnalysisBox.jsx';
 import { FundingBroadcastBox } from './components/FundingBroadcastBox.jsx';
 import { MintingLoopBox } from './components/MintingLoopBox.jsx';
 import TurbomintingService from '../../../services/turbominting/TurbomintingService.js';
+import { getSoundEffects } from './utils/soundEffects.js';
 import './styles/index.css';
 
 export function Turbominting() {
   const { wallet } = useStore();
+  const [shouldPlaySoundOnInteraction, setShouldPlaySoundOnInteraction] = useState(false);
+  
+  // Initialize audio context on first user interaction and play sound if needed
+  useEffect(() => {
+    const initAudioAndPlay = () => {
+      try {
+        const soundEffects = getSoundEffects();
+        soundEffects.initAudioContext();
+        
+        // If transaction was already confirmed on load, play sound now
+        if (shouldPlaySoundOnInteraction) {
+          soundEffects.playConfirmationSound();
+          setShouldPlaySoundOnInteraction(false);
+        }
+      } catch (error) {
+        // Ignore errors
+      }
+    };
+    
+    document.addEventListener('click', initAudioAndPlay, { once: true });
+    document.addEventListener('keydown', initAudioAndPlay, { once: true });
+    
+    return () => {
+      document.removeEventListener('click', initAudioAndPlay);
+      document.removeEventListener('keydown', initAudioAndPlay);
+    };
+  }, [shouldPlaySoundOnInteraction]);
   
   const {
     turbominingData,
@@ -24,7 +52,7 @@ export function Turbominting() {
     error,
     confirmationInfo,
     setConfirmationInfo
-  } = useTurbomintingState();
+  } = useTurbomintingState(setShouldPlaySoundOnInteraction);
 
   const {
     isBroadcasting,
