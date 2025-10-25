@@ -14,7 +14,7 @@ export function useFundingTransaction(requiredOutputs) {
     transaction: null,
     error: null
   });
-  // STEP 1: Load saved data on mount
+  // Load saved data on mount
   useEffect(() => {
     const savedData = TurbomintingService.load();
     
@@ -63,13 +63,19 @@ export function useFundingTransaction(requiredOutputs) {
         walletKeys
       );
 
-      // NOTE: Do NOT save here - will be saved on broadcast by TurbomintingService
-      // Saving here would cause duplication
+      // Update resultingUtxos with actual funding transaction outputs
+      const resultingUtxos = result.outputs?.map((output, vout) => ({
+        ...output,
+        txid: result.txid,
+        vout,
+        source: 'funding_tx'
+      })) || [];
 
       setFundingState(prev => ({
         ...prev,
         isCreating: false,
-        transaction: result
+        transaction: result,
+        resultingUtxos
       }));
 
       return result;
@@ -94,7 +100,6 @@ export function useFundingTransaction(requiredOutputs) {
         availableUtxos,
         resultingUtxos,
         needsFunding,
-        // Reset transaction if UTXOs changed - will be recreated by auto-create logic
         transaction: utxosChanged ? null : prev.transaction
       };
     });

@@ -5,14 +5,7 @@ import { MINTING_UTXO_VALUE } from '../../../../constants/minting.js';
 import { WalletUtxoScanner } from '../../../../services/utxo/WalletUtxoScanner.js';
 import TurbomintingService from '../../../../services/turbominting/TurbomintingService.js';
 
-/**
- * useFundingAnalysis - Centralized hook for funding analysis
- * 
- * Scans wallet UTXOs ONE TIME on mount and analyzes funding needs.
- * 
- * @param {number} requiredOutputs - Number of outputs needed for minting
- * @returns {Object} - Funding state with UTXOs, analysis, and derived data
- */
+// Centralized hook for funding analysis - scans wallet UTXOs once on mount
 export function useFundingAnalysis(requiredOutputs) {
   const [scannedUtxos, setScannedUtxos] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -26,7 +19,7 @@ export function useFundingAnalysis(requiredOutputs) {
     error: null
   });
   
-  // STEP 1: Check if funding was already broadcasted - if so, hydrate from storage
+  // Check if funding was already broadcasted
   useEffect(() => {
     const savedData = TurbomintingService.load();
     
@@ -45,7 +38,6 @@ export function useFundingAnalysis(requiredOutputs) {
           error: null
         });
         
-        // Skip wallet scan - we already have the data
         return;
       }
     }
@@ -60,7 +52,6 @@ export function useFundingAnalysis(requiredOutputs) {
         const utxoResults = await scanner.scanAllWalletUtxos();
         const availableUtxos = [...utxoResults.recipient, ...utxoResults.change];
         
-        // Filter protected UTXOs
         const usableUtxos = filterProtectedUtxos(availableUtxos);
         
         if (mounted) {
@@ -82,9 +73,9 @@ export function useFundingAnalysis(requiredOutputs) {
     return () => {
       mounted = false;
     };
-  }, []); // EMPTY DEPS - RUNS ONCE ON MOUNT
+  }, []);
   
-  // STEP 2: Analyze funding needs when UTXOs are scanned OR requiredOutputs changes
+  // Analyze funding needs when UTXOs are scanned
   useEffect(() => {
     if (!scannedUtxos) return;
     
@@ -92,7 +83,6 @@ export function useFundingAnalysis(requiredOutputs) {
       const availableSats = scannedUtxos.reduce((sum, u) => sum + u.value, 0);
       const currentOutputs = Math.floor(availableSats / MINTING_UTXO_VALUE);
       
-      // Analyze funding needs
       const builder = new FundingTxBuilder();
       const analysis = await builder.analyzeFundingNeeds(scannedUtxos, requiredOutputs);
       
@@ -110,7 +100,7 @@ export function useFundingAnalysis(requiredOutputs) {
     };
     
     analyze();
-  }, [scannedUtxos, requiredOutputs]); // Re-analyze when requiredOutputs changes
+  }, [scannedUtxos, requiredOutputs]);
   
   return {
     ...state,
@@ -118,108 +108,55 @@ export function useFundingAnalysis(requiredOutputs) {
   };
 }
 
-/**
- * Derive resulting UTXOs from analysis
- * 
- * Priority:
- * 1. If funding transaction exists, use its outputs
- * 2. If utxosToUse exists (sufficient or partial without TX), use them
- * 3. If partial 2B (needs TX but not created), derive theoretical outputs
- * 4. If split/combine, derive from details
- * 
- * @param {Object} analysis - Funding analysis result
- * @param {Object} fundingTransaction - Funding transaction (if exists)
- * @returns {Array} - Array of resulting UTXO objects
- */
+// Derive resulting UTXOs from analysis
 function deriveResultingUtxos(analysis, fundingTransaction) {
   // Case 1: Funding transaction exists
   if (fundingTransaction?.outputs) {
     return fundingTransaction.outputs.map((output, vout) => ({
       ...output,
+      txid: fundingTransaction.txid,
       vout,
       source: 'funding_tx'
     }));
   }
   
-  // Case 2: UTXOs to use (sufficient or partial without TX)
+  // Case 2: Use existing UTXOs
   if (analysis.utxosToUse?.length > 0) {
-    return analysis.utxosToUse;
+    return analysis.utxosToUse.map(utxo => ({
+      ...utxo,
+      source: utxo.source || 'existing'
+    }));
   }
   
-  // Case 3: Partial 2B - derive new outputs from analysis
-  if (analysis.isPartial && analysis.outputCount) {
-    const newOutputs = [];
+  // Case 3: Needs splitting
+  if (analysis.needsSplitting && analysis.outputCount) {
+    const theoreticalOutputs = [];
     
-    // Minting outputs
     for (let i = 0; i < analysis.outputCount; i++) {
-      newOutputs.push({
+      theoreticalOutputs.push({
         value: analysis.outputValue || MINTING_UTXO_VALUE,
         type: 'minting',
         vout: i,
-        source: 'new'
+        source: 'theoretical'
       });
     }
     
-    // Change output - merge with last minting output if too small
     if (analysis.mathematics?.totalChange > 0) {
       const changeValue = analysis.mathematics.totalChange;
       
-      // If change is less than MINTING_UTXO_VALUE, merge with last minting output
-      if (changeValue < MINTING_UTXO_VALUE && newOutputs.length > 0) {
-        const lastOutput = newOutputs[newOutputs.length - 1];
-        lastOutput.value += changeValue;
-        lastOutput.type = 'minting'; // Keep as minting (now has extra sats)
-      } else {
-        // Change is large enough, keep separate
-        newOutputs.push({
+      if (changeValue >= MINTING_UTXO_VALUE) {
+        theoreticalOutputs.push({
           value: changeValue,
           type: 'change',
           vout: analysis.outputCount,
-          source: 'new'
+          source: 'theoretical'
         });
+      } else if (theoreticalOutputs.length > 0) {
+        theoreticalOutputs[theoreticalOutputs.length - 1].value += changeValue;
       }
     }
     
-    return newOutputs;
-  }
-  
-  // Case 4: Split/Combine - derive from details
-  if (analysis.splitDetails || analysis.combineDetails) {
-    const newOutputs = [];
-    const details = analysis.splitDetails || analysis.combineDetails;
-    const outputCount = details.willCreate || details.willCreateOutputs || 0;
-    
-    // Minting outputs
-    for (let i = 0; i < outputCount; i++) {
-      newOutputs.push({
-        value: MINTING_UTXO_VALUE,
-        type: 'minting',
-        vout: i,
-        source: 'new'
-      });
-    }
-    
-    // Change output - merge with last minting output if too small
-    if (analysis.mathematics?.totalChange > 0) {
-      const changeValue = analysis.mathematics.totalChange;
-      
-      // If change is less than MINTING_UTXO_VALUE, merge with last minting output
-      if (changeValue < MINTING_UTXO_VALUE && newOutputs.length > 0) {
-        const lastOutput = newOutputs[newOutputs.length - 1];
-        lastOutput.value += changeValue;
-        lastOutput.type = 'minting'; // Keep as minting (now has extra sats)
-      } else {
-        // Change is large enough, keep separate
-        newOutputs.push({
-          value: changeValue,
-          type: 'change',
-          vout: outputCount,
-          source: 'new'
-        });
-      }
-    }
-    
-    return newOutputs;
+    return theoreticalOutputs;
   }
   
   return [];

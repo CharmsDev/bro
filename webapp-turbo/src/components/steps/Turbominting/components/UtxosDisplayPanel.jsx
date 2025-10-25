@@ -1,17 +1,6 @@
 import { PROTECTED_VALUES_ARRAY } from '../../../../services/utxo/protected-values.js';
 
-/**
- * UtxosDisplayPanel - Pure presentation component for UTXO lists
- * 
- * Displays two panels:
- * - Available UTXOs (📦): UTXOs in wallet that can be used
- * - Resulting UTXOs (🎯): UTXOs that will be used for minting
- * 
- * @param {Array} availableUtxos - Available UTXOs from wallet
- * @param {Array} resultingUtxos - Resulting UTXOs (existing, theoretical, or from funding TX)
- * @param {Object} analysis - Funding analysis result
- * @param {boolean} isScanning - Whether currently scanning
- */
+// Display component for available and resulting UTXOs
 export function UtxosDisplayPanel({ 
   availableUtxos = [],
   resultingUtxos = [],
@@ -20,7 +9,6 @@ export function UtxosDisplayPanel({
 }) {
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
-      {/* Left: Available UTXOs */}
       <div className="bg-slate-800/50 rounded-lg p-4">
         <h4 className="text-slate-300 font-semibold mb-3 flex items-center gap-2">
           <span>📦</span>
@@ -67,7 +55,6 @@ export function UtxosDisplayPanel({
         </div>
       </div>
 
-      {/* Right: Resulting UTXOs */}
       <div className="bg-slate-800/50 rounded-lg p-4">
         <h4 className="text-slate-300 font-semibold mb-3 flex items-center gap-2">
           <span>🎯</span>
@@ -79,61 +66,91 @@ export function UtxosDisplayPanel({
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {resultingUtxos.length > 0 ? (
             <>
-              {/* Header with status */}
               <div className={`rounded p-2 mb-2 ${
                 analysis?.isPartial 
                   ? 'bg-amber-900/20 border border-amber-600/30'
+                  : analysis?.needsSplitting
+                  ? 'bg-blue-900/20 border border-blue-600/30'
                   : 'bg-emerald-900/20 border border-emerald-600/30'
               }`}>
                 <p className={`text-xs font-semibold ${
-                  analysis?.isPartial ? 'text-amber-400' : 'text-emerald-400'
+                  analysis?.isPartial ? 'text-amber-400' : 
+                  analysis?.needsSplitting ? 'text-blue-400' :
+                  'text-emerald-400'
                 }`}>
                   {analysis?.isPartial 
-                    ? `⚠️ Partial: ${analysis.canAfford || resultingUtxos.length} outputs`
-                    : '✅ Ready to mint'}
+                    ? `⚠️ Partial: Can mint ${analysis.canAfford || resultingUtxos.length} outputs`
+                    : analysis?.needsSplitting
+                    ? `🔄 Will reorganize into ${resultingUtxos.length} outputs`
+                    : `✅ Ready to mint ${resultingUtxos.length} outputs`}
                 </p>
               </div>
               
-              {/* UTXO List */}
-              {resultingUtxos.map((utxo, idx) => (
-                <div key={idx} className={`p-2 rounded text-xs ${
-                  analysis?.isPartial
-                    ? 'bg-amber-900/20 border border-amber-600/30'
-                    : utxo.source === 'funding_tx'
-                    ? 'bg-blue-900/20 border border-blue-600/30'
-                    : 'bg-emerald-900/20 border border-emerald-600/30'
-                }`}>
-                  <div className="flex justify-between items-center mb-1">
-                    {utxo.txid ? (
-                      <code className="text-slate-400">
-                        {utxo.txid.substring(0, 12)}...:{utxo.vout}
-                      </code>
-                    ) : (
-                      <span className="text-slate-300">
-                        {utxo.type === 'minting' ? '🎯' : '💰'} UTXO #{idx + 1}
+              {resultingUtxos.map((utxo, idx) => {
+                const sourceColor = 
+                  analysis?.isPartial ? 'amber' :
+                  utxo.source === 'funding_tx' ? 'blue' :
+                  utxo.source === 'theoretical' ? 'purple' :
+                  'emerald';
+                
+                return (
+                  <div key={idx} className={`p-2 rounded text-xs ${
+                    sourceColor === 'amber' ? 'bg-amber-900/20 border border-amber-600/30' :
+                    sourceColor === 'blue' ? 'bg-blue-900/20 border border-blue-600/30' :
+                    sourceColor === 'purple' ? 'bg-purple-900/20 border border-purple-600/30' :
+                    'bg-emerald-900/20 border border-emerald-600/30'
+                  }`}>
+                    <div className="flex justify-between items-center mb-1">
+                      {utxo.txid ? (
+                        <code className="text-slate-400">
+                          {utxo.txid.substring(0, 12)}...:{utxo.vout}
+                        </code>
+                      ) : (
+                        <span className="text-slate-300">
+                          {utxo.type === 'minting' ? '🎯' : utxo.type === 'change' ? '💰' : '📦'} Output #{idx + 1}
+                        </span>
+                      )}
+                      <span className={`font-semibold ${
+                        sourceColor === 'amber' ? 'text-amber-400' :
+                        sourceColor === 'blue' ? 'text-blue-400' :
+                        sourceColor === 'purple' ? 'text-purple-400' :
+                        'text-emerald-400'
+                      }`}>
+                        {utxo.value.toLocaleString()} sats
                       </span>
-                    )}
-                    <span className={`font-semibold ${
-                      analysis?.isPartial ? 'text-amber-400' : 
-                      utxo.source === 'funding_tx' ? 'text-blue-400' : 
-                      'text-emerald-400'
-                    }`}>
-                      {utxo.value.toLocaleString()} sats
-                    </span>
+                    </div>
+                    <div className="text-slate-500 text-xs flex items-center gap-1">
+                      {utxo.source === 'existing' ? (
+                        <>📦 Existing wallet UTXO</>
+                      ) : utxo.source === 'funding_tx' ? (
+                        <>{utxo.type === 'minting' ? '🎯 From funding TX (minting)' : '💰 From funding TX (change)'}</>
+                      ) : utxo.source === 'theoretical' ? (
+                        <>🔮 Will be created by funding TX</>
+                      ) : (
+                        <>🆕 New output</>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-slate-500 text-xs">
-                    {utxo.source === 'new' ? 'New output' :
-                     utxo.source === 'funding_tx' ? 
-                       (utxo.type === 'minting' ? 'Minting output' : 'Change output') :
-                     `Origin: Existing UTXO (${utxo.value.toLocaleString()} sats)`}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </>
-          ) : isScanning ? (
-            <div className="text-slate-500 text-sm">Analyzing...</div>
           ) : (
-            <div className="text-slate-500 text-sm">No outputs</div>
+            <div className="text-center py-4">
+              <div className="text-slate-500 text-sm mb-2">
+                {isScanning ? (
+                  <>🔄 Analyzing...</>
+                ) : analysis?.canAfford === 0 ? (
+                  <>❌ No outputs available</>
+                ) : (
+                  <>⏳ Waiting for analysis...</>
+                )}
+              </div>
+              {analysis?.canAfford === 0 && (
+                <p className="text-slate-600 text-xs">
+                  Add more funds to your wallet to start minting
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
