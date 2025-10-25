@@ -38,7 +38,7 @@ export function useOutputProcessor({
       failOutput(outputIndex, error);
       
       const nextIndex = outputIndex + 1;
-      if (nextIndex < turbominingData.numberOfOutputs) {
+      if (nextIndex < maxAffordable) {
         setTimeout(() => processOutput(nextIndex), 2000);
       } else {
         if (onComplete) onComplete();
@@ -72,7 +72,6 @@ export function useOutputProcessor({
       completeOutput(outputIndex, result);
       
       const nextIndex = outputIndex + 1;
-      const maxAffordable = fundingAnalysis?.resultingUtxos?.length || fundingAnalysis?.currentOutputs || turbominingData.numberOfOutputs;
       
       if (nextIndex < maxAffordable) {
         setTimeout(() => processOutput(nextIndex), 1000);
@@ -84,7 +83,6 @@ export function useOutputProcessor({
       failOutput(outputIndex, error);
       
       const nextIndex = outputIndex + 1;
-      const maxAffordable = fundingAnalysis?.canAfford || fundingAnalysis?.utxosToUse?.length || turbominingData.numberOfOutputs;
       
       if (nextIndex < maxAffordable) {
         setTimeout(() => processOutput(nextIndex), 2000);
