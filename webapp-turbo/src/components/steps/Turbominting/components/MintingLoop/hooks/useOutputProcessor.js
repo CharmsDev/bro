@@ -18,14 +18,12 @@ export function useOutputProcessor({
   updateOutputProgress,
   onComplete
 }) {
-  /**
-   * Process a single output through all sub-steps
-   * Handles validation, processing, and continuation to next output
-   */
   const processOutput = useCallback(async (outputIndex) => {
-    const maxAffordable = fundingAnalysis?.resultingUtxos?.length || fundingAnalysis?.currentOutputs || 0;
+    // Use pre-defined total from mintingProgress (outputsProgress.length)
+    // This was already calculated and validated in previous steps
+    const totalOutputs = outputsProgress.length;
     
-    if (outputIndex >= maxAffordable) {
+    if (outputIndex >= totalOutputs) {
       if (onComplete) onComplete();
       return;
     }
@@ -38,7 +36,7 @@ export function useOutputProcessor({
       failOutput(outputIndex, error);
       
       const nextIndex = outputIndex + 1;
-      if (nextIndex < maxAffordable) {
+      if (nextIndex < totalOutputs) {
         setTimeout(() => processOutput(nextIndex), 2000);
       } else {
         if (onComplete) onComplete();
@@ -73,7 +71,7 @@ export function useOutputProcessor({
       
       const nextIndex = outputIndex + 1;
       
-      if (nextIndex < maxAffordable) {
+      if (nextIndex < totalOutputs) {
         setTimeout(() => processOutput(nextIndex), 1000);
       } else {
         if (onComplete) onComplete();
@@ -84,7 +82,7 @@ export function useOutputProcessor({
       
       const nextIndex = outputIndex + 1;
       
-      if (nextIndex < maxAffordable) {
+      if (nextIndex < totalOutputs) {
         setTimeout(() => processOutput(nextIndex), 2000);
       } else {
         if (onComplete) onComplete();

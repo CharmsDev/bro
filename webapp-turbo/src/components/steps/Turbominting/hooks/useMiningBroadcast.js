@@ -25,7 +25,16 @@ export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmat
 
   // Auto-broadcast mining transaction on load
   useEffect(() => {
+    // CRITICAL: Prevent double-broadcast
+    // Check both miningTxid AND if broadcast was already attempted
     if (!turbominingData?.signedTxHex || turbominingData.miningTxid || isBroadcasting || broadcastAttemptedRef.current) {
+      return;
+    }
+
+    // Additional safety: Check if there's already a confirmed mining TX in storage
+    const savedData = TurbomintingService.load();
+    if (savedData?.miningTxid) {
+      console.warn('[MiningBroadcast] Mining TX already exists in storage. Skipping broadcast.');
       return;
     }
 
@@ -50,22 +59,8 @@ export function useMiningBroadcast(turbominingData, setMiningReady, setConfirmat
             }));
           }
         } else {
-          if (!result.txid) {
-            setBroadcastError(result.error || 'Broadcast failed');
-            broadcastAttemptedRef.current = false;
-          } else {
-            setBroadcastError(null);
-            
-            if (setTurbominingData) {
-              setTurbominingData(prev => ({
-                ...prev,
-                miningTxid: result.txid,
-                explorerUrl: result.explorerUrl,
-                miningTxConfirmed: false,
-                miningReady: false
-              }));
-            }
-          }
+          setBroadcastError(result.error || 'Broadcast failed');
+          broadcastAttemptedRef.current = false;
         }
       } catch (error) {
         console.error('Broadcast error:', error.message);
