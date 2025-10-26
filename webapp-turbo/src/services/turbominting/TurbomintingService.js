@@ -249,14 +249,13 @@ export class TurbomintingService {
   // ============================================
 
   /**
-   * Initialize minting progress with pre-calculated UTXOs
+   * Initialize minting progress with pre-calculated funding UTXOs
    * @param {number} totalOutputs - Total number of outputs to mint
-   * @param {Array} spendableOutputs - Mining TX outputs (from turbomining)
    * @param {Array} resultingUtxos - Funding UTXOs (from funding analysis)
    * @param {boolean} force - Force re-initialization even if progress exists
    * @returns {boolean}
    */
-  static initializeMintingProgress(totalOutputs, spendableOutputs = [], resultingUtxos = [], force = false) {
+  static initializeMintingProgress(totalOutputs, resultingUtxos = [], force = false) {
     try {
       const current = CentralStorage.getTurbominting() || {};
       
@@ -270,8 +269,11 @@ export class TurbomintingService {
         index,
         status: 'ready',
         currentSubStep: null,
-        miningUtxo: spendableOutputs[index] || null,
-        fundingUtxo: resultingUtxos[index] || null,
+        fundingUtxo: resultingUtxos[index] ? {
+          txid: resultingUtxos[index].txid,
+          vout: resultingUtxos[index].vout,
+          value: resultingUtxos[index].value
+        } : null,
         commitTxid: null,
         spellTxid: null,
         error: null,

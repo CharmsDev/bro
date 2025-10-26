@@ -27,11 +27,24 @@ export function useOutputProcessor({
       return;
     }
       
-    const spendableOutput = turbominingData.spendableOutputs[outputIndex];
-    const fundingUtxo = fundingAnalysis?.resultingUtxos?.[outputIndex];
+    // Read pre-calculated data from localStorage (mintingProgress.outputs)
+    const outputData = outputsProgress[outputIndex];
+    
+    if (!outputData) {
+      const error = new Error(`Output ${outputIndex} not found in mintingProgress`);
+      failOutput(outputIndex, error);
+      if (onComplete) onComplete();
+      return;
+    }
+    
+    // Mining UTXO comes from turbominingData (stored separately)
+    const spendableOutput = turbominingData.spendableOutputs?.[outputIndex];
+    
+    // Funding UTXO comes from mintingProgress (pre-calculated)
+    const fundingUtxo = outputData.fundingUtxo;
 
     if (!spendableOutput) {
-      const error = new Error('Output not found');
+      const error = new Error(`Mining UTXO ${outputIndex} not found in turbominingData`);
       failOutput(outputIndex, error);
       
       const nextIndex = outputIndex + 1;
@@ -44,7 +57,7 @@ export function useOutputProcessor({
     }
 
     if (!fundingUtxo || !fundingUtxo.txid) {
-      const error = new Error(`Funding UTXO ${outputIndex} is missing or invalid. Cannot process output.`);
+      const error = new Error(`Funding UTXO ${outputIndex} not found in mintingProgress`);
       failOutput(outputIndex, error);
       if (onComplete) onComplete();
       return;
@@ -52,8 +65,6 @@ export function useOutputProcessor({
 
     try {
       startOutput(outputIndex);
-
-      const outputData = outputsProgress[outputIndex];
 
       const result = await OutputProcessor.processOutput({
         outputIndex,

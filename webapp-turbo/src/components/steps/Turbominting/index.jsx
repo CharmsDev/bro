@@ -81,10 +81,9 @@ export function Turbominting() {
       funding.setAnalysis(fundingAnalysisData.analysis, fundingAnalysisData.availableUtxos, fundingAnalysisData.resultingUtxos);
       
       // POINT 1: Initialize minting progress with funding analysis results
-      if (fundingAnalysisData.resultingUtxos?.length > 0 && turbominingData?.spendableOutputs) {
+      if (fundingAnalysisData.resultingUtxos?.length > 0) {
         TurbomintingService.initializeMintingProgress(
           turbominingData.numberOfOutputs,
-          turbominingData.spendableOutputs,
           fundingAnalysisData.resultingUtxos
         );
       }
@@ -174,7 +173,6 @@ export function Turbominting() {
           
           TurbomintingService.initializeMintingProgress(
             turbominingData.numberOfOutputs,
-            turbominingData.spendableOutputs,
             updatedResultingUtxos,
             true  // Force update with real funding TX data
           );
