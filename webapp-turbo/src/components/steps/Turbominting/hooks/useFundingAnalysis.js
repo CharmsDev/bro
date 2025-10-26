@@ -175,9 +175,30 @@ export function useFundingAnalysis(requiredOutputs, excludeUtxo = null, turbomin
     analyze();
   }, [scannedUtxos, requiredOutputs, excludeUtxo, turbominingData]);
   
+  // Expose function to force re-scan (for when new funds are detected)
+  const forceRescan = async () => {
+    console.log('[RJJ-DEBUG] 🔄 Force re-scan triggered by new funds detection');
+    setIsScanning(true);
+    try {
+      const wallet = await getWallet();
+      if (!wallet?.address) {
+        throw new Error('No wallet available');
+      }
+      
+      const utxos = await scanWalletUtxos(wallet.address);
+      setScannedUtxos(utxos);
+    } catch (error) {
+      console.error('Force re-scan failed:', error);
+      setState(prev => ({ ...prev, error: error.message }));
+    } finally {
+      setIsScanning(false);
+    }
+  };
+  
   return {
     ...state,
-    isScanning
+    isScanning,
+    forceRescan
   };
 }
 

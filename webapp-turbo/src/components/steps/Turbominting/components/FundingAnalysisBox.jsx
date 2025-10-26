@@ -1,7 +1,7 @@
 import { MINTING_UTXO_VALUE } from '../../../../constants/minting.js';
 import { PartialFundingCalculator } from './PartialFundingCalculator.jsx';
 
-export function FundingAnalysisBox({ turbominingData, walletAddress, fundingAnalysisData }) {
+export function FundingAnalysisBox({ turbominingData, walletAddress, fundingAnalysisData, onForceRescan }) {
   const funding = fundingAnalysisData;
   const targetOutputs = turbominingData?.numberOfOutputs || 0;
   const currentOutputs = funding.currentOutputs || 0;
@@ -132,6 +132,7 @@ export function FundingAnalysisBox({ turbominingData, walletAddress, fundingAnal
                   totalOutputs={targetOutputs}
                   walletAddress={walletAddress}
                   lastDeltaSats={funding.lastDeltaSats}
+                  onForceRescan={onForceRescan}
                 />
               )}
             </>

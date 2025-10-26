@@ -306,6 +306,7 @@ export function Turbominting() {
         turbominingData={turbominingData}
         walletAddress={wallet?.address}
         fundingAnalysisData={fundingAnalysisData}
+        onForceRescan={fundingAnalysisData.forceRescan}
       />
 
       <FundingBroadcastBox 
