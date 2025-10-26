@@ -137,12 +137,48 @@ export function FundingAnalysisBox({ turbominingData, walletAddress, fundingAnal
             </>
           ) : (
             // CASO 1: Fondos suficientes
-            <div className="bg-emerald-900/20 border border-emerald-600/30 rounded-lg p-3 flex items-center gap-2">
-              <span className="text-emerald-400 text-lg">✅</span>
-              <p className="text-emerald-400 text-sm font-semibold">
-                Sufficient funds for all {targetOutputs} outputs
-              </p>
-            </div>
+            <>
+              <div className="bg-emerald-900/20 border border-emerald-600/30 rounded-lg p-3 flex items-center gap-2 mb-4">
+                <span className="text-emerald-400 text-lg">✅</span>
+                <p className="text-emerald-400 text-sm font-semibold">
+                  Sufficient funds for all {targetOutputs} outputs
+                </p>
+              </div>
+              
+              {/* [RJJ-DEBUG] Show UTXOs that will be used */}
+              {funding.resultingUtxos && funding.resultingUtxos.length > 0 && (
+                <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/50">
+                  <h4 className="text-slate-300 font-semibold mb-3 flex items-center gap-2">
+                    <span>📦</span>
+                    <span>UTXOs for Minting Loop ({funding.resultingUtxos.length})</span>
+                  </h4>
+                  <div className="space-y-2">
+                    {funding.resultingUtxos.map((utxo, idx) => (
+                      <div key={idx} className="bg-slate-900/50 rounded p-3 border border-slate-700/30">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-slate-400 text-xs font-mono">Output {idx}</span>
+                          <span className="text-emerald-400 text-sm font-semibold">{utxo.value} sats</span>
+                        </div>
+                        <div className="text-slate-500 text-xs font-mono break-all">
+                          {utxo.txid}:{utxo.vout}
+                        </div>
+                        <div className="mt-1">
+                          <span className={`text-xs px-2 py-0.5 rounded ${
+                            utxo.source === 'existing' ? 'bg-green-900/30 text-green-400' :
+                            utxo.source === 'mining_tx_pending' ? 'bg-purple-900/30 text-purple-400' :
+                            'bg-blue-900/30 text-blue-400'
+                          }`}>
+                            {utxo.source === 'existing' ? '📦 Wallet' :
+                             utxo.source === 'mining_tx_pending' ? '⛏️ Mining TX' :
+                             '🎯 Funding TX'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

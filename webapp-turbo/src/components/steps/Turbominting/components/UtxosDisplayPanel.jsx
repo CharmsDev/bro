@@ -7,6 +7,13 @@ export function UtxosDisplayPanel({
   analysis = null,
   isScanning = false
 }) {
+  // [RJJ-DEBUG] Log what we're receiving
+  console.log('[RJJ-DEBUG] UtxosDisplayPanel props:', {
+    availableUtxos: availableUtxos.length,
+    resultingUtxos: resultingUtxos.length,
+    analysis: analysis?.strategy
+  });
+  
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
       <div className="bg-slate-800/50 rounded-lg p-4">
@@ -66,26 +73,6 @@ export function UtxosDisplayPanel({
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {resultingUtxos.length > 0 ? (
             <>
-              <div className={`rounded p-2 mb-2 ${
-                analysis?.isPartial 
-                  ? 'bg-amber-900/20 border border-amber-600/30'
-                  : analysis?.needsSplitting
-                  ? 'bg-blue-900/20 border border-blue-600/30'
-                  : 'bg-emerald-900/20 border border-emerald-600/30'
-              }`}>
-                <p className={`text-xs font-semibold ${
-                  analysis?.isPartial ? 'text-amber-400' : 
-                  analysis?.needsSplitting ? 'text-blue-400' :
-                  'text-emerald-400'
-                }`}>
-                  {analysis?.isPartial 
-                    ? `⚠️ Partial: Can mint ${analysis.canAfford || resultingUtxos.length} outputs`
-                    : analysis?.needsSplitting
-                    ? `🔄 Will reorganize into ${resultingUtxos.length} outputs`
-                    : `✅ Ready to mint ${resultingUtxos.length} outputs`}
-                </p>
-              </div>
-              
               {resultingUtxos.map((utxo, idx) => {
                 const sourceColor = 
                   analysis?.isPartial ? 'amber' :

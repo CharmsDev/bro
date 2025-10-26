@@ -19,14 +19,18 @@ export function useFundingAnalysis(requiredOutputs, excludeUtxo = null, turbomin
     error: null
   });
   
+  // [RJJ-DEBUG] TEMPORARY DEBUG FLAG - Set to true to force re-scan on every refresh
+  const FORCE_RESCAN_FOR_TESTING = true;
+  
   // Check if funding was already broadcasted
   useEffect(() => {
     const savedData = TurbomintingService.load();
     
-    if (savedData?.fundingBroadcasted === true) {
+    if (!FORCE_RESCAN_FOR_TESTING && savedData?.fundingBroadcasted === true) {
       const savedAnalysis = TurbomintingService.getFundingAnalysis();
       
       if (savedAnalysis) {
+        console.log('[RJJ-DEBUG] 📦 Using saved analysis:', savedAnalysis);
         
         setState({
           availableUtxos: savedAnalysis.availableUtxos || [],
@@ -40,6 +44,10 @@ export function useFundingAnalysis(requiredOutputs, excludeUtxo = null, turbomin
         
         return;
       }
+    }
+    
+    if (FORCE_RESCAN_FOR_TESTING) {
+      console.log('[RJJ-DEBUG] 🔧 Force re-scan enabled - ignoring saved data');
     }
     
     let mounted = true;
@@ -89,14 +97,69 @@ export function useFundingAnalysis(requiredOutputs, excludeUtxo = null, turbomin
         source: 'mining_tx_pending'
       } : null;
       
-      const allUtxos = miningChangeUtxo ? [...scannedUtxos, miningChangeUtxo] : scannedUtxos;
+      // Combine scanned UTXOs with mining change, removing duplicates
+      let allUtxos = [...scannedUtxos];
+      if (miningChangeUtxo) {
+        // Check if mining change already exists in scanned UTXOs
+        const isDuplicate = scannedUtxos.some(u => 
+          u.txid === miningChangeUtxo.txid && u.vout === miningChangeUtxo.vout
+        );
+        
+        if (isDuplicate) {
+          console.log('[RJJ-DEBUG] ⚠️ Mining TX change already in wallet - skipping duplicate');
+        } else {
+          allUtxos.push(miningChangeUtxo);
+          console.log('[RJJ-DEBUG] ✅ Added mining TX change as theoretical UTXO');
+        }
+      }
+      
       const availableSats = allUtxos.reduce((sum, u) => sum + u.value, 0);
       const currentOutputs = Math.floor(availableSats / MINTING_UTXO_VALUE);
+      
+      console.log('[RJJ-DEBUG] 🔍 Starting analysis:', {
+        scannedUtxos: scannedUtxos.length,
+        miningChangeUtxo,
+        allUtxos: allUtxos.length,
+        requiredOutputs,
+        excludeUtxo
+      });
+      
+      console.log('[RJJ-DEBUG] 🔍 All available UTXOs:');
+      allUtxos.forEach((utxo, idx) => {
+        console.log(`[RJJ-DEBUG]   allUtxos[${idx}]:`, {
+          txid: utxo.txid,
+          vout: utxo.vout,
+          value: utxo.value,
+          source: utxo.source
+        });
+      });
       
       const builder = new FundingTxBuilder();
       const analysis = await builder.analyzeFundingNeeds(allUtxos, requiredOutputs, excludeUtxo);
       
+      console.log('[RJJ-DEBUG] 📊 Analysis result:', analysis);
+      if (analysis.utxosToUse) {
+        console.log('[RJJ-DEBUG] 📊 Analysis.utxosToUse:');
+        analysis.utxosToUse.forEach((utxo, idx) => {
+          console.log(`[RJJ-DEBUG]   utxosToUse[${idx}]:`, {
+            txid: utxo.txid,
+            vout: utxo.vout,
+            value: utxo.value
+          });
+        });
+      }
+      
       const resultingUtxos = deriveResultingUtxos(analysis, null);
+      
+      console.log('[RJJ-DEBUG] ✅ Resulting UTXOs:', resultingUtxos);
+      resultingUtxos.forEach((utxo, idx) => {
+        console.log(`[RJJ-DEBUG]   UTXO ${idx}:`, {
+          txid: utxo.txid,
+          vout: utxo.vout,
+          value: utxo.value,
+          source: utxo.source
+        });
+      });
       
       setState({
         availableUtxos: allUtxos,

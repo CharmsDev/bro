@@ -162,10 +162,12 @@ export class TurbomintingService {
           txid: result.txid
         };
         
+        // Map funding TX outputs to resultingUtxos with correct vout
         const resultingUtxosWithTxid = analysis.resultingUtxos?.map((utxo, index) => ({
-          ...utxo,
           txid: result.txid,
-          vout: utxo.vout !== undefined ? utxo.vout : index
+          vout: index,  // Each output gets sequential vout (0, 1, 2, ...)
+          value: utxo.value,
+          source: 'funding_tx'
         })) || [];
         
         const current = CentralStorage.getTurbominting() || {};
@@ -257,28 +259,39 @@ export class TurbomintingService {
    */
   static initializeMintingProgress(totalOutputs, resultingUtxos = [], force = false) {
     try {
+      console.log('[RJJ-DEBUG] 📦 INIT PROGRESS - Starting:', { totalOutputs, resultingUtxos, force });
+      
       const current = CentralStorage.getTurbominting() || {};
       
       // Don't overwrite if minting already started (unless forced)
       if (!force && current.mintingProgress?.outputs?.some(o => o.status !== 'ready')) {
-        console.log('Minting already in progress - skipping initialization');
+        console.log('[RJJ-DEBUG] ⚠️ INIT PROGRESS - Minting already in progress, skipping');
         return false;
       }
       
-      const outputs = Array.from({ length: totalOutputs }, (_, index) => ({
-        index,
-        status: 'ready',
-        currentSubStep: null,
-        fundingUtxo: resultingUtxos[index] ? {
+      const outputs = Array.from({ length: totalOutputs }, (_, index) => {
+        const fundingUtxo = resultingUtxos[index] ? {
           txid: resultingUtxos[index].txid,
           vout: resultingUtxos[index].vout,
           value: resultingUtxos[index].value
-        } : null,
-        commitTxid: null,
-        spellTxid: null,
-        error: null,
-        createdAt: Date.now()
-      }));
+        } : null;
+        
+        console.log(`[RJJ-DEBUG]   📝 Output ${index}:`, {
+          source: resultingUtxos[index],
+          result: fundingUtxo
+        });
+        
+        return {
+          index,
+          status: 'ready',
+          currentSubStep: null,
+          fundingUtxo,
+          commitTxid: null,
+          spellTxid: null,
+          error: null,
+          createdAt: Date.now()
+        };
+      });
 
       CentralStorage.saveTurbominting({
         ...current,

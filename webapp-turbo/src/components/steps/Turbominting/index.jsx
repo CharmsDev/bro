@@ -82,10 +82,30 @@ export function Turbominting() {
       
       // POINT 1: Initialize minting progress with funding analysis results
       if (fundingAnalysisData.resultingUtxos?.length > 0) {
+        console.log('[RJJ-DEBUG] 🎯 POINT 1 - Initializing minting progress:', {
+          numberOfOutputs: turbominingData.numberOfOutputs,
+          resultingUtxos: fundingAnalysisData.resultingUtxos,
+          strategy: fundingAnalysisData.analysis?.strategy
+        });
+        
+        // Validate: resultingUtxos must have at least numberOfOutputs elements
+        if (fundingAnalysisData.resultingUtxos.length < turbominingData.numberOfOutputs) {
+          console.warn(`[RJJ-DEBUG] ⚠️ POINT 1 - Insufficient resultingUtxos: ${fundingAnalysisData.resultingUtxos.length} < ${turbominingData.numberOfOutputs}`);
+        }
+        
         TurbomintingService.initializeMintingProgress(
           turbominingData.numberOfOutputs,
           fundingAnalysisData.resultingUtxos
         );
+        
+        // Log what was saved
+        const saved = TurbomintingService.load();
+        console.log('[RJJ-DEBUG] ✅ POINT 1 - Saved outputs:', saved?.mintingProgress?.outputs);
+        saved?.mintingProgress?.outputs?.forEach((output, idx) => {
+          console.log(`[RJJ-DEBUG]   Saved Output ${idx}:`, {
+            fundingUtxo: output.fundingUtxo
+          });
+        });
       }
     }
   }, [fundingAnalysisData.analysis, fundingAnalysisData.availableUtxos, fundingAnalysisData.resultingUtxos, turbominingData]);
@@ -164,18 +184,29 @@ export function Turbominting() {
         // POINT 2: Update minting progress with real funding TX outputs
         const savedData = TurbomintingService.load();
         if (savedData?.fundingAnalysis?.resultingUtxos) {
-          const updatedResultingUtxos = savedData.fundingAnalysis.resultingUtxos.map((utxo, idx) => ({
-            ...utxo,
+          console.log('[RJJ-DEBUG] 🎯 POINT 2 - Updating with real funding TX:', {
             txid: result.txid,
-            vout: utxo.vout !== undefined ? utxo.vout : idx,
+            savedResultingUtxos: savedData.fundingAnalysis.resultingUtxos
+          });
+          
+          const updatedResultingUtxos = savedData.fundingAnalysis.resultingUtxos.map((utxo, idx) => ({
+            txid: result.txid,
+            vout: idx,  // Each output gets its own vout (0, 1, 2, ...)
+            value: utxo.value,
             source: 'funding_tx'
           }));
+          
+          console.log('[RJJ-DEBUG] 📝 POINT 2 - Updated UTXOs:', updatedResultingUtxos);
           
           TurbomintingService.initializeMintingProgress(
             turbominingData.numberOfOutputs,
             updatedResultingUtxos,
             true  // Force update with real funding TX data
           );
+          
+          // Log what was saved
+          const updated = TurbomintingService.load();
+          console.log('[RJJ-DEBUG] ✅ POINT 2 - Saved outputs:', updated?.mintingProgress?.outputs);
         }
 
         // Start monitoring for confirmation (for UI status only)
@@ -279,6 +310,7 @@ export function Turbominting() {
 
       <FundingBroadcastBox 
         funding={funding}
+        fundingAnalysisData={fundingAnalysisData}
         fundingTxid={turbominingData?.fundingTxid}
         fundingExplorerUrl={turbominingData?.fundingExplorerUrl}
         fundingTxConfirmed={turbominingData?.fundingTxConfirmed}

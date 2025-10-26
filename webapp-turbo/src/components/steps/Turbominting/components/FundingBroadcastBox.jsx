@@ -5,6 +5,7 @@ import { UtxosDisplayPanel } from './UtxosDisplayPanel.jsx';
 
 export function FundingBroadcastBox({ 
   funding,
+  fundingAnalysisData,
   fundingTxid,
   fundingExplorerUrl,
   fundingTxConfirmed,
@@ -129,12 +130,29 @@ export function FundingBroadcastBox({
             {/* UTXO Analysis Tab */}
             {activeTab === 'utxos' && (
               <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4 mb-4">
-                <UtxosDisplayPanel 
-                  availableUtxos={funding.availableUtxos}
-                  resultingUtxos={funding.resultingUtxos}
-                  analysis={funding.analysis}
-                  isScanning={false}
-                />
+                {(() => {
+                  const availableUtxos = (funding.availableUtxos?.length > 0 ? funding.availableUtxos : fundingAnalysisData?.availableUtxos) || [];
+                  const resultingUtxos = (funding.resultingUtxos?.length > 0 ? funding.resultingUtxos : fundingAnalysisData?.resultingUtxos) || [];
+                  const analysis = funding.analysis || fundingAnalysisData?.analysis;
+                  
+                  console.log('[RJJ-DEBUG] FundingBroadcastBox passing to UtxosDisplayPanel:', {
+                    'funding.availableUtxos': funding.availableUtxos?.length,
+                    'fundingAnalysisData.availableUtxos': fundingAnalysisData?.availableUtxos?.length,
+                    'funding.resultingUtxos': funding.resultingUtxos?.length,
+                    'fundingAnalysisData.resultingUtxos': fundingAnalysisData?.resultingUtxos?.length,
+                    'final availableUtxos': availableUtxos?.length,
+                    'final resultingUtxos': resultingUtxos?.length
+                  });
+                  
+                  return (
+                    <UtxosDisplayPanel 
+                      availableUtxos={availableUtxos}
+                      resultingUtxos={resultingUtxos}
+                      analysis={analysis}
+                      isScanning={false}
+                    />
+                  );
+                })()}
               </div>
             )}
 
