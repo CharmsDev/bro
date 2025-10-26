@@ -8,7 +8,6 @@ import { OutputProcessor } from '../services/OutputProcessor.js';
 
 export function useOutputProcessor({
   turbominingData,
-  fundingAnalysis,
   walletAddress,
   outputsProgress,
   startOutput,
@@ -90,7 +89,6 @@ export function useOutputProcessor({
     }
   }, [
     turbominingData,
-    fundingAnalysis,
     walletAddress,
     outputsProgress,
     startOutput,

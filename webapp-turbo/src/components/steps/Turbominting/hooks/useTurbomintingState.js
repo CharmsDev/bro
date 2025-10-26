@@ -66,10 +66,8 @@ export function useTurbomintingState(setShouldPlaySoundOnInteraction) {
           setFundingReady(mergedData.fundingReady === true);
         }
 
-        // Initialize minting progress if not exists
-        if (!savedState?.mintingProgress && mergedData.numberOfOutputs) {
-          TurbomintingService.initializeMintingProgress(mergedData.numberOfOutputs);
-        }
+        // Minting progress is initialized after funding analysis completes
+        // (see index.jsx POINT 1 and POINT 2)
         
       } catch (error) {
         setError(`Failed to load data: ${error.message}`);

@@ -249,18 +249,20 @@ export class TurbomintingService {
   // ============================================
 
   /**
-   * Initialize minting progress
+   * Initialize minting progress with pre-calculated UTXOs
    * @param {number} totalOutputs - Total number of outputs to mint
+   * @param {Array} spendableOutputs - Mining TX outputs (from turbomining)
+   * @param {Array} resultingUtxos - Funding UTXOs (from funding analysis)
    * @returns {boolean}
    */
-  static initializeMintingProgress(totalOutputs) {
+  static initializeMintingProgress(totalOutputs, spendableOutputs = [], resultingUtxos = []) {
     try {
-      const outputs = Array.from({ length: totalOutputs }, (_, i) => ({
-        index: i,
-        status: 'ready', // Changed from 'pending' to 'ready' - outputs are ready to mint when funding is ready
+      const outputs = Array.from({ length: totalOutputs }, (_, index) => ({
+        index,
+        status: 'ready',
         currentSubStep: null,
-        miningUtxo: null,
-        fundingUtxo: null,
+        miningUtxo: spendableOutputs[index] || null,
+        fundingUtxo: resultingUtxos[index] || null,
         commitTxid: null,
         spellTxid: null,
         error: null,

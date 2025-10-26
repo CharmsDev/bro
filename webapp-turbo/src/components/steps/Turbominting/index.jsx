@@ -143,6 +143,22 @@ export function Turbominting() {
         // Enable funding ready flag immediately (no need to wait for confirmation)
         setFundingReady(true);
         
+        // POINT 2: Update minting progress with real funding TX outputs
+        const savedData = TurbomintingService.load();
+        if (savedData?.fundingAnalysis?.resultingUtxos) {
+          const updatedResultingUtxos = savedData.fundingAnalysis.resultingUtxos.map((utxo, idx) => ({
+            ...utxo,
+            txid: result.txid,
+            vout: utxo.vout !== undefined ? utxo.vout : idx,
+            source: 'funding_tx'
+          }));
+          
+          TurbomintingService.initializeMintingProgress(
+            turbominingData.numberOfOutputs,
+            turbominingData.spendableOutputs,
+            updatedResultingUtxos
+          );
+        }
 
         // Start monitoring for confirmation (for UI status only)
         monitorFundingConfirmation(result.txid);

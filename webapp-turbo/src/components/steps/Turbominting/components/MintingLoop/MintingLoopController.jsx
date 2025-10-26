@@ -41,7 +41,6 @@ export function MintingLoopController({
 
   const { processOutput } = useOutputProcessor({
     turbominingData,
-    fundingAnalysis,
     walletAddress,
     outputsProgress,
     startOutput,
