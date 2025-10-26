@@ -86,13 +86,40 @@ export function FundingBroadcastBox({
               className="inline-flex items-center gap-2 px-4 py-2 border border-slate-500 hover:border-slate-400 text-slate-300 hover:text-slate-200 rounded-lg font-semibold text-sm transition-colors"
             />
           </div>
-        ) : funding.needsFunding === false ? (
-          <div className="bg-emerald-900/20 border border-emerald-600/30 rounded-lg p-6 text-center">
-            <p className="text-emerald-400 font-semibold mb-2">✅ Funding transaction not needed</p>
-            <p className="text-slate-400 text-sm">
-              Sufficient UTXOs already available for minting process
-            </p>
-          </div>
+        ) : funding.needsFunding === false || fundingAnalysisData?.analysis?.strategy === 'sufficient_utxos' || fundingAnalysisData?.analysis?.strategy === 'use_available_utxos' ? (
+          // Case: No funding TX needed - Show only UTXO analysis
+          <>
+            <div className="bg-emerald-900/20 border border-emerald-600/30 rounded-lg p-4 mb-4 text-center">
+              <p className="text-emerald-400 font-semibold">
+                {fundingAnalysisData?.analysis?.isPartial 
+                  ? '⚠️ Using available UTXOs (partial funding)'
+                  : '✅ Funding transaction not needed'}
+              </p>
+              <p className="text-slate-400 text-sm mt-1">
+                {fundingAnalysisData?.analysis?.isPartial
+                  ? 'Will mint with available UTXOs'
+                  : 'Sufficient UTXOs already available'}
+              </p>
+            </div>
+            
+            {/* Show only UTXO Analysis */}
+            <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
+              {(() => {
+                const availableUtxos = (funding.availableUtxos?.length > 0 ? funding.availableUtxos : fundingAnalysisData?.availableUtxos) || [];
+                const resultingUtxos = (funding.resultingUtxos?.length > 0 ? funding.resultingUtxos : fundingAnalysisData?.resultingUtxos) || [];
+                const analysis = funding.analysis || fundingAnalysisData?.analysis;
+                
+                return (
+                  <UtxosDisplayPanel 
+                    availableUtxos={availableUtxos}
+                    resultingUtxos={resultingUtxos}
+                    analysis={analysis}
+                    isScanning={false}
+                  />
+                );
+              })()}
+            </div>
+          </>
         ) : funding.isCreating ? (
           <div className="bg-slate-800/50 rounded-lg p-6 text-center">
             <div className="flex items-center justify-center gap-3">
