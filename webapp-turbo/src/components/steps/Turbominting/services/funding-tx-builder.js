@@ -12,9 +12,9 @@ export class FundingTxBuilder {
       : btc.NETWORK;
   }
 
-  async analyzeFundingNeeds(availableUtxos, requiredOutputs) {
-    // Use the new simple analyzer
-    return simpleAnalyzer(availableUtxos, requiredOutputs);
+  async analyzeFundingNeeds(availableUtxos, requiredOutputs, excludeUtxo = null) {
+    // Use the new simple analyzer with excludeUtxo to prevent double-spend
+    return simpleAnalyzer(availableUtxos, requiredOutputs, excludeUtxo);
   }
 
   createFundingTransaction(analysis, walletAddress, walletKeys) {

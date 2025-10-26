@@ -6,7 +6,7 @@ import { WalletUtxoScanner } from '../../../../services/utxo/WalletUtxoScanner.j
 import TurbomintingService from '../../../../services/turbominting/TurbomintingService.js';
 
 // Centralized hook for funding analysis - scans wallet UTXOs once on mount
-export function useFundingAnalysis(requiredOutputs) {
+export function useFundingAnalysis(requiredOutputs, excludeUtxo = null, turbominingData = null) {
   const [scannedUtxos, setScannedUtxos] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [state, setState] = useState({
@@ -80,16 +80,26 @@ export function useFundingAnalysis(requiredOutputs) {
     if (!scannedUtxos) return;
     
     const analyze = async () => {
-      const availableSats = scannedUtxos.reduce((sum, u) => sum + u.value, 0);
+      // Include mining TX change as theoretical UTXO if available
+      const miningChangeUtxo = turbominingData?.miningTxid && turbominingData?.changeAmount > 0 ? {
+        txid: turbominingData.miningTxid,
+        // Change is after OP_RETURN (vout 0) + spendable outputs (vout 1..N)
+        vout: (turbominingData.spendableOutputs?.length || turbominingData.numberOfOutputs || 0) + 1,
+        value: turbominingData.changeAmount,
+        source: 'mining_tx_pending'
+      } : null;
+      
+      const allUtxos = miningChangeUtxo ? [...scannedUtxos, miningChangeUtxo] : scannedUtxos;
+      const availableSats = allUtxos.reduce((sum, u) => sum + u.value, 0);
       const currentOutputs = Math.floor(availableSats / MINTING_UTXO_VALUE);
       
       const builder = new FundingTxBuilder();
-      const analysis = await builder.analyzeFundingNeeds(scannedUtxos, requiredOutputs);
+      const analysis = await builder.analyzeFundingNeeds(allUtxos, requiredOutputs, excludeUtxo);
       
       const resultingUtxos = deriveResultingUtxos(analysis, null);
       
       setState({
-        availableUtxos: scannedUtxos,
+        availableUtxos: allUtxos,
         availableSats,
         currentOutputs,
         analysis,
@@ -100,7 +110,7 @@ export function useFundingAnalysis(requiredOutputs) {
     };
     
     analyze();
-  }, [scannedUtxos, requiredOutputs]);
+  }, [scannedUtxos, requiredOutputs, excludeUtxo, turbominingData]);
   
   return {
     ...state,

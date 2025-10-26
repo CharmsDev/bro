@@ -5,7 +5,7 @@ const MIN_UTXO_VALUE = 5000;
 const ESTIMATED_FEE_PER_OUTPUT = 150;
 const BASE_FEE = 1000;
 
-export function analyzeFundingNeeds(availableUtxos, requiredOutputs) {
+export function analyzeFundingNeeds(availableUtxos, requiredOutputs, excludeUtxo = null) {
   if (!availableUtxos || availableUtxos.length === 0) {
     return { needsSplitting: false, canAfford: 0, isPartial: true, error: 'No UTXOs available in wallet' };
   }
@@ -13,7 +13,7 @@ export function analyzeFundingNeeds(availableUtxos, requiredOutputs) {
     return { needsSplitting: false, canAfford: 0, isPartial: true, error: 'Invalid number of required outputs' };
   }
   
-  const usableUtxos = filterProtectedUtxos(availableUtxos);
+  const usableUtxos = filterProtectedUtxos(availableUtxos, excludeUtxo);
   const validUtxos = usableUtxos.filter(u => u.value >= MIN_UTXO_VALUE);
   const totalValue = usableUtxos.reduce((sum, u) => sum + u.value, 0);
   const estimatedFee = BASE_FEE + (ESTIMATED_FEE_PER_OUTPUT * requiredOutputs);
@@ -86,8 +86,18 @@ function createFundingPlan(utxos, outputCount, isPartial) {
   };
 }
 
-// Filter protected UTXOs
-function filterProtectedUtxos(utxos) {
+// Filter protected UTXOs and exclude specific UTXO (e.g., challenge UTXO being spent by mining TX)
+function filterProtectedUtxos(utxos, excludeUtxo = null) {
   const PROTECTED_VALUES = [546, 333, 330, 1000, 777, 600, 10000];
-  return utxos.filter(utxo => !PROTECTED_VALUES.includes(utxo.value));
+  return utxos.filter(utxo => {
+    // Filter by protected values
+    if (PROTECTED_VALUES.includes(utxo.value)) return false;
+    
+    // Exclude specific UTXO (prevent double-spend with mining TX)
+    if (excludeUtxo && utxo.txid === excludeUtxo.txid && utxo.vout === excludeUtxo.vout) {
+      return false;
+    }
+    
+    return true;
+  });
 }

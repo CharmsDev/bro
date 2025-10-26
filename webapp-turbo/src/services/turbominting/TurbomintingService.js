@@ -253,10 +253,19 @@ export class TurbomintingService {
    * @param {number} totalOutputs - Total number of outputs to mint
    * @param {Array} spendableOutputs - Mining TX outputs (from turbomining)
    * @param {Array} resultingUtxos - Funding UTXOs (from funding analysis)
+   * @param {boolean} force - Force re-initialization even if progress exists
    * @returns {boolean}
    */
-  static initializeMintingProgress(totalOutputs, spendableOutputs = [], resultingUtxos = []) {
+  static initializeMintingProgress(totalOutputs, spendableOutputs = [], resultingUtxos = [], force = false) {
     try {
+      const current = CentralStorage.getTurbominting() || {};
+      
+      // Don't overwrite if minting already started (unless forced)
+      if (!force && current.mintingProgress?.outputs?.some(o => o.status !== 'ready')) {
+        console.log('Minting already in progress - skipping initialization');
+        return false;
+      }
+      
       const outputs = Array.from({ length: totalOutputs }, (_, index) => ({
         index,
         status: 'ready',
@@ -269,7 +278,6 @@ export class TurbomintingService {
         createdAt: Date.now()
       }));
 
-      const current = CentralStorage.getTurbominting() || {};
       CentralStorage.saveTurbominting({
         ...current,
         mintingProgress: {

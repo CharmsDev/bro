@@ -60,7 +60,17 @@ export function Turbominting() {
     isMonitoring
   } = useMiningBroadcast(turbominingData, setMiningReady, setConfirmationInfo, setTurbominingData);
 
-  const fundingAnalysisData = useFundingAnalysis(turbominingData?.numberOfOutputs || 0);
+  // Exclude challenge UTXO from funding analysis to prevent double-spend with mining TX
+  const challengeUtxo = turbominingData?.challengeTxid ? {
+    txid: turbominingData.challengeTxid,
+    vout: turbominingData.challengeVout
+  } : null;
+  
+  const fundingAnalysisData = useFundingAnalysis(
+    turbominingData?.numberOfOutputs || 0,
+    challengeUtxo,
+    turbominingData
+  );
   const funding = useFundingTransaction(turbominingData?.numberOfOutputs || 0);
   
   const [isBroadcastingFunding, setIsBroadcastingFunding] = useState(false);
@@ -69,8 +79,17 @@ export function Turbominting() {
   useEffect(() => {
     if (fundingAnalysisData.analysis && fundingAnalysisData.availableUtxos) {
       funding.setAnalysis(fundingAnalysisData.analysis, fundingAnalysisData.availableUtxos, fundingAnalysisData.resultingUtxos);
+      
+      // POINT 1: Initialize minting progress with funding analysis results
+      if (fundingAnalysisData.resultingUtxos?.length > 0 && turbominingData?.spendableOutputs) {
+        TurbomintingService.initializeMintingProgress(
+          turbominingData.numberOfOutputs,
+          turbominingData.spendableOutputs,
+          fundingAnalysisData.resultingUtxos
+        );
+      }
     }
-  }, [fundingAnalysisData.analysis, fundingAnalysisData.availableUtxos, fundingAnalysisData.resultingUtxos]);
+  }, [fundingAnalysisData.analysis, fundingAnalysisData.availableUtxos, fundingAnalysisData.resultingUtxos, turbominingData]);
 
   useEffect(() => {
     const needsFunding = fundingAnalysisData.analysis?.strategy !== 'sufficient_utxos';
@@ -156,7 +175,8 @@ export function Turbominting() {
           TurbomintingService.initializeMintingProgress(
             turbominingData.numberOfOutputs,
             turbominingData.spendableOutputs,
-            updatedResultingUtxos
+            updatedResultingUtxos,
+            true  // Force update with real funding TX data
           );
         }
 
