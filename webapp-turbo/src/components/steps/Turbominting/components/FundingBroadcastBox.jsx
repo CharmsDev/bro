@@ -162,15 +162,6 @@ export function FundingBroadcastBox({
                   const resultingUtxos = (funding.resultingUtxos?.length > 0 ? funding.resultingUtxos : fundingAnalysisData?.resultingUtxos) || [];
                   const analysis = funding.analysis || fundingAnalysisData?.analysis;
                   
-                  console.log('[RJJ-DEBUG] FundingBroadcastBox passing to UtxosDisplayPanel:', {
-                    'funding.availableUtxos': funding.availableUtxos?.length,
-                    'fundingAnalysisData.availableUtxos': fundingAnalysisData?.availableUtxos?.length,
-                    'funding.resultingUtxos': funding.resultingUtxos?.length,
-                    'fundingAnalysisData.resultingUtxos': fundingAnalysisData?.resultingUtxos?.length,
-                    'final availableUtxos': availableUtxos?.length,
-                    'final resultingUtxos': resultingUtxos?.length
-                  });
-                  
                   return (
                     <UtxosDisplayPanel 
                       availableUtxos={availableUtxos}

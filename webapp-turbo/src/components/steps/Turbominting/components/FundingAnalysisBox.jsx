@@ -146,7 +146,6 @@ export function FundingAnalysisBox({ turbominingData, walletAddress, fundingAnal
                 </p>
               </div>
               
-              {/* [RJJ-DEBUG] Show UTXOs that will be used */}
               {funding.resultingUtxos && funding.resultingUtxos.length > 0 && (
                 <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/50">
                   <h4 className="text-slate-300 font-semibold mb-3 flex items-center gap-2">

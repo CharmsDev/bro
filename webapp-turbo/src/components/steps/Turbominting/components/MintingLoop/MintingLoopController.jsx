@@ -53,16 +53,28 @@ export function MintingLoopController({
 
   // Start the minting loop
   const startMinting = useCallback(() => {
+    console.log('\n╔═══════════════════════════════════════════════════════════════╗');
+    console.log('║  🚀 MINTING LOOP - START REQUESTED                           ║');
+    console.log('╚═══════════════════════════════════════════════════════════════╝');
+    console.log('📊 Minting Status Check:');
+    console.log('  • miningReady:', miningReady);
+    console.log('  • fundingReady:', fundingReady);
+    console.log('  • mintingAllowed:', mintingAllowed);
+    console.log('  • totalOutputs:', turbominingData?.numberOfOutputs);
+    
     if (!mintingAllowed) {
       if (!miningReady) {
+        console.error('❌ Cannot start: Mining not ready');
         setError('Mining not ready - waiting for transaction confirmation');
       } else if (!fundingReady) {
+        console.error('❌ Cannot start: Funding not ready');
         setError('Funding not ready - waiting for transaction broadcast');
       }
       return;
     }
 
-    
+    console.log('✅ All checks passed - Starting minting loop...');
+    console.log('🎯 Processing output #0\n');
     setError(null);
     processOutput(0);
   }, [mintingAllowed, miningReady, fundingReady, processOutput, turbominingData]);

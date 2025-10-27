@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useStore } from '../../../store/index.js';
 import { useFundingTransaction } from './hooks/useFundingTransaction.js';
 import { useFundingAnalysis } from './hooks/useFundingAnalysis.js';
 import { useTurbomintingState } from './hooks/useTurbomintingState.js';
+import { useTurbomintingFlowV2 } from './hooks/useTurbomintingFlowV2.js';
 import { useMiningBroadcast } from './hooks/useMiningBroadcast.js';
 import { MiningTransactionBox } from './components/MiningTransactionBox.jsx';
 import { FundingAnalysisBox } from './components/FundingAnalysisBox.jsx';
@@ -10,11 +11,119 @@ import { FundingBroadcastBox } from './components/FundingBroadcastBox.jsx';
 import { MintingLoopBox } from './components/MintingLoopBox.jsx';
 import TurbomintingService from '../../../services/turbominting/TurbomintingService.js';
 import { getSoundEffects } from './utils/soundEffects.js';
+import CentralStorage from '../../../storage/CentralStorage.js';
 import './styles/index.css';
 
 export function Turbominting() {
   const { wallet } = useStore();
   const [shouldPlaySoundOnInteraction, setShouldPlaySoundOnInteraction] = useState(false);
+  
+  // ═══════════════════════════════════════════════════════════════
+  // FEATURE FLAG - V2 Flow (can be toggled via localStorage)
+  // ═══════════════════════════════════════════════════════════════
+  const useV2Flow = localStorage.getItem('TURBOMINTING_V2_ENABLED') === 'true';
+  
+  // Log complete localStorage state on mount
+  useEffect(() => {
+    console.log('\n╔═══════════════════════════════════════════════════════════════╗');
+    console.log('║  🚀 TURBOMINTING - INITIALIZATION                            ║');
+    console.log('╚═══════════════════════════════════════════════════════════════╝\n');
+    
+    console.log('📦 READING LOCALSTORAGE DATA...\n');
+    
+    // Get all turbominting-related data
+    const turbomining = CentralStorage.getTurbomining();
+    const turbominting = CentralStorage.getTurbominting();
+    const mintingProgress = turbominting?.mintingProgress || null;
+    const state = CentralStorage.getAll();
+    const batch = state.batch || null;
+    const wallet = CentralStorage.getWallet();
+    const isRecoveryMode = CentralStorage.isMiningRecoveryMode();
+    
+    console.log('1️⃣  TURBOMINING DATA:');
+    console.log('═══════════════════════════════════════════════════════════════');
+    if (turbomining) {
+      console.log(JSON.stringify(turbomining, null, 2));
+      console.log('\n📊 TURBOMINING VALIDATION:');
+      console.log('  ✓ signedTxHex:', turbomining.signedTxHex ? `${turbomining.signedTxHex.length} chars` : '❌ MISSING');
+      console.log('  ✓ miningTxid:', turbomining.miningTxid || '❌ MISSING');
+      console.log('  ✓ spendableOutputs:', turbomining.spendableOutputs?.length || '❌ MISSING');
+      console.log('  ✓ numberOfOutputs:', turbomining.numberOfOutputs || '❌ MISSING');
+      console.log('  ✓ miningData.reward:', turbomining.miningData?.reward || '❌ MISSING');
+      console.log('  ✓ miningData.nonce:', turbomining.miningData?.nonce || '❌ MISSING');
+      console.log('  ✓ miningData.hash:', turbomining.miningData?.hash || '❌ MISSING');
+      console.log('  ✓ challengeTxid:', turbomining.challengeTxid || '(empty - OK for recovery)');
+      console.log('  ✓ challengeVout:', turbomining.challengeVout ?? '❌ MISSING');
+      console.log('  ✓ changeAmount:', turbomining.changeAmount ?? '❌ MISSING');
+    } else {
+      console.log('❌ NO TURBOMINING DATA FOUND');
+    }
+    
+    console.log('\n2️⃣  TURBOMINTING DATA:');
+    console.log('═══════════════════════════════════════════════════════════════');
+    if (turbominting) {
+      console.log(JSON.stringify(turbominting, null, 2));
+      console.log('\n📊 TURBOMINTING VALIDATION:');
+      console.log('  ✓ miningTxid:', turbominting.miningTxid || '❌ MISSING');
+      console.log('  ✓ miningTxConfirmed:', turbominting.miningTxConfirmed ?? '❌ MISSING');
+      console.log('  ✓ miningReady:', turbominting.miningReady ?? '❌ MISSING');
+      console.log('  ✓ confirmationInfo.blockHeight:', turbominting.confirmationInfo?.blockHeight ?? '❌ MISSING');
+      console.log('  ✓ confirmationInfo.confirmations:', turbominting.confirmationInfo?.confirmations ?? '❌ MISSING');
+      console.log('  ✓ confirmationInfo.timestamp:', turbominting.confirmationInfo?.timestamp ?? '❌ MISSING');
+    } else {
+      console.log('❌ NO TURBOMINTING DATA FOUND');
+    }
+    
+    console.log('\n3️⃣  MINTING PROGRESS:');
+    console.log('═══════════════════════════════════════════════════════════════');
+    if (mintingProgress) {
+      console.log(JSON.stringify(mintingProgress, null, 2));
+      console.log('\n📊 MINTING PROGRESS VALIDATION:');
+      console.log('  ✓ completed:', mintingProgress.completed ?? '❌ MISSING');
+      console.log('  ✓ total:', mintingProgress.total ?? '❌ MISSING');
+      console.log('  ✓ outputs:', mintingProgress.outputs?.length || '❌ MISSING');
+      if (mintingProgress.outputs) {
+        mintingProgress.outputs.forEach((output, i) => {
+          console.log(`\n  Output ${i}:`);
+          console.log(`    - status: ${output.status || '❌ MISSING'}`);
+          console.log(`    - fundingUtxo: ${output.fundingUtxo ? '✓ Present' : '❌ MISSING'}`);
+          if (output.fundingUtxo) {
+            console.log(`      • txid: ${output.fundingUtxo.txid}`);
+            console.log(`      • vout: ${output.fundingUtxo.vout}`);
+            console.log(`      • value: ${output.fundingUtxo.value}`);
+          }
+        });
+      }
+    } else {
+      console.log('❌ NO MINTING PROGRESS FOUND');
+    }
+    
+    console.log('\n4️⃣  BATCH DATA:');
+    console.log('═══════════════════════════════════════════════════════════════');
+    if (batch) {
+      console.log('  ✓ utxos:', batch.utxos?.length || 0);
+      console.log('  ✓ selectedUtxos:', batch.selectedUtxos?.length || 0);
+    } else {
+      console.log('❌ NO BATCH DATA FOUND');
+    }
+    
+    console.log('\n5️⃣  WALLET DATA:');
+    console.log('═══════════════════════════════════════════════════════════════');
+    if (wallet) {
+      console.log('  ✓ address:', wallet.address || '❌ MISSING');
+      console.log('  ✓ seedPhrase:', wallet.seedPhrase ? 'Present' : '❌ MISSING');
+    } else {
+      console.log('❌ NO WALLET DATA FOUND');
+    }
+    
+    console.log('\n6️⃣  RECOVERY MODE:');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('  ✓ isRecoveryMode:', isRecoveryMode ? '✅ YES' : '❌ NO');
+    
+    console.log('\n╔═══════════════════════════════════════════════════════════════╗');
+    console.log('║  ✅ LOCALSTORAGE INSPECTION COMPLETE                         ║');
+    console.log('╚═══════════════════════════════════════════════════════════════╝\n');
+  }, []);
   
   // Initialize audio context on first user interaction and play sound if needed
   useEffect(() => {
@@ -42,6 +151,13 @@ export function Turbominting() {
     };
   }, [shouldPlaySoundOnInteraction]);
   
+  // ═══════════════════════════════════════════════════════════════
+  // V1 or V2 State Management
+  // ═══════════════════════════════════════════════════════════════
+  const stateV1 = useTurbomintingState(setShouldPlaySoundOnInteraction);
+  const stateV2 = useTurbomintingFlowV2();
+  
+  // Use V1 or V2 based on feature flag
   const {
     turbominingData,
     setTurbominingData,
@@ -52,7 +168,18 @@ export function Turbominting() {
     error,
     confirmationInfo,
     setConfirmationInfo
-  } = useTurbomintingState(setShouldPlaySoundOnInteraction);
+  } = useV2Flow ? {
+    // V2: Derive from V2 state
+    turbominingData: stateV2.currentData,
+    setTurbominingData: () => {}, // Not used in V2
+    miningReady: stateV2.step1Complete,
+    setMiningReady: () => {},
+    fundingReady: stateV2.step3Complete,
+    setFundingReady: () => {},
+    error: stateV2.error,
+    confirmationInfo: stateV2.currentData?.confirmationInfo,
+    setConfirmationInfo: () => {}
+  } : stateV1;
 
   const {
     isBroadcasting,
@@ -61,10 +188,14 @@ export function Turbominting() {
   } = useMiningBroadcast(turbominingData, setMiningReady, setConfirmationInfo, setTurbominingData);
 
   // Exclude challenge UTXO from funding analysis to prevent double-spend with mining TX
-  const challengeUtxo = turbominingData?.challengeTxid ? {
-    txid: turbominingData.challengeTxid,
-    vout: turbominingData.challengeVout
-  } : null;
+  // Safe to always exclude: if TX is confirmed, API won't return it anyway (no-op)
+  // Use useMemo to prevent recreating this object on every render (causes infinite loop)
+  const challengeUtxo = useMemo(() => {
+    return turbominingData?.challengeTxid ? {
+      txid: turbominingData.challengeTxid,
+      vout: turbominingData.challengeVout
+    } : null;
+  }, [turbominingData?.challengeTxid, turbominingData?.challengeVout]);
   
   const fundingAnalysisData = useFundingAnalysis(
     turbominingData?.numberOfOutputs || 0,
@@ -76,55 +207,94 @@ export function Turbominting() {
   const [isBroadcastingFunding, setIsBroadcastingFunding] = useState(false);
   const [fundingBroadcastError, setFundingBroadcastError] = useState(null);
 
+  // Use ref to track if we've already initialized
+  const hasInitialized = useRef(false);
+  
+  // Extract stable values to avoid infinite loop
+  const numberOfOutputsForInit = turbominingData?.numberOfOutputs;
+  const setAnalysis = funding.setAnalysis; // This is stable (useCallback)
+  
+  // Stabilize objects using JSON comparison
+  const analysisHash = useMemo(() => 
+    JSON.stringify(fundingAnalysisData.analysis), 
+    [fundingAnalysisData.analysis]
+  );
+  const availableUtxosHash = useMemo(() => 
+    JSON.stringify(fundingAnalysisData.availableUtxos), 
+    [fundingAnalysisData.availableUtxos]
+  );
+  const resultingUtxosHash = useMemo(() => 
+    JSON.stringify(fundingAnalysisData.resultingUtxos), 
+    [fundingAnalysisData.resultingUtxos]
+  );
+  
   useEffect(() => {
+    console.log('🔍 [INIT CHECK] Funding analysis data changed');
+    console.log('  • analysis:', fundingAnalysisData.analysis ? '✅' : '❌');
+    console.log('  • availableUtxos:', fundingAnalysisData.availableUtxos?.length || 0);
+    console.log('  • resultingUtxos:', fundingAnalysisData.resultingUtxos?.length || 0);
+    console.log('  • numberOfOutputsForInit:', numberOfOutputsForInit);
+    console.log('  • hasInitialized.current:', hasInitialized.current);
+    
     if (fundingAnalysisData.analysis && fundingAnalysisData.availableUtxos) {
-      funding.setAnalysis(fundingAnalysisData.analysis, fundingAnalysisData.availableUtxos, fundingAnalysisData.resultingUtxos);
+      setAnalysis(fundingAnalysisData.analysis, fundingAnalysisData.availableUtxos, fundingAnalysisData.resultingUtxos);
       
-      // POINT 1: Initialize minting progress with funding analysis results
-      if (fundingAnalysisData.resultingUtxos?.length > 0) {
-        console.log('[RJJ-DEBUG] 🎯 POINT 1 - Initializing minting progress:', {
-          numberOfOutputs: turbominingData.numberOfOutputs,
-          resultingUtxos: fundingAnalysisData.resultingUtxos,
-          strategy: fundingAnalysisData.analysis?.strategy
-        });
+      // POINT 1: Initialize minting progress with funding analysis results (only once)
+      if (!hasInitialized.current && fundingAnalysisData.resultingUtxos?.length > 0 && numberOfOutputsForInit) {
+        console.log('✅ [INIT] Initializing minting progress...');
+        console.log('  • Total outputs:', numberOfOutputsForInit);
+        console.log('  • Resulting UTXOs:', fundingAnalysisData.resultingUtxos);
         
-        // Validate: resultingUtxos must have at least numberOfOutputs elements
-        if (fundingAnalysisData.resultingUtxos.length < turbominingData.numberOfOutputs) {
-          console.warn(`[RJJ-DEBUG] ⚠️ POINT 1 - Insufficient resultingUtxos: ${fundingAnalysisData.resultingUtxos.length} < ${turbominingData.numberOfOutputs}`);
-        }
+        // Check if we need to force re-initialization (repair missing fundingUtxos)
+        const current = TurbomintingService.load();
+        const needsRepair = current?.mintingProgress?.outputs?.some(o => !o.fundingUtxo || !o.fundingUtxo.txid);
         
-        TurbomintingService.initializeMintingProgress(
-          turbominingData.numberOfOutputs,
-          fundingAnalysisData.resultingUtxos
+        console.log('  • Needs repair:', needsRepair ? '✅ YES (missing fundingUtxos)' : '❌ NO');
+        
+        const success = TurbomintingService.initializeMintingProgress(
+          numberOfOutputsForInit,
+          fundingAnalysisData.resultingUtxos,
+          needsRepair // Force if needs repair
         );
         
-        // Log what was saved
+        console.log('  • Initialization result:', success ? '✅ Success' : '❌ Failed');
+        
+        // Verify what was saved
         const saved = TurbomintingService.load();
-        console.log('[RJJ-DEBUG] ✅ POINT 1 - Saved outputs:', saved?.mintingProgress?.outputs);
-        saved?.mintingProgress?.outputs?.forEach((output, idx) => {
-          console.log(`[RJJ-DEBUG]   Saved Output ${idx}:`, {
-            fundingUtxo: output.fundingUtxo
-          });
-        });
+        console.log('  • Saved mintingProgress:', saved?.mintingProgress);
+        
+        hasInitialized.current = true;
+      } else {
+        console.log('⏭️  [INIT] Skipping initialization:');
+        console.log('  • Already initialized:', hasInitialized.current);
+        console.log('  • Has resulting UTXOs:', fundingAnalysisData.resultingUtxos?.length > 0);
+        console.log('  • Has numberOfOutputs:', !!numberOfOutputsForInit);
       }
     }
-  }, [fundingAnalysisData.analysis, fundingAnalysisData.availableUtxos, fundingAnalysisData.resultingUtxos, turbominingData]);
+  }, [analysisHash, availableUtxosHash, resultingUtxosHash, numberOfOutputsForInit, setAnalysis, fundingAnalysisData.analysis, fundingAnalysisData.availableUtxos, fundingAnalysisData.resultingUtxos]);
 
+  // Extract stable values from funding to avoid infinite loop
+  const fundingAnalysis = funding.analysis;
+  const fundingTransaction = funding.transaction;
+  const fundingIsCreating = funding.isCreating;
+  const createFundingTransaction = funding.createFundingTransaction;
+  const analysisStrategy = fundingAnalysisData.analysis?.strategy;
+  
   useEffect(() => {
-    const needsFunding = fundingAnalysisData.analysis?.strategy !== 'sufficient_utxos';
+    const needsFunding = analysisStrategy !== 'sufficient_utxos';
 
-    if (funding.analysis && needsFunding && !funding.transaction && !funding.isCreating) {
-      funding.createFundingTransaction();
+    if (fundingAnalysis && needsFunding && !fundingTransaction && !fundingIsCreating) {
+      createFundingTransaction();
     }
-  }, [funding.analysis, funding.transaction, funding.isCreating, fundingAnalysisData.analysis]);
+  }, [fundingAnalysis, fundingTransaction, fundingIsCreating, analysisStrategy, createFundingTransaction]);
 
   // Auto-activate fundingReady when funds are sufficient (no funding TX needed)
   useEffect(() => {
-    if (fundingAnalysisData.analysis?.strategy === 'sufficient_utxos' && !fundingReady) {
+    if (analysisStrategy === 'sufficient_utxos' && !fundingReady) {
       setFundingReady(true);
       TurbomintingService.setFundingReady(true);
     }
-  }, [fundingAnalysisData.analysis?.strategy, fundingReady]);
+  }, [analysisStrategy, fundingReady, setFundingReady]);
 
   // Log testmempoolaccept command when funding transaction is created
   // testmempoolaccept command available in funding.transaction.signedHex
@@ -184,29 +354,16 @@ export function Turbominting() {
         // POINT 2: Update minting progress with real funding TX outputs
         const savedData = TurbomintingService.load();
         if (savedData?.fundingAnalysis?.resultingUtxos) {
-          console.log('[RJJ-DEBUG] 🎯 POINT 2 - Updating with real funding TX:', {
+          const updatedResultingUtxos = savedData.fundingAnalysis.resultingUtxos.map(utxo => ({
+            ...utxo,
             txid: result.txid,
-            savedResultingUtxos: savedData.fundingAnalysis.resultingUtxos
-          });
-          
-          const updatedResultingUtxos = savedData.fundingAnalysis.resultingUtxos.map((utxo, idx) => ({
-            txid: result.txid,
-            vout: idx,  // Each output gets its own vout (0, 1, 2, ...)
-            value: utxo.value,
             source: 'funding_tx'
           }));
           
-          console.log('[RJJ-DEBUG] 📝 POINT 2 - Updated UTXOs:', updatedResultingUtxos);
-          
           TurbomintingService.initializeMintingProgress(
             turbominingData.numberOfOutputs,
-            updatedResultingUtxos,
-            true  // Force update with real funding TX data
+            updatedResultingUtxos
           );
-          
-          // Log what was saved
-          const updated = TurbomintingService.load();
-          console.log('[RJJ-DEBUG] ✅ POINT 2 - Saved outputs:', updated?.mintingProgress?.outputs);
         }
 
         // Start monitoring for confirmation (for UI status only)

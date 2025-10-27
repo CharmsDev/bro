@@ -47,14 +47,10 @@ export function PartialFundingCalculator({
   };
 
   const handleFundsDetected = async (utxos, newFunds) => {
-    console.log('[RJJ-DEBUG] 💰 New funds detected:', { utxos: utxos.length, newFunds });
-    
     // Trigger re-scan of wallet UTXOs and re-analysis
     if (onForceRescan) {
       await onForceRescan();
-      console.log('[RJJ-DEBUG] ✅ Re-analysis completed after new funds');
     } else {
-      console.warn('[RJJ-DEBUG] ⚠️ onForceRescan not available, falling back to reload');
       window.location.reload();
     }
   };

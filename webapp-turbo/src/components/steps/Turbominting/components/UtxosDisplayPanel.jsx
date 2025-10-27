@@ -7,13 +7,6 @@ export function UtxosDisplayPanel({
   analysis = null,
   isScanning = false
 }) {
-  // [RJJ-DEBUG] Log what we're receiving
-  console.log('[RJJ-DEBUG] UtxosDisplayPanel props:', {
-    availableUtxos: availableUtxos.length,
-    resultingUtxos: resultingUtxos.length,
-    analysis: analysis?.strategy
-  });
-  
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
       <div className="bg-slate-800/50 rounded-lg p-4">

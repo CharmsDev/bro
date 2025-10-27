@@ -1,157 +1,151 @@
-/**
- * UtxoMonitoring - Display UTXO monitoring status and found UTXO
- */
-import React from 'react';
+// UtxoMonitoring - Container for UTXO detection and mining transaction recovery
+import React, { useState, useMemo, useEffect } from 'react';
+import { useMiningTxScanner } from '../../../../hooks/useMiningTxScanner.js';
+import { MiningTxAnalyzer } from '../../../../services/wallet/MiningTxAnalyzer.js';
+import CentralStorage from '../../../../storage/CentralStorage.js';
+import { environmentConfig } from '../../../../config/environment.js';
+import { NewMiningMode } from './NewMiningMode.jsx';
+import { RecoveryMode } from './RecoveryMode.jsx';
+import { UtxoFound } from './UtxoFound.jsx';
 
 export function UtxoMonitoring({ 
   wallet, 
   monitoringStatus, 
   savedUtxos = [],
-  onCopyAddress 
+  onCopyAddress,
+  activeMode = 'new'
 }) {
   const { isMonitoring, foundUtxo, message, pollingCount } = monitoringStatus;
+  const [isLoadingRecovery, setIsLoadingRecovery] = useState(false);
   
-  // Use saved UTXOs if available, otherwise use foundUtxo
   const displayUtxo = foundUtxo || (savedUtxos.length > 0 ? savedUtxos[0] : null);
+  
+  const analyzer = useMemo(() => new MiningTxAnalyzer(), []);
+  
+  const { miningTxs, isScanning, error: scanError, scanWallet, hasResults } = useMiningTxScanner(
+    wallet?.address,
+    false
+  );
+  
+  useEffect(() => {
+    if (activeMode === 'recover' && wallet?.address) {
+      scanWallet();
+    }
+  }, [activeMode, wallet?.address]);
+  
+  const handleRecoverMiningTx = async (txid) => {
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🔄 MINING TX RECOVERY - START');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('📋 Transaction ID:', txid);
+    console.log('👤 Wallet Address:', wallet.address);
+    console.log('⏰ Recovery Time:', new Date().toISOString());
+    
+    setIsLoadingRecovery(true);
+    
+    try {
+      console.log('\n🔍 Step 1: Analyzing mining transaction...');
+      const recoveryData = await analyzer.getMiningTxForRecovery(txid, wallet.address);
+      
+      if (!recoveryData) {
+        console.error('❌ Failed to load mining transaction data');
+        alert('Failed to load mining transaction data');
+        return;
+      }
+      
+      console.log('✅ Step 1 Complete: Mining TX analyzed');
+      console.log('📊 Recovery Data:', JSON.stringify(recoveryData, null, 2));
+      
+      const turbomintingData = {
+        miningTxid: recoveryData.miningTxid,
+        explorerUrl: environmentConfig.getExplorerUrl(recoveryData.miningTxid),
+        miningTxConfirmed: recoveryData.miningTxConfirmed,
+        miningReady: recoveryData.miningReady,
+        confirmationInfo: recoveryData.confirmationInfo,
+        timestamp: recoveryData.timestamp || Date.now()
+      };
+      
+      console.log('\n💾 Step 2: Saving to localStorage...');
+      console.log('📦 Turbomining Data:', JSON.stringify(recoveryData, null, 2));
+      console.log('📦 Turbominting Data:', JSON.stringify(turbomintingData, null, 2));
+      
+      CentralStorage.saveTurbomining(recoveryData);
+      CentralStorage.saveTurbominting(turbomintingData);
+      
+      console.log('✅ Step 2 Complete: Data saved to localStorage');
+      
+      console.log('\n🔧 Step 3: Enabling recovery mode...');
+      CentralStorage.setMiningRecoveryMode(true);
+      console.log('✅ Step 3 Complete: Recovery mode enabled');
+      
+      console.log('\n🔍 Step 4: Verifying saved data...');
+      const savedTurbomining = CentralStorage.getTurbomining();
+      const savedTurbominting = CentralStorage.getTurbominting();
+      console.log('📦 Verified Turbomining:', JSON.stringify(savedTurbomining, null, 2));
+      console.log('📦 Verified Turbominting:', JSON.stringify(savedTurbominting, null, 2));
+      console.log('✅ Step 4 Complete: Data verified');
+      
+      console.log('\n═══════════════════════════════════════════════════════');
+      console.log('✅ MINING TX RECOVERY - SUCCESS');
+      console.log('🚀 Navigating to Turbominting...');
+      console.log('═══════════════════════════════════════════════════════\n');
+      
+      window.location.href = '/turbominting';
+    } catch (error) {
+      console.log('\n═══════════════════════════════════════════════════════');
+      console.error('❌ MINING TX RECOVERY - FAILED');
+      console.error('Error:', error);
+      console.error('Stack:', error.stack);
+      console.log('═══════════════════════════════════════════════════════\n');
+      alert(`Failed to recover mining TX: ${error.message}`);
+    } finally {
+      setIsLoadingRecovery(false);
+    }
+  };
 
   return (
-    <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-6 backdrop-blur-md shadow-sm transition-colors duration-200 hover:border-slate-500 hover:shadow">
-      <h4 className="text-xl font-bold text-slate-200 mb-4 flex items-center gap-2">
-        <span>🔍</span>
-        <span>Looking for UTXO to start minting process</span>
-      </h4>
-      
-      {/* Address Display */}
-      <div className="mb-6">
-        <div className="text-slate-400 text-sm mb-2">Your Bitcoin Address:</div>
-        <div className="bg-slate-800/50 border border-slate-600 rounded-xl p-4 flex items-center gap-4">
-          <code className="flex-1 text-slate-200 font-mono text-sm break-all">
-            {wallet.address}
-          </code>
-          <button 
-            className="inline-flex items-center justify-center gap-2 rounded-xl font-semibold px-4 py-2 transition-all duration-200 shadow-sm text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:scale-105 hover:shadow-lg"
-            onClick={onCopyAddress}
-            title="Copy address"
-          >
-            <span>📋</span>
-          </button>
-        </div>
-      </div>
-
-      {!displayUtxo ? (
-        <div className="space-y-4">
-          {/* Funding Instructions */}
-          <div className="text-slate-300">
-            <p>
-              <strong>BTC is the gas you'll need to mine and mint $BRO.</strong><br/>
-              Send funds to the address above to start mining $BRO.
-            </p>
-            <p className="mt-2">
-              <strong>Minimum required: 7,000 satoshis (0.00007000 BTC)</strong>
-            </p>
-          </div>
-
-          {/* Monitoring Status */}
-          {isMonitoring && (
-            <div className="bg-blue-900/20 border border-blue-600/50 rounded-xl p-6">
-              <div className="flex items-center justify-center mb-4">
-                {/* Large Spinner */}
-                <div className="relative">
-                  <div className="w-12 h-12 border-4 border-blue-200/30 border-t-blue-500 rounded-full animate-spin"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 bg-blue-500 rounded-full animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="text-center mb-4">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                  </div>
-                  <span className="text-blue-300 font-semibold text-lg">Monitoring blockchain...</span>
-                </div>
-                <p className="text-blue-400 text-sm">
-                  Scanning for incoming transactions with at least 7,000 satoshis
-                </p>
-              </div>
-              
-              <div className="bg-blue-800/30 rounded-lg p-3 text-center">
-                <div className="text-blue-400 text-sm space-y-1">
-                  <div className="font-medium">Status: {message}</div>
-                  {pollingCount > 0 && (
-                    <div>Blockchain checks: {pollingCount}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {!isMonitoring && !displayUtxo && (
-            <div className="bg-slate-800/30 border border-slate-600/50 rounded-xl p-4 text-center">
-              <p className="text-slate-400 mb-3">Monitoring will start automatically when wallet is ready</p>
-              <div className="text-slate-500 text-sm">
-                We'll detect incoming transactions in real-time
-              </div>
-            </div>
-          )}
-
-          {/* Technical Note */}
-          <div className="bg-amber-900/20 border border-amber-500/50 rounded-lg p-4">
-            <p className="text-amber-300 text-sm">
-              <strong>IMPORTANT:</strong> Your address must receive at least one UTXO of 7,000 satoshis or more in a single transaction.<br/>
-              Multiple smaller UTXOs will not work for the mining process.
-            </p>
-          </div>
-        </div>
-      ) : (
-        /* UTXO Found - Success State */
-        <div className="bg-emerald-900/20 border border-emerald-600/50 rounded-xl p-5">
-          {/* Row 1: Header */}
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-            <h3 className="text-lg font-semibold text-emerald-400">Challenge UTXO Selected</h3>
-          </div>
+    <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-6 backdrop-blur-md shadow-sm">
+      {activeMode === 'new' ? (
+        <>
+          <h4 className="text-xl font-bold text-slate-200 flex items-center gap-2 mb-6">
+            <span>🔍</span>
+            <span>Looking for UTXO to start minting process</span>
+          </h4>
           
-          {/* Row 2: All UTXO Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-3 items-center">
-            {/* Transaction ID */}
-            <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-3 min-w-0">
-              <div className="text-slate-400 text-xs mb-1">Transaction ID</div>
-              <code className="text-emerald-400 font-mono text-xs break-all">
-                {displayUtxo.txid}
-              </code>
-            </div>
-            
-            {/* Output */}
-            <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-3">
-              <div className="text-slate-400 text-xs mb-1">Output</div>
-              <div className="text-slate-200 font-semibold">
-                {displayUtxo.vout}
-              </div>
-            </div>
-            
-            {/* Amount */}
-            <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-3">
-              <div className="text-slate-400 text-xs mb-1">Amount</div>
-              <div className="text-emerald-400 font-semibold">
-                {displayUtxo.value?.toLocaleString()} sats
-              </div>
-            </div>
-            
-            {/* Confirmations (if > 0) */}
-            {displayUtxo.confirmations > 0 && (
-              <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-3">
-                <div className="text-slate-400 text-xs mb-1">Confirmations</div>
-                <div className="text-slate-200 font-semibold">
-                  {displayUtxo.confirmations}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+          {displayUtxo ? (
+            <UtxoFound 
+              utxo={displayUtxo} 
+              wallet={wallet}
+              onCopyAddress={onCopyAddress}
+            />
+          ) : (
+            <NewMiningMode
+              wallet={wallet}
+              isMonitoring={isMonitoring}
+              message={message}
+              pollingCount={pollingCount}
+              onCopyAddress={onCopyAddress}
+            />
+          )}
+        </>
+      ) : (
+        <>
+          <h4 className="text-xl font-bold text-slate-200 flex items-center gap-2 mb-6">
+            <span>🔄</span>
+            <span>Recover Mining Transaction</span>
+          </h4>
+          
+          <RecoveryMode
+            wallet={wallet}
+            miningTxs={miningTxs}
+            isScanning={isScanning}
+            scanError={scanError}
+            hasResults={hasResults}
+            isLoadingRecovery={isLoadingRecovery}
+            onRecoverMiningTx={handleRecoverMiningTx}
+            onCopyAddress={onCopyAddress}
+          />
+        </>
       )}
     </div>
   );

@@ -9,6 +9,111 @@ import CentralStorage from '../../storage/CentralStorage.js';
 
 export class TurbomintingService {
   // ============================================
+  // V2 METHODS - New Flow (Compatibility Layer)
+  // ============================================
+
+  /**
+   * Load data with V2 structure (compatible with old data)
+   */
+  static loadV2() {
+    const oldData = this.load();
+    if (!oldData) return null;
+    
+    // Return data as-is, it's already compatible
+    return oldData;
+  }
+
+  /**
+   * Check if Step 1 (Mining TX) is complete
+   */
+  static isStep1Complete() {
+    const data = this.load();
+    return data?.miningTxConfirmed === true;
+  }
+
+  /**
+   * Check if Step 2 (Funding Analysis) is complete
+   */
+  static isStep2Complete() {
+    const data = this.load();
+    return data?.fundingAnalysis?.completed === true;
+  }
+
+  /**
+   * Check if Step 3 (Funding TX) is complete
+   */
+  static isStep3Complete() {
+    const data = this.load();
+    const needsFunding = data?.fundingAnalysis?.strategy === 'reorganize';
+    
+    if (!needsFunding) return true; // Skip if not needed
+    return data?.fundingBroadcasted === true;
+  }
+
+  /**
+   * Check if Step 4 (Minting Loop) is ready
+   */
+  static isStep4Ready() {
+    return this.isStep1Complete() && 
+           this.isStep2Complete() && 
+           this.isStep3Complete();
+  }
+
+  /**
+   * Complete Step 1 - Mining TX confirmed
+   */
+  static completeStep1(confirmationData) {
+    this.update({
+      miningTxConfirmed: true,
+      miningReady: true,
+      confirmationInfo: confirmationData
+    });
+  }
+
+  /**
+   * Complete Step 2 - Funding Analysis done
+   */
+  static completeStep2(analysisResult) {
+    this.update({
+      fundingAnalysis: {
+        ...analysisResult,
+        completed: true,
+        timestamp: Date.now()
+      }
+    });
+    
+    // Auto-complete Step 3 if no funding needed
+    if (analysisResult.strategy === 'sufficient_utxos') {
+      this.update({ fundingReady: true });
+    }
+  }
+
+  /**
+   * Complete Step 3 - Funding TX broadcast
+   */
+  static completeStep3(fundingTxid) {
+    this.update({
+      fundingTxid,
+      fundingBroadcasted: true,
+      fundingReady: true
+    });
+  }
+
+  /**
+   * Reset from Step 2 (for re-analysis when adding funds)
+   */
+  static resetFromStep2() {
+    const current = this.load();
+    this.save({
+      ...current,
+      fundingAnalysis: null,
+      fundingTxid: null,
+      fundingBroadcasted: false,
+      fundingReady: false,
+      mintingProgress: null
+    });
+  }
+  // ============================================
   // RESET / CLEANUP OPERATIONS
   // ============================================
 
@@ -29,17 +134,56 @@ export class TurbomintingService {
    */
   static resetForMintMore() {
     try {
-      const currentData = CentralStorage.get() || {};
+      console.log('🔄 [MINT MORE] Starting reset...');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       
-      const preservedData = {
-        wallet: currentData.wallet || null,
-        walletExtendedAddresses: currentData.walletExtendedAddresses || null
+      // STEP 1: Get current state and list all keys
+      const currentData = CentralStorage.getAll() || {};
+      const allKeys = Object.keys(currentData);
+      console.log('📦 Current localStorage keys:', allKeys);
+      
+      // STEP 2: Save ONLY wallet data in memory
+      const wallet = currentData.wallet || null;
+      const walletExtendedAddresses = currentData.walletExtendedAddresses || null;
+      
+      console.log('\n💾 PRESERVING (in memory):');
+      console.log('  • wallet:', wallet ? '✅ Found' : '❌ Missing');
+      if (wallet) {
+        console.log('    - address:', wallet.address?.substring(0, 20) + '...');
+      }
+      console.log('  • walletExtendedAddresses:', walletExtendedAddresses ? '✅ Found' : '❌ Missing');
+      
+      // STEP 3: NUCLEAR OPTION - Clear EVERYTHING from localStorage
+      console.log('\n🗑️  CLEARING ALL DATA (nuclear option):');
+      allKeys.forEach(key => {
+        console.log(`  • ${key}: DELETED`);
+      });
+      
+      // Clear by creating empty object (removes ALL keys)
+      CentralStorage.saveAll({});
+      console.log('\n💥 localStorage COMPLETELY CLEARED');
+      
+      // STEP 4: Restore ONLY wallet data
+      console.log('\n♻️  RESTORING wallet data:');
+      const restoredState = {
+        wallet,
+        walletExtendedAddresses
       };
       
-      CentralStorage.saveAll(preservedData);
+      CentralStorage.saveAll(restoredState);
+      console.log('  • wallet: ✅ RESTORED');
+      console.log('  • walletExtendedAddresses: ✅ RESTORED');
+      
+      // STEP 5: Verify cleanup
+      const finalState = CentralStorage.getAll();
+      const finalKeys = Object.keys(finalState);
+      console.log('\n🔍 VERIFICATION - Final keys:', finalKeys);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ [MINT MORE] Reset complete - 100% clean slate');
       
       return true;
     } catch (error) {
+      console.error('❌ [MINT MORE] Reset failed:', error);
       return false;
     }
   }
@@ -259,13 +403,16 @@ export class TurbomintingService {
    */
   static initializeMintingProgress(totalOutputs, resultingUtxos = [], force = false) {
     try {
-      console.log('[RJJ-DEBUG] 📦 INIT PROGRESS - Starting:', { totalOutputs, resultingUtxos, force });
+      console.log('🔧 [TurbomintingService] initializeMintingProgress called');
+      console.log('  • totalOutputs:', totalOutputs);
+      console.log('  • resultingUtxos:', resultingUtxos);
+      console.log('  • force:', force);
       
       const current = CentralStorage.getTurbominting() || {};
       
       // Don't overwrite if minting already started (unless forced)
       if (!force && current.mintingProgress?.outputs?.some(o => o.status !== 'ready')) {
-        console.log('[RJJ-DEBUG] ⚠️ INIT PROGRESS - Minting already in progress, skipping');
+        console.log('⏭️  [TurbomintingService] Skipping - minting already started (not forced)');
         return false;
       }
       
@@ -275,11 +422,6 @@ export class TurbomintingService {
           vout: resultingUtxos[index].vout,
           value: resultingUtxos[index].value
         } : null;
-        
-        console.log(`[RJJ-DEBUG]   📝 Output ${index}:`, {
-          source: resultingUtxos[index],
-          result: fundingUtxo
-        });
         
         return {
           index,
@@ -293,6 +435,15 @@ export class TurbomintingService {
         };
       });
 
+      console.log('📦 [TurbomintingService] Created outputs array:');
+      outputs.forEach((output, i) => {
+        console.log(`  Output ${i}:`, {
+          index: output.index,
+          status: output.status,
+          fundingUtxo: output.fundingUtxo ? `${output.fundingUtxo.txid.substring(0, 8)}...:${output.fundingUtxo.vout} (${output.fundingUtxo.value} sats)` : '❌ NULL'
+        });
+      });
+
       CentralStorage.saveTurbominting({
         ...current,
         mintingProgress: {
@@ -303,8 +454,10 @@ export class TurbomintingService {
         timestamp: Date.now()
       });
       
+      console.log('✅ [TurbomintingService] Minting progress saved to localStorage');
       return true;
     } catch (error) {
+      console.error('❌ [TurbomintingService] Error initializing minting progress:', error);
       return false;
     }
   }

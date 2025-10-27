@@ -8,14 +8,67 @@ export function useMintingLoop(numberOfOutputs) {
   const [currentOutputIndex, setCurrentOutputIndex] = useState(null);
   const [lastProcessedIndex, setLastProcessedIndex] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Initialize or load progress from storage
   useEffect(() => {
-    const savedState = TurbomintingService.load();
+    console.log('🔄 [MINTING LOOP] Initializing from localStorage...');
+    console.log('  • numberOfOutputs dependency:', numberOfOutputs);
     
-    if (savedState?.mintingProgress?.outputs) {
-      // Restore from storage
-      setOutputsProgress(savedState.mintingProgress.outputs);
+    // Small delay to ensure localStorage was updated by index.jsx
+    const loadFromStorage = () => {
+      const savedState = TurbomintingService.load();
+      console.log('  • Saved state:', savedState ? '✅ Found' : '❌ Missing');
+      console.log('  • mintingProgress:', savedState?.mintingProgress ? '✅ Found' : '❌ Missing');
+      console.log('  • outputs:', savedState?.mintingProgress?.outputs?.length || 0);
+      
+      // Log current outputs state
+      if (savedState?.mintingProgress?.outputs) {
+        console.log('  • Current outputs in localStorage:');
+        savedState.mintingProgress.outputs.forEach((o, i) => {
+          console.log(`    Output ${i}: status=${o.status}, fundingUtxo=${o.fundingUtxo ? '✅' : '❌'}`);
+        });
+      }
+      
+      if (savedState?.mintingProgress?.outputs) {
+      console.log('✅ [MINTING LOOP] Restoring from saved mintingProgress');
+      
+      // Check if fundingUtxos are missing and need to be repaired
+      const needsRepair = savedState.mintingProgress.outputs.some(o => !o.fundingUtxo || !o.fundingUtxo.txid);
+      
+      if (needsRepair) {
+        console.log('⚠️  [MINTING LOOP] Funding UTXOs missing - attempting repair...');
+        
+        // Try to get funding UTXOs from fundingAnalysis
+        const fundingAnalysis = TurbomintingService.getFundingAnalysis();
+        const resultingUtxos = fundingAnalysis?.resultingUtxos || [];
+        
+        console.log('  • Found resultingUtxos:', resultingUtxos.length);
+        
+        if (resultingUtxos.length > 0) {
+          // Repair the outputs with funding UTXOs
+          const repairedOutputs = savedState.mintingProgress.outputs.map((output, index) => ({
+            ...output,
+            fundingUtxo: resultingUtxos[index] ? {
+              txid: resultingUtxos[index].txid,
+              vout: resultingUtxos[index].vout,
+              value: resultingUtxos[index].value
+            } : output.fundingUtxo
+          }));
+          
+          console.log('✅ [MINTING LOOP] Repaired outputs with funding UTXOs');
+          setOutputsProgress(repairedOutputs);
+          
+          // Save repaired progress
+          TurbomintingService.initializeMintingProgress(numberOfOutputs, resultingUtxos, true);
+        } else {
+          console.error('❌ [MINTING LOOP] Cannot repair - no resultingUtxos found in fundingAnalysis');
+          setOutputsProgress(savedState.mintingProgress.outputs);
+        }
+      } else {
+        console.log('✅ [MINTING LOOP] Funding UTXOs already present');
+        setOutputsProgress(savedState.mintingProgress.outputs);
+      }
       
       // Find last incomplete output to resume
       const lastIncomplete = savedState.mintingProgress.outputs.findIndex(
@@ -26,22 +79,39 @@ export function useMintingLoop(numberOfOutputs) {
         setCurrentOutputIndex(lastIncomplete);
       }
     } else if (numberOfOutputs > 0) {
+      console.log('🆕 [MINTING LOOP] No saved progress - initializing fresh...');
+      
+      // Try to get funding UTXOs from fundingAnalysis
+      const fundingAnalysis = TurbomintingService.getFundingAnalysis();
+      const resultingUtxos = fundingAnalysis?.resultingUtxos || [];
+      
+      console.log('  • Found resultingUtxos:', resultingUtxos.length);
+      
       // Initialize fresh - outputs start as READY (orange) when funding is ready
       const initialProgress = Array.from({ length: numberOfOutputs }, (_, i) => ({
         index: i,
-        status: OUTPUT_STATUS.READY, // Changed from PENDING to READY
+        status: OUTPUT_STATUS.READY,
         currentSubStep: null,
-        miningUtxo: null,  // { txid, vout, amount } - set when starting
-        fundingUtxo: null, // { txid, vout, amount } - set when starting
-        commitTxid: null,  // Set after broadcast
-        spellTxid: null,   // Set after broadcast
+        miningUtxo: null,
+        fundingUtxo: resultingUtxos[i] ? {
+          txid: resultingUtxos[i].txid,
+          vout: resultingUtxos[i].vout,
+          value: resultingUtxos[i].value
+        } : null,
+        commitTxid: null,
+        spellTxid: null,
         error: null,
         createdAt: Date.now()
       }));
       
+      console.log('✅ [MINTING LOOP] Initialized with funding UTXOs:', initialProgress.map(o => o.fundingUtxo));
       setOutputsProgress(initialProgress);
-      TurbomintingService.initializeMintingProgress(numberOfOutputs);
+      TurbomintingService.initializeMintingProgress(numberOfOutputs, resultingUtxos);
     }
+    };
+    
+    // Execute immediately
+    loadFromStorage();
   }, [numberOfOutputs]);
 
   // Update output progress
