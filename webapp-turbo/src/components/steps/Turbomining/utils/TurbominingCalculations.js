@@ -1,12 +1,37 @@
-export const calculateTotalCost = (outputs, costPerOutput = 333, feePerOutput = 500) => {
+/**
+ * Calculate total cost for turbomining transaction
+ * @param {number} outputs - Number of outputs to create
+ * @param {number} costPerOutput - Cost per output (default 333 sats)
+ * @param {number} feeRate - Fee rate in sat/vB (optional, uses dynamic if not provided)
+ * @returns {number|Promise<number>} Total cost in satoshis
+ */
+export const calculateTotalCost = async (outputs, costPerOutput = 333, feeRate = null) => {
   if (!outputs || outputs <= 0) return 0;
-  // More realistic fee estimation based on actual transaction structure:
-  // - 1 input (58 vbytes) + 1 OP_RETURN (43 bytes) + overhead (10 bytes) ≈ 111 vbytes base
-  // - Each output adds ~43 bytes
-  // - At 8 sat/vB: base = 888 sats, per output = 344 sats
-  const baseFee = 900; // Base transaction overhead (input + OP_RETURN + overhead)
-  const feePerOutputEstimate = 350; // Fee contribution per output (43 bytes × ~8 sat/vB)
-  const estimatedFee = baseFee + (outputs * feePerOutputEstimate);
+  
+  // If fee rate not provided, fetch dynamically
+  if (feeRate === null) {
+    try {
+      const { getFeeEstimator } = await import('../../../../services/bitcoin/fee-estimator.js');
+      const feeEstimator = getFeeEstimator();
+      
+      // Calculate fee for: 1 input + 1 OP_RETURN + N outputs (+ possible change)
+      const numInputs = 1;
+      const numOutputs = 1 + outputs; // OP_RETURN + spendable outputs
+      const estimatedFee = await feeEstimator.calculateFee(numInputs, numOutputs);
+      
+      return (outputs * costPerOutput) + estimatedFee;
+    } catch (error) {
+      console.warn('Failed to fetch dynamic fee, using fallback:', error);
+      // Fallback to conservative estimate for testnet (2 sat/vB)
+      feeRate = 2;
+    }
+  }
+  
+  // Manual calculation if fee rate is provided
+  // Transaction structure: 1 input (58 vB) + 1 OP_RETURN (43 vB) + N outputs (43 vB each) + overhead (10.5 vB)
+  const txSize = 10.5 + 58 + 43 + (outputs * 43);
+  const estimatedFee = Math.ceil(txSize * feeRate);
+  
   return (outputs * costPerOutput) + estimatedFee;
 };
 
@@ -77,6 +102,7 @@ export const getAvailableUtxos = (walletUtxos) => {
 export const TURBOMINING_CONSTANTS = {
   OUTPUT_OPTIONS: [2, 4, 8, 16, 32, 64, 128, 256],
   COST_PER_OUTPUT: 333, // satoshis (Taproot dust limit 330 + 3 extra)
-  FEE_PER_OUTPUT: 350,  // satoshis (realistic fee per output: ~43 bytes × 8 sat/vB)
-  MIN_CHANGE_OUTPUT: 546 // dust limit
+  MIN_CHANGE_OUTPUT: 546, // dust limit
+  // Note: Fees are calculated dynamically using FeeEstimator service
+  // which fetches real-time network fee rates via estimatesmartfee RPC
 };

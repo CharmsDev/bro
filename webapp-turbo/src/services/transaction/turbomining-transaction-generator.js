@@ -25,44 +25,45 @@ export class TurbominingTransactionGenerator {
       throw new Error('Missing wallet address');
     }
 
-    // Get available UTXOs from wallet
     const availableUtxos = getAvailableUtxos(walletUtxos);
     
     if (!availableUtxos || availableUtxos.length === 0) {
       throw new Error('No UTXOs available in wallet. Please fund your wallet first.');
     }
 
-    // Calculate total cost needed
     const totalCost = calculateTotalCost(numberOfOutputs);
 
-    // Normalize UTXOs to have consistent 'amount' property
     const normalizedUtxos = availableUtxos.map(utxo => ({
       ...utxo,
       amount: utxo.value || utxo.amount || 0
     }));
 
-    // CRITICAL: Use the challenge UTXO as input (the one used for mining)
-    // This MUST be the input 0 of the mining transaction
     let suitableUtxo = null;
     
     if (miningState?.challengeTxid && miningState?.challengeVout !== undefined) {
-      // Find the challenge UTXO in available UTXOs
       suitableUtxo = normalizedUtxos.find(utxo => 
         utxo.txid === miningState.challengeTxid && 
         utxo.vout === miningState.challengeVout
       );
       
       if (!suitableUtxo) {
-        throw new Error(`Challenge UTXO ${miningState.challengeTxid}:${miningState.challengeVout} not found in wallet. This UTXO was used for mining and must be available.`);
+        console.warn(`Challenge UTXO ${miningState.challengeTxid}:${miningState.challengeVout} not found. Using fallback (largest UTXO).`);
+        
+        suitableUtxo = normalizedUtxos
+          .filter(utxo => utxo.amount >= totalCost)
+          .sort((a, b) => b.amount - a.amount)[0];
+        
+        if (!suitableUtxo) {
+          const maxAvailable = Math.max(...normalizedUtxos.map(u => u.amount));
+          throw new Error(`No UTXO with sufficient funds. Need ${totalCost} sats, largest available: ${maxAvailable} sats.`);
+        }
       }
       
-      // Verify it has enough funds
       if (suitableUtxo.amount < totalCost) {
         throw new Error(`Challenge UTXO has insufficient funds. Need ${totalCost} sats, has ${suitableUtxo.amount} sats.`);
       }
       
     } else {
-      // Fallback: Select largest UTXO (should not happen in normal flow)
       suitableUtxo = normalizedUtxos
         .filter(utxo => utxo.amount >= totalCost)
         .sort((a, b) => b.amount - a.amount)[0];
@@ -73,16 +74,12 @@ export class TurbominingTransactionGenerator {
       }
     }
 
-    const confirmStatus = suitableUtxo.confirmed ? 'CONFIRMED' : 'UNCONFIRMED';
-
-    // Final normalized UTXO for transaction building
     const normalizedUtxo = {
       ...suitableUtxo,
       amount: suitableUtxo.amount,
-      value: suitableUtxo.amount  // Ensure both properties exist
+      value: suitableUtxo.amount
     };
 
-    // Get wallet keys from WalletStorage (centralized)
     const { WalletStorage } = await import('../../storage/index.js');
     const extendedAddresses = WalletStorage.loadExtendedAddresses();
     const walletKeys = extendedAddresses?.recipient?.[0];
@@ -91,8 +88,6 @@ export class TurbominingTransactionGenerator {
       throw new Error('Wallet keys not found. Please regenerate wallet in Step 1.');
     }
 
-    // Create transaction
-    
     const txBuilder = new BitcoinTxBuilder();
     const result = await txBuilder.createTurbominingTransaction(
       normalizedUtxo,
