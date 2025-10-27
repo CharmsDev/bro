@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { environmentConfig } from '../../config/environment.js';
 import TurbominingModule from '../../modules/turbomining/TurbominingModule.js';
 import TurbomintingService from '../../services/turbominting/TurbomintingService.js';
+import CentralStorage from '../../storage/CentralStorage.js';
 
 export function PageLayout({ 
   children, 
@@ -24,6 +25,13 @@ export function PageLayout({
   const { error, clearError, wallet, mining, batch, isWalletReady } = useStore();
   const [turbominingTxReady, setTurbominingTxReady] = useState(false);
   const [mintingLoopComplete, setMintingLoopComplete] = useState(false);
+  const [miningRecoveryMode, setMiningRecoveryMode] = useState(false);
+  
+  // Load miningRecoveryMode flag from localStorage
+  useEffect(() => {
+    const isRecoveryMode = CentralStorage.isMiningRecoveryMode();
+    setMiningRecoveryMode(isRecoveryMode);
+  }, [currentKey]);
   
   // Monitor turbomining transaction generation
   useEffect(() => {
@@ -120,7 +128,8 @@ export function PageLayout({
     
     switch (currentKey) {
       case 'wallet':
-        return 'Continue to Mining';
+        // Show different text in recovery mode
+        return miningRecoveryMode ? 'Continue to Turbominting' : 'Continue to Mining';
       case 'mining':
         return 'Continue to Turbomining';
       case 'turbomining':
@@ -142,7 +151,12 @@ export function PageLayout({
     // Auto-navigate based on current step
     switch (currentKey) {
       case 'wallet':
-        navigate('/mining');
+        // If miningRecoveryMode is active, skip to turbominting (step 4)
+        if (miningRecoveryMode) {
+          navigate('/turbominting');
+        } else {
+          navigate('/mining');
+        }
         break;
       case 'mining':
         if (mining.hasResult) navigate('/turbomining');
@@ -177,7 +191,13 @@ export function PageLayout({
         navigate('/mining');
         break;
       case 'turbominting':
-        navigate('/turbomining');
+        // If miningRecoveryMode is active, go back to wallet (step 1)
+        // Otherwise, go back to turbomining (step 3)
+        if (miningRecoveryMode) {
+          navigate('/wallet-setup');
+        } else {
+          navigate('/turbomining');
+        }
         break;
       case 'minting':
         navigate('/turbomining');

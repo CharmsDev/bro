@@ -70,6 +70,9 @@ class CentralStorage {
       turbomining: null,
       turbominting: null,
       funding: null,
+      config: {
+        miningRecoveryMode: false
+      },
       steps: {
         current: 1,
         completed: []
@@ -307,6 +310,24 @@ class CentralStorage {
   
   static saveWalletExtendedAddresses(addressesData) {
     this.set('walletExtendedAddresses', addressesData);
+  }
+
+  // Config
+  static getConfig() {
+    const state = this.getAll();
+    return state.config || { miningRecoveryMode: false };
+  }
+  
+  static setMiningRecoveryMode(enabled) {
+    const state = this.getAll();
+    if (!state.config) state.config = { miningRecoveryMode: false };
+    state.config.miningRecoveryMode = enabled;
+    this.saveAll(state);
+  }
+  
+  static isMiningRecoveryMode() {
+    const config = this.getConfig();
+    return config.miningRecoveryMode === true;
   }
 
   static debug() {
