@@ -28,8 +28,10 @@ export class FeeEstimator {
         }
       }
 
-      // Fetch fresh fee rate
-      const feeRate = await this.apiRouter.getAverageFeeRate(blocks, 'CONSERVATIVE', 2);
+      // Fetch fresh fee rate (ECONOMICAL mode for lower fees, no buffer)
+      const feeRate = await this.apiRouter.getAverageFeeRate(blocks, 'ECONOMICAL', 0);
+      
+      console.log(`[FeeEstimator] Network fee rate: ${feeRate} sat/vB (${blocks} blocks, ECONOMICAL)`);
       
       // Cache the result
       this.cachedFeeRate = feeRate;
@@ -37,8 +39,9 @@ export class FeeEstimator {
       
       return feeRate;
     } catch (error) {
-      // Fallback to low default (suitable for testnet and low-traffic periods)
-      const fallbackRate = 2; // 2 sat/vB default (testnet typical)
+      console.warn('Fee estimation failed, using fallback:', error);
+      // Fallback to minimal safe rate
+      const fallbackRate = 2; // 2 sat/vB (works for both testnet and low-traffic mainnet)
       return fallbackRate;
     }
   }

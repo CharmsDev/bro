@@ -59,14 +59,14 @@ export const selectUtxosForCost = (availableUtxos, targetCost) => {
   };
 };
 
-export const calculateMaxAffordableOutputs = (availableUtxos, outputOptions = [2, 4, 8, 16, 32, 64, 128, 256], costPerOutput = 333, feePerOutput = 7) => {
+export const calculateMaxAffordableOutputs = async (availableUtxos, outputOptions = [2, 4, 8, 16, 32, 64, 128, 256], costPerOutput = 333, feeRate = null) => {
   if (!availableUtxos || !Array.isArray(availableUtxos)) return 0;
   
   const totalAvailable = availableUtxos.reduce((sum, utxo) => sum + utxo.value, 0);
   
   for (let i = outputOptions.length - 1; i >= 0; i--) {
     const outputs = outputOptions[i];
-    const totalCost = calculateTotalCost(outputs, costPerOutput, feePerOutput);
+    const totalCost = await calculateTotalCost(outputs, costPerOutput, feeRate);
     if (totalAvailable >= totalCost) {
       return outputs;
     }
@@ -74,11 +74,11 @@ export const calculateMaxAffordableOutputs = (availableUtxos, outputOptions = [2
   return 0;
 };
 
-export const isOutputAffordable = (outputs, availableUtxos, costPerOutput = 333, feePerOutput = 7) => {
+export const isOutputAffordable = async (outputs, availableUtxos, costPerOutput = 333, feeRate = null) => {
   if (!availableUtxos || !Array.isArray(availableUtxos)) return false;
   
   const totalAvailable = availableUtxos.reduce((sum, utxo) => sum + utxo.value, 0);
-  const totalCost = calculateTotalCost(outputs, costPerOutput, feePerOutput);
+  const totalCost = await calculateTotalCost(outputs, costPerOutput, feeRate);
   
   return totalAvailable >= totalCost;
 };

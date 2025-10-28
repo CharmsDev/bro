@@ -16,6 +16,9 @@ export function Turbomining() {
   const { mining } = useStore();
   const [txDisplayFormat, setTxDisplayFormat] = useState('json');
   const [savedTurbomining, setSavedTurbomining] = useState(null);
+  const [affordabilityMap, setAffordabilityMap] = useState({});
+  const [maxAffordable, setMaxAffordable] = useState(0);
+  const [currentCost, setCurrentCost] = useState(0);
   const navigate = useNavigate();
   
   // Component loaded - silent
@@ -83,6 +86,44 @@ export function Turbomining() {
       }
     }
   }, []);
+
+  // Calculate affordability for all output options when wallet UTXOs change
+  useEffect(() => {
+    if (!walletUtxos || !outputOptions || !checkOutputAffordable) return;
+    
+    const calculateAffordability = async () => {
+      const newMap = {};
+      let max = 0;
+      
+      for (const outputs of outputOptions) {
+        const affordable = await checkOutputAffordable(outputs);
+        newMap[outputs] = affordable;
+        if (affordable && outputs > max) {
+          max = outputs;
+        }
+      }
+      
+      setAffordabilityMap(newMap);
+      setMaxAffordable(max);
+    };
+    
+    calculateAffordability();
+  }, [walletUtxos, outputOptions, checkOutputAffordable]);
+
+  // Calculate cost when selected outputs change
+  useEffect(() => {
+    if (!selectedOutputs || !getTotalCost) {
+      setCurrentCost(0);
+      return;
+    }
+    
+    const calculateCost = async () => {
+      const cost = await getTotalCost(selectedOutputs);
+      setCurrentCost(cost);
+    };
+    
+    calculateCost();
+  }, [selectedOutputs, getTotalCost]);
 
   // Build a display-friendly transaction from saved data if hook hasn't generated one
   const displayTransaction = generatedTransaction || (savedTurbomining ? {
@@ -207,6 +248,7 @@ export function Turbomining() {
           walletUtxos={walletUtxos}
           isScanning={isScanning}
           scanError={scanError}
+          maxAffordable={maxAffordable}
         />
       )}
 
@@ -243,8 +285,7 @@ export function Turbomining() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {outputOptions.map((outputs) => {
-            const isAffordable = checkOutputAffordable(outputs);
-            const totalCost = getTotalCost(outputs);
+            const isAffordable = affordabilityMap[outputs] || false;
             
             return (
               <button
@@ -281,7 +322,7 @@ export function Turbomining() {
       {selectedOutputs > 0 && (
         <CostSummary 
           selectedOutputs={selectedOutputs}
-          miningTxCost={getTotalCost(selectedOutputs)}
+          miningTxCost={currentCost}
           walletUtxos={walletUtxos}
           isLocked={isLocked}
         />

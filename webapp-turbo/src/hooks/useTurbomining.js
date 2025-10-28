@@ -115,18 +115,18 @@ export function useTurbomining(miningResult, isLocked = false) {
   }, [selectedOutputs, walletUtxos, miningResult, generatedTransaction, isGeneratingTx, generateTurbominingTransaction]);
 
   // Utility functions - direct access to utils
-  const getMaxAffordableOutputs = useCallback(() => {
+  const getMaxAffordableOutputs = useCallback(async () => {
     if (!walletUtxos) return 0;
-    return calculateMaxAffordableOutputs(getAvailableUtxos(walletUtxos));
+    return await calculateMaxAffordableOutputs(getAvailableUtxos(walletUtxos));
   }, [walletUtxos]);
 
-  const checkOutputAffordable = useCallback((outputs) => {
+  const checkOutputAffordable = useCallback(async (outputs) => {
     if (!walletUtxos) return false;
-    return isOutputAffordable(outputs, getAvailableUtxos(walletUtxos));
+    return await isOutputAffordable(outputs, getAvailableUtxos(walletUtxos));
   }, [walletUtxos]);
 
-  const getTotalCost = useCallback((outputs) => {
-    return outputs * (TURBOMINING_CONSTANTS.COST_PER_OUTPUT + TURBOMINING_CONSTANTS.FEE_PER_OUTPUT);
+  const getTotalCost = useCallback(async (outputs) => {
+    return await calculateTotalCost(outputs);
   }, []);
 
   const generateTransactionJSON = useCallback(() => {
@@ -159,7 +159,6 @@ export function useTurbomining(miningResult, isLocked = false) {
     // Constants
     outputOptions: TURBOMINING_CONSTANTS.OUTPUT_OPTIONS,
     costPerOutput: TURBOMINING_CONSTANTS.COST_PER_OUTPUT,
-    feePerOutput: TURBOMINING_CONSTANTS.FEE_PER_OUTPUT,
     constants: TURBOMINING_CONSTANTS
   };
 }

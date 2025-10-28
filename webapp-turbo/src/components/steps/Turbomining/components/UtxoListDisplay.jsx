@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatSatoshis } from '../../../../utils/formatters.js';
 
-export function UtxoListDisplay({ walletUtxos, isScanning, scanError }) {
+export function UtxoListDisplay({ walletUtxos, isScanning, scanError, maxAffordable = 0 }) {
   if (isScanning) {
     return (
       <div className="bg-blue-900/20 border border-blue-600/50 rounded-2xl p-8 backdrop-blur-md shadow-sm mb-8">
@@ -81,7 +81,7 @@ export function UtxoListDisplay({ walletUtxos, isScanning, scanError }) {
         <div className="bg-purple-900/30 border border-purple-600/50 rounded-lg p-4 text-center">
           <div className="text-purple-400 text-sm mb-1">Max Outputs</div>
           <div className="text-purple-300 text-2xl font-bold">
-            {Math.floor(walletUtxos.totalValue / 340)}
+            {maxAffordable || '...'}
           </div>
         </div>
       </div>
@@ -126,7 +126,7 @@ export function UtxoListDisplay({ walletUtxos, isScanning, scanError }) {
       {/* Cost Information */}
       <div className="mt-4 p-3 bg-slate-800/30 border border-slate-600 rounded-lg">
         <div className="text-slate-400 text-xs text-center">
-          � <strong>Turbomining Cost:</strong> 333 sats per output + 7 sats fee = 340 sats total per output
+          � <strong>Turbomining Cost:</strong> 333 sats per output + dynamic network fee (calculated in real-time)
         </div>
       </div>
     </div>
