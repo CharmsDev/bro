@@ -2,7 +2,7 @@ app_bins=./src/wasm/bro-token.wasm
 
 export app_vk=$(charms app vk ${app_bins})
 export in_utxo_0="2282b8878f852b531a8a61274f296778cd49fe6e9ebf65381b33c3ae0e3d291c:1"
-export app_id=$(echo -n "${in_utxo_0}" | sha256sum | cut -d' ' -f1)
+export app_id=3d7fe7e4cea6121947af73d70e5119bebd8aa5b7edfe74bfaf6e779a1847bd9b
 
 export addr_0=bc1qegwdfw2mmlpqtplsy7u4mqa5gq2pvjvs2zhfyh
 

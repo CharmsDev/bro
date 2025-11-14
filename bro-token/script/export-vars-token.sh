@@ -1,8 +1,7 @@
 app_bins=./src/wasm/bro-token.wasm
 
 export app_vk=$(charms app vk ${app_bins})
-export in_utxo_0="4988e8a6ad5eb660d1135075a2674135855b40ddbbabbe6dfa7a7207c241c278:1"
-export app_id=$(echo -n "${in_utxo_0}" | sha256sum | cut -d' ' -f1)
+export app_id=3d7fe7e4cea6121947af73d70e5119bebd8aa5b7edfe74bfaf6e779a1847bd9b
 export mining_txid=732337e4a15ef24b2e49f83ab397e305e60563615fc9710aa5616e68e2e66774
 export mining_tx=$(b getrawtransaction ${mining_txid})
 
